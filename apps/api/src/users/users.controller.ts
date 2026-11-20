@@ -29,7 +29,11 @@ export class UsersController {
         email: body.email.trim().toLowerCase(),
         fullName: body.fullName,
       })
-      .returning({ id: users.id, email: users.email, fullName: users.fullName });
+      .returning({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+      });
     return user;
   }
 }

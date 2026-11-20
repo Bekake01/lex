@@ -1,0 +1,37 @@
+{
+  "id": "01999999-0000-7000-8000-000000000002",
+  "documentId": "01999999-0000-7000-8000-00000000000a",
+  "status": "done",
+  "riskLevel": "high",
+  "verdict": "needs_changes",
+  "summary": "Ijara shartnomasi asosan to'g'ri tuzilgan, lekin ijara haqini bir tomonlama oshirish va depozitni qaytarmaslik shartlari ijaraga oluvchi uchun jiddiy xavf tug'diradi.",
+  "issues": [
+    {
+      "id": "01999999-0000-7000-8000-000000000101",
+      "clauseRef": "3",
+      "quote": "Ijaraga beruvchi ijara haqini istalgan vaqtda, ijaraga oluvchini ogohlantirmasdan oshirishi mumkin.",
+      "problem": "Ijara haqini cheklovsiz va ogohlantirishsiz oshirish huquqi ijaraga oluvchini noaniq majburiyat ostida qoldiradi.",
+      "severity": "high",
+      "recommendation": "Oshirish chastotasini (masalan, yiliga bir marta), maksimal foizni va kamida 30 kunlik yozma ogohlantirish muddatini belgilang.",
+      "citation": {
+        "articleId": "fx-civil-a556",
+        "actTitle": "O'zbekiston Respublikasining Fuqarolik kodeksi",
+        "articleNumber": "556",
+        "sourceUrl": "https://lex.uz/docs/111181",
+        "versionDate": "2026-06-01"
+      }
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000102",
+      "clauseRef": "4",
+      "quote": "Depozit qaytarilmaydi.",
+      "problem": "Depozitni hech qanday holatda qaytarmaslik sharti depozitning maqsadiga qarshi: u zararni qoplash uchun garov, jarima emas.",
+      "severity": "high",
+      "recommendation": "Depozit nimalar uchun ushlab qolinishi mumkinligini sanab o'ting va qolgan qismi necha kun ichida qaytarilishini yozing.",
+      "citation": null
+    }
+  ],
+  "lawVersionDate": "2026-06-01",
+  "language": "uz",
+  "createdAt": "2026-11-20T09:00:00.000Z"
+}

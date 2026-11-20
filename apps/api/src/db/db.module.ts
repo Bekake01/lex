@@ -19,7 +19,8 @@ const PG_POOL = Symbol('PG_POOL');
     {
       provide: DB,
       inject: [PG_POOL],
-      useFactory: (pool: Pool): Db => drizzle(pool, { schema, casing: 'snake_case' }),
+      useFactory: (pool: Pool): Db =>
+        drizzle(pool, { schema, casing: 'snake_case' }),
     },
   ],
   exports: [DB],

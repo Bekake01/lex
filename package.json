@@ -20,7 +20,12 @@
     "db:studio": "pnpm --filter api db:studio",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dev:lex": "pnpm --filter lex-api start:dev"
+    "dev:lex": "pnpm --filter lex-api start:dev",
+    "redis:up": "docker compose up -d redis",
+    "services:up": "docker compose up -d",
+    "services:down": "docker compose down",
+    "eval:review": "pnpm --filter api eval:review",
+    "seed:demo": "pnpm --filter api seed:demo"
   },
   "devDependencies": {
     "prettier": "^3.10.1",
