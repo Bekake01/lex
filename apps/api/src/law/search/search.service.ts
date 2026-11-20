@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { count, eq, inArray, max, sql, type SQL } from 'drizzle-orm';
 import type { LawArticleHit, MetaResponse } from '../law.types.js';
 import { DB, type Db } from '../../db/db.module.js';
 import { lawActs, lawArticles, lawSyncRuns } from '../../db/schema/index.js';
+import { EmbeddingService } from '../embeddings/embedding.service.js';
 import { fuseRankings, queryStems, toTsQuery } from './query.js';
 import type { SearchInput } from './schemas.js';
 
@@ -20,11 +21,18 @@ const CANDIDATES = 300;
 
 @Injectable()
 export class SearchService {
-  constructor(@Inject(DB) private readonly db: Db) {}
+  constructor(
+    @Inject(DB) private readonly db: Db,
+    // Optional so keyword-only callers (scripts, tests) can leave it out.
+    @Optional() private readonly embeddings?: EmbeddingService,
+  ) {}
 
   /**
-   * Keyword search (v1). Each query is ranked on its own by ts_rank, then the
-   * rankings are fused (RRF) and the top `limit` returned.
+   * Hybrid search (Phase 8). Each query gets a keyword ranking (stems,
+   * headings, ts_rank) and, when embeddings are configured, a vector ranking
+   * (cosine distance on law_articles.embedding). All rankings are fused with
+   * reciprocal rank fusion and the top `limit` returned. Without embeddings,
+   * or when the provider fails, this is the Phase 6 keyword search.
    * `docType` is accepted now and used for anchor acts from Phase 9.
    */
   async search({ queries, inForceOnly, limit }: SearchInput): Promise<LawArticleHit[]> {
@@ -34,10 +42,11 @@ export class SearchService {
       const tsQuery = toTsQuery(q);
       if (tsQuery && !byTsQuery.has(tsQuery)) byTsQuery.set(tsQuery, queryStems(q));
     }
-    const unique = [...byTsQuery].map(([tsQuery, stems]) => ({ tsQuery, stems }));
-    if (unique.length === 0) return [];
+    const keyword = Promise.all([...byTsQuery].map(([tsQuery, stems]) => this.rankIds(tsQuery, stems, inForceOnly)));
+    const vector = this.embeddings?.enabled ? this.vectorRankings(queries, inForceOnly) : Promise.resolve([]);
 
-    const rankings = await Promise.all(unique.map((q) => this.rankIds(q.tsQuery, q.stems, inForceOnly)));
+    const rankings = [...(await keyword), ...(await vector)].filter((r) => r.length > 0);
+    if (rankings.length === 0) return [];
     const fused = [...fuseRankings(rankings)].sort((a, b) => b[1] - a[1]).slice(0, limit);
 
     const byId = new Map((await this.load(fused.map(([id]) => id))).map((h) => [h.articleId, h]));
@@ -45,6 +54,28 @@ export class SearchService {
       const hit = byId.get(id);
       return hit ? [{ ...hit, score: Number(score.toFixed(6)) }] : [];
     });
+  }
+
+  /** One vector ranking per distinct query; a query the provider could not embed gets none. */
+  private async vectorRankings(queries: string[], inForceOnly: boolean): Promise<string[][]> {
+    const distinct = [...new Set(queries.map((q) => EmbeddingService.queryText(q)).filter(Boolean))];
+    const vectors = await this.embeddings!.embedQueries(distinct);
+    return Promise.all(vectors.map((v) => (v ? this.vectorRank(v, inForceOnly) : Promise.resolve([]))));
+  }
+
+  /** Nearest rows by cosine distance (HNSW index on embedding). Rows not embedded yet are skipped. */
+  private async vectorRank(vector: number[], inForceOnly: boolean): Promise<string[]> {
+    const literal = `[${vector.join(',')}]`;
+    // node-postgres and PGlite both return { rows }; the driver-agnostic Db type doesn't say so.
+    const result = (await this.db.execute(sql`
+      SELECT a.id
+      FROM law_articles a
+      JOIN law_acts b ON b.doc_id = a.doc_id
+      WHERE a.embedding IS NOT NULL ${inForceOnly ? sql`AND b.status <> 'repealed'` : sql``}
+      ORDER BY a.embedding <=> ${literal}::vector, a.id
+      LIMIT ${PER_QUERY}
+    `)) as unknown as { rows: { id: string }[] };
+    return result.rows.map((r) => r.id);
   }
 
   /** Articles by id, in the order asked; unknown ids are left out. */

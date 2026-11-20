@@ -174,6 +174,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** all rows embedded; `eval:search` recall@10 is clearly above the keyword baseline (target ≥ 0.75 at this point); `/search` p95 < 300 ms for 5 queries.
 
+**Status (2026-11-21): code done, measurement pending.** `EmbeddingService` (`src/law/embeddings/embedding.service.ts`: Voyage from env, query cache of 2,000, Cyrillic queries embedded in Latin, keyword-only fallback when the provider fails or is not configured); hybrid `SearchService.search` (keyword + vector top 50 per query, RRF); `pnpm ingest:embed [--limit N]` (resumable, token-budget batches); `pnpm eval:search [--keyword-only] --out`; `pnpm ingest:hf --types …` for a small subset. Tests use a fake provider (`test/law/hybrid-search.spec.ts`). The full embed + measurement runs on the MacBook: Job E in `docs/heavy-jobs-mac.md`.
+
 ### Phase 9 — Core acts from lex.uz (3 days)
 **Build**
 - `data/core-acts.yaml`: about 50 acts (Civil Code, Labor Code 2023, Tax, Housing, Family codes; laws on consumer rights, personal data, the rental market, contract-related laws…) with lex.uz ids and the `docType`s each one anchors

@@ -111,21 +111,76 @@ It embeds about 9,000 law articles. Progress lines show while it works. If it st
 
 ---
 
-## 5. Job D: bge-m3 embedding test (not needed: Voyage was chosen)
+## 5. Job E: embed all laws and measure hybrid search (Phase 8; about 2 hours, mostly waiting)
 
-bge-m3 is a free model that runs on your Mac. The test code doesn't support the easy Mac route yet, which is Ollama. Skip this job until the repo owner says it's added. The steps will then be:
+This is the big one. It loads every law into a **real Postgres**, sends all ~190,000 rows to Voyage once, and measures how much better hybrid search (keyword + Voyage) is than keyword search alone.
+
+- **Cost:** roughly **$7–10** of Voyage usage for the whole corpus (about 120 million tokens by our estimate; Voyage may count up to ~1.5× more for Uzbek). Check the Voyage dashboard: new accounts get free tokens that may cover it. Set a spending limit first.
+- **Disk:** about 5 GB.
+- **Safe to stop:** if your Mac sleeps or the network drops, just run the same command again. Finished rows are saved and never paid for twice.
+
+**E1. Start Postgres (with pgvector) and Redis.** The easiest way is Docker Desktop (https://www.docker.com/products/docker-desktop). From the `lex` folder:
 
 ```bash
-brew install ollama
-ollama serve &            # leave it running
-ollama pull bge-m3        # ~1.2 GB download
+cd ~/path/to/lex
+git pull origin z-ai
+pnpm install
+pnpm services:up          # Postgres on port 5434, Redis on 6379
 ```
 
-There will then be one more test command.
+**E2. Settings.** In `apps/api/.env`, next to your `VOYAGE_API_KEY`, add these lines if they aren't there:
+
+```bash
+DATABASE_URL=postgres://lex:lex@localhost:5434/lex
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=any-long-random-text-at-least-32-characters-long
+EMBEDDING_PROVIDER=voyage
+```
+
+**E3. Create the tables and load all laws** (about 5–10 minutes):
+
+```bash
+cd apps/api
+pnpm db:migrate
+pnpm ingest:hf            # reads data/hf/articles.parquet (download step in section 1)
+```
+
+**E4. Try embeddings on 2,000 rows first** (about 1 minute; checks the key and shows the speed):
+
+```bash
+pnpm ingest:embed --limit 2000
+```
+
+**E5. Embed everything** (1–2 hours). It prints progress and the time left; leave it running.
+
+```bash
+pnpm ingest:embed
+```
+
+It should end with `0 rows still without an embedding`. If not, run it again.
+
+**E6. Measure.** This takes a few minutes and makes two reports: keyword-only, then hybrid.
+
+```bash
+pnpm eval:search --keyword-only --out data/eval-phase8-keyword.json
+pnpm eval:search --out data/eval-phase8-hybrid.json
+```
+
+**What to send back:**
+- `data/eval-phase8-keyword.txt` and `data/eval-phase8-hybrid.txt`
+- the last line printed by `pnpm ingest:embed`
+
+**Keep the database.** Don't run `docker compose down -v`: it would delete the embeddings you paid for. To stop it without deleting anything, run `docker compose stop`.
 
 ---
 
-## 6. Sending the results back
+## 6. Job D: bge-m3 embedding test (not needed: Voyage was chosen)
+
+Skip this. Voyage was chosen in Phase 7, and bge-m3 is only a self-hosted fallback.
+
+---
+
+## 7. Sending the results back
 
 The easiest way is to send the `.txt` and `.json` files listed above in chat.
 
@@ -135,9 +190,9 @@ Or, if you have push access:
 cd ../..                                   # back to the lex folder
 git pull origin z-ai
 mkdir -p docs/decisions/results
-cp apps/api/data/eval-*.txt apps/api/data/report-import.json docs/decisions/results/
+cp apps/api/data/eval-*.txt apps/api/data/report-import.json docs/decisions/results/ 2>/dev/null
 git add docs/decisions/results
-git commit -m "Phase 7 results from the MacBook run"
+git commit -m "Results from the MacBook run"
 git push origin z-ai
 ```
 
@@ -145,9 +200,14 @@ Only add the result files. **Don't** add `apps/api/data/` (it's large and git-ig
 
 ---
 
-## 7. Cleaning up afterwards
+## 8. Cleaning up afterwards
 
-Everything is inside the `lex` folder. To free the space, delete the whole folder:
+Only clean up when the team says Phase 8 is done (the database holds the paid-for embeddings). Then stop and delete the database, and the folder:
+
+```bash
+cd ~/path/to/lex && docker compose down -v
+```
+
 
 ```bash
 cd ~ && rm -rf path/to/lex

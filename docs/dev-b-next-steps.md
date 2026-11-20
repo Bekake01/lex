@@ -91,6 +91,7 @@ Tell the frontend team:
 - **Email delivery:** `send-signing-invite` only logs the links. Resend is "the email track", but who owns it?
 - **Signing itself:** consent, stamp, seal, and rendering the certificate. `@lex/crypto` has the hashing and the "Summary shown to signer: sha256 …" line, but nothing renders a certificate yet.
 - **Full-app test:** `test/app-module.e2e-spec.ts` needs Postgres and Redis, so run it in CI or on a machine with Docker.
+- **E2E teardown leaks Redis errors (yours to fix, small):** with Redis running, `pnpm test:e2e` passes all tests, but `test/app.e2e-spec.ts` leaves about 20 unhandled `ioredis` "Connection is closed" rejections when the app shuts down, so the run exits with code 1. Close the BullMQ queues and workers cleanly on shutdown, or stub the queue module in that test.
 
 ## Rules that keep us from colliding
 

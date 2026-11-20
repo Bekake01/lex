@@ -31,7 +31,11 @@ const INSERT_SLICE = 2000;
 export interface HfImportOptions {
   batchSize?: number;
   onProgress?: (rowsRead: number) => void;
+  /** Import only these dataset `doc_type`s (e.g. code, law, constitution: a small-laptop subset). */
+  docTypes?: string[];
 }
+
+const DOC_TYPE = /^[a-z_]+$/;
 
 /** `excluded.<col>` for every column an upsert may overwrite. */
 const excluded = (column: string): SQL => sql.raw(`excluded.${column}`);
@@ -44,7 +48,7 @@ const excluded = (column: string): SQL => sql.raw(`excluded.${column}`);
 export async function importHf(
   db: Db,
   parquetPath: string,
-  { batchSize = 1000, onProgress }: HfImportOptions = {},
+  { batchSize = 1000, onProgress, docTypes }: HfImportOptions = {},
 ): Promise<HfImportReport> {
   const started = Date.now();
   const report: HfImportReport = {
@@ -91,7 +95,13 @@ export async function importHf(
     // which keeps the -dN renaming stable across runs.
     const columns = HF_COLUMNS.map((c) => (c === 'doc_id' ? 'CAST(doc_id AS VARCHAR) AS doc_id' : c));
     const result = await conn.stream(
-      `SELECT ${columns.join(', ')} FROM read_parquet('${parquetPath.replaceAll("'", "''")}')`,
+      `SELECT ${columns.join(', ')} FROM read_parquet('${parquetPath.replaceAll("'", "''")}')` +
+        (docTypes?.length
+          ? ` WHERE doc_type IN (${docTypes
+              .filter((t) => DOC_TYPE.test(t))
+              .map((t) => `'${t}'`)
+              .join(', ')})`
+          : ''),
     );
 
     for (;;) {
