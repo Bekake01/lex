@@ -162,8 +162,8 @@ Durations assume 1–2 developers. Phases 0–3 are the **MVP**.
 - [ ] Extract parties; party → recipient mapping on the send screen
 - [ ] `summarize-for-recipients` job at send time (uz/ru/en)
 - [ ] `recipient_summaries` table + `summaryHash`
-- [ ] Add `GET /sign/:token/summary` to the relay allowlist (uniform 404)
-- [ ] `apps/sign`: summary, your obligations, other party's obligations, key conditions → consent → sign
+- [x] `GET /sign/:token/summary` reachable from the sign app (pass-through, uniform 404)
+- [x] `apps/sign`: summary, your obligations, other party's obligations, key conditions → consent → sign
 - [ ] Certificate of Completion records the summary hash shown to the signer
 
 **Done when:** a receiver can read their obligations and sign; the certificate proves which summary they saw. **→ MVP launch (closed beta).**
@@ -206,6 +206,7 @@ Durations assume 1–2 developers. Phases 0–3 are the **MVP**.
 - [ ] **Public verify page:** anyone drops a signed PDF and we check its hash + seal.
 - [ ] **Export all copies of a send:** CSV of field values, ZIP of signed PDFs.
 - [ ] **Open link limits:** max number of submissions, rate limit on password tries for the open link.
+- [ ] **Harden the sign app pass-through:** relay secret between sign app and API, edge rate limit, trusted client-IP header behind a CDN.
 - [ ] **Server-side Word → PDF** (LibreOffice / Gotenberg), so a DOCX can be sent without converting it by hand.
 
 ---

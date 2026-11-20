@@ -41,12 +41,12 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <div className="px-3 pt-3 sm:px-6 sm:pt-4">
-          <header className="frost mx-auto flex h-16 max-w-3xl items-center rounded-2xl px-6">
+          <header className="frost mx-auto flex h-14 max-w-3xl items-center rounded-2xl px-4 sm:h-16 sm:px-6">
             <span className="flex items-center gap-2.5">
               <LogoMark className="size-9" />
               <span className="font-display text-2xl font-semibold tracking-tight text-ink">lex</span>
             </span>
-            <span className="ml-auto text-sm text-muted">Xavfsiz elektron imzo</span>
+            <span className="ml-auto hidden text-sm text-muted sm:inline">Xavfsiz elektron imzo</span>
             <ThemeToggle className="ml-3" />
           </header>
         </div>
