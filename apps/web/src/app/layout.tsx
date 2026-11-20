@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Figtree, Geist_Mono, Outfit, Source_Serif_4 } from 'next/font/google';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const figtree = Figtree({
+  variable: '--font-figtree',
+  subsets: ['latin'],
+});
+
+const outfit = Outfit({
+  variable: '--font-outfit',
   subsets: ['latin'],
 });
 
@@ -12,18 +17,23 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
+const sourceSerif = Source_Serif_4({
+  variable: '--font-source-serif',
+  subsets: ['latin'],
+});
+
 export const metadata: Metadata = {
-  title: 'Lex',
-  description: 'Lex frontend',
+  title: 'Lex — AI yuridik yordamçi',
+  description: 'Şartnomalarni AI bilan tekşiring va imzolang, yuridik savollarga javob oling',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="uz"
+      className={`${figtree.variable} ${outfit.variable} ${geistMono.variable} ${sourceSerif.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );
 }

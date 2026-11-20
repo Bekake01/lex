@@ -1,26 +1,11 @@
 import { Suspense } from 'react';
-import { apiGet } from '@/lib/api';
+import { AskChatRoute } from '@/components/ask/AskChat';
 
-async function BackendStatus() {
-  const message = await apiGet('/').catch(() => null);
-
-  if (message === null) {
-    return (
-      <p className="text-red-600">
-        Could not reach lex-api. Is the backend running?
-      </p>
-    );
-  }
-  return <p className="text-green-600">Backend says: {message}</p>;
-}
-
-export default function Home() {
+export default function AskPage() {
+  // AskChat reads ?q= (useSearchParams), so it needs a Suspense boundary with cacheComponents.
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 p-16">
-      <h1 className="text-3xl font-semibold">Lex</h1>
-      <Suspense fallback={<p className="text-zinc-500">Checking backend…</p>}>
-        <BackendStatus />
-      </Suspense>
-    </main>
+    <Suspense fallback={<div className="flex-1" />}>
+      <AskChatRoute />
+    </Suspense>
   );
 }

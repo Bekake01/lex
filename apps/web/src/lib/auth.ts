@@ -23,6 +23,20 @@ export class SignedOutError extends Error {
   }
 }
 
+/**
+ * Local demo login, for working on the UI without the API/database.
+ * On only with NEXT_PUBLIC_DEMO_LOGIN=1 (apps/web/.env.local) and never in a
+ * production build. Any email + password signs in; nothing is sent to the API.
+ */
+const DEMO_LOGIN =
+  process.env.NEXT_PUBLIC_DEMO_LOGIN === '1' &&
+  process.env.NODE_ENV !== 'production';
+const DEMO_USER_KEY = 'lex-demo-user';
+
+function keepDemo(user: SessionUser): void {
+  session = { accessToken: 'demo', expiresIn: 0, user };
+}
+
 /** Matches the API's 30-day absolute session limit (SESSION_ABSOLUTE_MS). */
 const REMEMBER_ME_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 /** Refresh this long before the access token expires. */
@@ -53,6 +67,13 @@ export function currentUser(): SessionUser | null {
  * throws on network or server errors, which don't mean the user is signed out.
  */
 export async function ensureSession(): Promise<boolean> {
+  if (DEMO_LOGIN) {
+    if (session) return true;
+    const saved = localStorage.getItem(DEMO_USER_KEY);
+    if (!saved || !hasSignedInCookie()) return false;
+    keepDemo(JSON.parse(saved) as SessionUser);
+    return true;
+  }
   return session !== null || (await refreshSession()) !== null;
 }
 
@@ -138,6 +159,19 @@ export async function login(credentials: {
   password: string;
   rememberMe: boolean;
 }): Promise<{ ok: true } | { ok: false; message: string }> {
+  if (DEMO_LOGIN) {
+    const email = credentials.email.trim();
+    const name = email.split('@')[0] || 'Demo';
+    const user: SessionUser = {
+      id: 'demo',
+      email,
+      fullName: name.charAt(0).toUpperCase() + name.slice(1),
+    };
+    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(user));
+    keepDemo(user);
+    setSignedInCookie(credentials.rememberMe);
+    return { ok: true };
+  }
   let res: Response;
   try {
     // credentials: the browser stores the refresh cookie the API sets.
@@ -184,6 +218,11 @@ async function errorMessage(res: Response): Promise<string> {
 
 /** Ends the session on the API (always succeeds there) and in this tab. */
 export async function logout(): Promise<void> {
+  if (DEMO_LOGIN) {
+    localStorage.removeItem(DEMO_USER_KEY);
+    endSession('logout');
+    return;
+  }
   try {
     await fetch(`${API_URL}/auth/logout`, {
       method: 'POST',
