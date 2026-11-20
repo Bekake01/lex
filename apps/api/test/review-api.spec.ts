@@ -90,7 +90,7 @@ describe('POST /documents/:id/reviews', () => {
     const { reviewId } = await reviews.createReview(user, documentId, 'uz');
 
     expect(analyze.added).toHaveLength(1);
-    expect(analyze.added[0].id).toBe(`analyze:${reviewId}`);
+    expect(analyze.added[0].id).toBe(`analyze.${reviewId}`);
 
     const wire = await reviews.getReview(user, reviewId);
     expect(wire.status).toBe('queued');

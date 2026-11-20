@@ -199,7 +199,7 @@ describe('corrections', () => {
       expect(messages[1].id).toBe(messageId);
       expect(messages[1].status).toBe('pending');
       expect(revise.added).toHaveLength(1);
-      expect(revise.added[0].id).toBe(`revise:${review.id}:${messages[0].id}`);
+      expect(revise.added[0].id).toBe(`revise.${review.id}.${messages[0].id}`);
     });
 
     it('refuses while the review is still running', async () => {
