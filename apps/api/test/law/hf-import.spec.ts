@@ -94,7 +94,7 @@ describe('importHf (fixture Parquet → PGlite)', () => {
   it('a second run of the same file changes nothing', async () => {
     const report = await importHf(db, file);
     expect(report.acts).toEqual({ inserted: 0, updated: 0, unchanged: 3 });
-    expect(report.articles).toEqual({ inserted: 0, updated: 0, unchanged: 5 });
+    expect(report.articles).toEqual({ inserted: 0, updated: 0, unchanged: 5, removed: 0 });
   });
 
   it('updates a changed article and clears its embedding', async () => {
@@ -108,7 +108,7 @@ describe('importHf (fixture Parquet → PGlite)', () => {
     await writeParquet(file2, changed);
 
     const report = await importHf(db, file2);
-    expect(report.articles).toEqual({ inserted: 0, updated: 1, unchanged: 4 });
+    expect(report.articles).toEqual({ inserted: 0, updated: 1, unchanged: 4, removed: 0 });
 
     const cleared = await db
       .select({ id: lawArticles.id })
@@ -136,5 +136,81 @@ describe('importHf (fixture Parquet → PGlite)', () => {
       .orderBy(lawActs.docId);
     expect(acts).toContainEqual({ id: '-111189', title: 'Fuqarolik kodeksi (lex.uz)', status: 'in_force' });
     expect(acts).toContainEqual({ id: '-5838599', title: 'Vazirlar Mahkamasining qarori', status: 'repealed' });
+  });
+});
+
+describe('importHf splitting long rows', () => {
+  let db: Db;
+  let close: () => Promise<void>;
+  let dir: string;
+
+  const SENTENCE = 'Vazirlik ushbu qarorning ijrosini taʼminlash yuzasidan zarur chora-tadbirlarni koʻrsin.';
+  const longText = (n: number) => Array.from({ length: n }, (_, i) => `${i + 1}. ${SENTENCE}`).join(' ');
+  const flatAct = (text: string): FixtureRow => ({
+    ...base,
+    id: '-777-full',
+    act_group_id: '777',
+    doc_id: -777,
+    doc_title: 'Uzun qaror',
+    doc_type: 'resolution',
+    doc_date: '2024-01-01',
+    version_date: '2024-01-01',
+    article_number: '',
+    article_title: '',
+    article_text: text,
+    source_url: 'https://lex.uz/uz/docs/-777',
+    quality_flag: 'no-articles',
+  });
+
+  const importText = async (name: string, text: string) => {
+    const file = join(dir, `${name}.parquet`);
+    await writeParquet(file, [flatAct(text)]);
+    return importHf(db, file);
+  };
+  const storedIds = async () =>
+    (await db.select({ id: lawArticles.id }).from(lawArticles).orderBy(lawArticles.chunkIndex)).map((r) => r.id);
+
+  beforeAll(async () => {
+    ({ db, close } = await createTestDb());
+    dir = mkdtempSync(join(tmpdir(), 'lex-hf-chunk-'));
+  }, 60_000);
+
+  afterAll(async () => {
+    await close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('stores a long flat act as parts under the size limit', async () => {
+    const report = await importText('long', longText(120));
+    expect(report.split.articles).toBe(1);
+    expect(report.articles).toEqual({ inserted: report.split.parts, updated: 0, unchanged: 0, removed: 0 });
+
+    const parts = await db.select().from(lawArticles).orderBy(lawArticles.chunkIndex);
+    expect(parts.length).toBe(report.split.parts);
+    parts.forEach((p, i) => {
+      expect(p).toMatchObject({ id: `-777-full-p${i + 1}`, parentId: '-777-full', chunkIndex: i + 1 });
+      expect(p.nTokens).toBeLessThanOrEqual(800);
+    });
+  });
+
+  it('a second run changes and removes nothing', async () => {
+    const before = await storedIds();
+    const report = await importText('long-again', longText(120));
+    expect(report.articles).toEqual({ inserted: 0, updated: 0, unchanged: before.length, removed: 0 });
+    expect(await storedIds()).toEqual(before);
+  });
+
+  it('removes the parts when the act becomes short', async () => {
+    const partsBefore = (await storedIds()).length;
+    const report = await importText('short', 'Qisqa qaror matni.');
+    expect(report.articles).toEqual({ inserted: 1, updated: 0, unchanged: 0, removed: partsBefore });
+    expect(await storedIds()).toEqual(['-777-full']);
+  });
+
+  it('removes the whole row when the act becomes long again', async () => {
+    const report = await importText('long-3', longText(120));
+    expect(report.articles.removed).toBe(1);
+    expect(await storedIds()).not.toContain('-777-full');
+    expect((await storedIds()).every((id) => id.startsWith('-777-full-p'))).toBe(true);
   });
 });

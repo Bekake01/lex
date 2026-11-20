@@ -24,7 +24,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "ingest:hf": "nest build && node dist/law/ingest/hf-import.command.js"
+    "ingest:hf": "nest build && node dist/law/ingest/hf-import.command.js",
+    "ingest:chunk": "nest build && node dist/law/ingest/chunk.command.js"
   },
   "dependencies": {
     "@duckdb/node-api": "2.0.0-r.1",
