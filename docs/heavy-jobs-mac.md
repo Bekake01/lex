@@ -111,24 +111,7 @@ It embeds about 9,000 law articles. Progress lines show while it works. If it st
 
 ---
 
-## 5. Job C2: OpenAI embedding test (about 10–20 minutes, needs the team's OpenAI key)
-
-The app already uses OpenAI for the AI review, so its embeddings are a strong candidate. Ask the repo owner for an OpenAI key (best: a separate project key with a small spending limit). This run costs about $0.40–0.70.
-
-```bash
-echo 'OPENAI_API_KEY=paste-the-key-here' >> .env
-set -a; source .env; set +a
-HF_PARQUET=data/hf/articles.parquet \
-  pnpm vitest run test/law/embed-eval.full.spec.ts
-```
-
-If both keys are in `.env`, one run does Voyage and OpenAI together; already-embedded parts come from the cache for free.
-
-**What to send back:** `data/eval-embed-openai.txt` (plus the Voyage and keyword files if you ran them). **Never send or commit the `.env` file or the keys.**
-
----
-
-## 6. Job D: bge-m3 embedding test (wait for the go-ahead)
+## 5. Job D: bge-m3 embedding test (not needed: Voyage was chosen)
 
 bge-m3 is a free model that runs on your Mac. The test code doesn't support the easy Mac route yet, which is Ollama. Skip this job until the repo owner says it's added. The steps will then be:
 
@@ -142,7 +125,7 @@ There will then be one more test command.
 
 ---
 
-## 7. Sending the results back
+## 6. Sending the results back
 
 The easiest way is to send the `.txt` and `.json` files listed above in chat.
 
@@ -162,7 +145,7 @@ Only add the result files. **Don't** add `apps/api/data/` (it's large and git-ig
 
 ---
 
-## 8. Cleaning up afterwards
+## 7. Cleaning up afterwards
 
 Everything is inside the `lex` folder. To free the space, delete the whole folder:
 
@@ -170,4 +153,4 @@ Everything is inside the `lex` folder. To free the space, delete the whole folde
 cd ~ && rm -rf path/to/lex
 ```
 
-If you created a Voyage key, delete it in the Voyage dashboard, and tell the owner when you are done with the OpenAI key so they can revoke it.
+If you created a Voyage key, delete it in the Voyage dashboard.

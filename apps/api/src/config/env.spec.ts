@@ -11,7 +11,7 @@ describe('parseEnv', () => {
     const env = parseEnv(valid);
     expect(env.PORT).toBe(5000);
     expect(env.NODE_ENV).toBe('development');
-    expect(env.EMBEDDING_PROVIDER).toBe('openai');
+    expect(env.EMBEDDING_PROVIDER).toBe('voyage');
     expect(env.SYNC_ENABLED).toBe(false);
   });
 

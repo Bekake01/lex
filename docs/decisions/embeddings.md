@@ -1,6 +1,6 @@
 # Decision: embedding model for law search (Phase 7)
 
-**Status: open.** Keyword baseline measured. Three candidates, all 1024-d (no schema change): **OpenAI `text-embedding-3-large`** (reuses the team's `OPENAI_API_KEY`; the AI review runs on OpenAI too), **Voyage `voyage-3.5`** and **bge-m3** (self-hosted). The runs are waiting on keys and a bge-m3 server (see "How to finish").
+**Status: decided — Voyage `voyage-3.5` (1024 d).** Chosen by the team on 2026-11-21: measured on the MacBook run (raw reports in [`results/`](results/)), roughly equal to keyword search on its own and complementary to it, cheap (about $0.06 per million tokens), nothing to host, and the team already has a `VOYAGE_API_KEY`. OpenAI embeddings were dropped (not used by the team); bge-m3 stays as a self-hosted fallback in the code but is not planned. Config: `EMBEDDING_PROVIDER=voyage`, `VOYAGE_API_KEY` in `apps/api/.env`.
 
 ## What we measure
 
@@ -37,30 +37,46 @@ Missed in the top 10 (5): the right law is found but a neighbouring article rank
 - `pd-02` transfer of personal data to third parties → wants art. 13; gets art. 25, 22
 - `gen-07` contract by offer and acceptance → wants Civil Code art. 367, 370; gets art. 373, 372
 
-Speed on PGlite (in-process, single-user, much slower than Postgres): p50 1.7 s, p95 4.2 s per query. To be measured on real Postgres in Phase 8 (target p95 < 300 ms for 5 queries).
+Speed on PGlite (in-process, single-user): p50 1.7 s / p95 4.2 s per query on the dev laptop, **p50 190 ms / p95 344 ms on the MacBook** (same numbers otherwise, so the eval is reproducible). Real Postgres is measured in Phase 8 (target p95 < 300 ms for 5 queries).
+
+### Full corpus import (Phase 4 + 5 check, MacBook)
+
+All 54,173 dataset rows: 11 too-short skipped, 16,161 long articles split into 150,880 parts, **188,881 rows stored, largest 1,498 tokens** (limit 1,600), all 24,267 acts, 111 s. Full-dataset import and search tests passed.
 
 ### Embedding comparison, ~30-act sample
 
-The 9 acts the queries expect plus the 21 largest other codes and laws (excluding amending acts), split like the real import: 9,143 rows, ~2.9 M tokens. That is roughly $0.17 with voyage-3.5 ($0.06 / M tokens) and $0.40–0.70 with text-embedding-3-large ($0.13 / M; OpenAI counts more tokens for Uzbek than our estimate). Vectors are cached in `apps/api/data/embed-cache/`, so re-runs are free.
+The 9 acts the queries expect plus the 21 largest other codes and laws (excluding amending acts), split like the real import: 9,143 rows, ~2.9 M tokens. That is roughly $0.17 with voyage-3.5 ($0.06 / M tokens). Vectors are cached in `apps/api/data/embed-cache/`, so re-runs are free.
 
 | retrieval on the sample | R@5 | R@10 | hit@10 | MRR |
 |---|---|---|---|---|
 | keyword (Phase 6) | 91.3% | 93.1% | 96.1% | 0.831 |
-| OpenAI text-embedding-3-large (1024 d), vectors only | — | — | — | — |
-| voyage-3.5, vectors only | — | — | — | — |
+| voyage-3.5, vectors only | 87.3% | **93.5%** | 96.1% | 0.807 |
 | bge-m3, vectors only | — | — | — | — |
+
+Voyage per topic: rental 92.5% R@10, sale 87.0%, services 100%, employment 95.0%, NDA 93.8%, personal data 94.4%, consumer 100%, general 90.0% (full table in `results/eval-embed-voyage.txt`). Embedding the sample took 310 s.
+
+Voyage and keyword search **miss different queries**:
+
+| query | keyword | voyage |
+|---|---|---|
+| `nda-01` definition of a trade secret | missed | found |
+| `pd-02` personal data to third parties | missed | found |
+| `gen-07` offer and acceptance | missed | found |
+| `emp-08` dismissal notice period | missed | found |
+| `emp-20` Cyrillic: grounds to end an employment contract | found | **missed: returned the repealed 1995 Labour Code** |
+| `rent-08` form of a lease contract | found | missed (Law on Lease instead of Civil Code) |
+| `sale-03` delivery deadline for goods | found | missed |
+| `gen-09` liability for a money obligation | found | missed |
 
 ## Reading so far
 
+- **Voyage alone is not better than keyword search** (R@10 +0.4 points, MRR −0.024), but its misses barely overlap keyword's: a hybrid (Phase 8, reciprocal rank fusion) should beat both. That, not vector-only R@10, is the case for embeddings here.
+- Vectors do not transliterate: a Cyrillic query matched the Cyrillic-era 1995 Labour Code. Phase 8 should embed the **normalized Latin** query (`normalizeQuery`), and old acts need `repealed` status (Phase 14) or demotion.
+
 - Keyword search already clears the Phase 8 target (R@10 ≥ 0.75) on codes and laws. Its misses are about **ranking inside the right law**, which is where embeddings usually help.
 - Embeddings should be judged on what keyword search misses: paraphrased questions ("can the landlord end the lease early") and **MRR** (the right article first), not on R@10 alone.
-- The choice rule, once the runs exist: pick the model with the higher vector-only R@10 on the sample; if within 2 points, prefer the higher MRR; if still tied, prefer **OpenAI** (one provider and one key for the whole app, nothing to host), then Voyage, then bge-m3 (a server to run and patch).
+- **What this means for Phase 8:** use Voyage in a hybrid with keyword search (reciprocal rank fusion), embed the normalized Latin form of each query, and re-run `eval:search` with the hybrid to confirm it beats both (target R@10 ≥ 0.75 is already met; the aim now is MRR, the right article first).
 
-## How to finish
+## Re-running the comparison
 
-1. Put `OPENAI_API_KEY=…` and/or `VOYAGE_API_KEY=…` in `apps/api/.env`. Each run costs under $1; set a spending limit on the key you use.
-2. For bge-m3, run a text-embeddings-inference server where there is room (the model is ~2.3 GB), for example
-   `docker run -p 8080:80 ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id BAAI/bge-m3`,
-   and set `EMBEDDING_URL=http://localhost:8080`.
-3. In `apps/api`: `HF_PARQUET=data/hf/articles.parquet pnpm vitest run test/law/embed-eval.full.spec.ts`
-   (reports in `data/eval-embed-*.txt`), fill in the table, and set `EMBEDDING_PROVIDER` in `.env.example`.
+In `apps/api` with `VOYAGE_API_KEY` set: `HF_PARQUET=data/hf/articles.parquet pnpm vitest run test/law/embed-eval.full.spec.ts` (reports in `data/eval-embed-*.txt`; cached vectors make re-runs free). For bge-m3 add `EMBEDDING_URL` pointing at a text-embeddings-inference server.

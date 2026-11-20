@@ -6,12 +6,15 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  PayloadTooLargeException,
   Post,
+  UnsupportedMediaTypeException,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { kindOfContentType, sniffDocumentKind } from '../law/documents/file-type.js';
 import type { DocumentVersionWire, DocumentWire } from '@lex/contracts';
 import {
   CurrentUserGuard,
@@ -49,13 +52,20 @@ export class DocumentsController {
     @UploadedFile() file: UploadedDocument | undefined,
   ): Promise<DocumentWire> {
     if (!file) throw new BadRequestException('A `file` field is required');
+    if (file.size > this.env.MAX_UPLOAD_BYTES) {
+      throw new PayloadTooLargeException('The file is too large');
+    }
     if (!ALLOWED_CONTENT_TYPES.includes(file.mimetype)) {
-      throw new BadRequestException(
+      throw new UnsupportedMediaTypeException(
         `Unsupported file type. Allowed: ${ALLOWED_CONTENT_TYPES.join(', ')}`,
       );
     }
-    if (file.size > this.env.MAX_UPLOAD_BYTES) {
-      throw new BadRequestException('The file is too large');
+    // The declared type is only a claim; check what the bytes really are.
+    const actual = sniffDocumentKind(new Uint8Array(file.buffer));
+    if (!actual || actual !== kindOfContentType(file.mimetype)) {
+      throw new UnsupportedMediaTypeException(
+        'The file content does not match its type. Upload a real PDF, DOCX or plain-text file',
+      );
     }
 
     const document = await this.documents.upload(user, {

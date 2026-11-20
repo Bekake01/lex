@@ -1,5 +1,6 @@
 import { Global, Logger, Module } from '@nestjs/common';
 import { ENV, type Env } from '../config/env.js';
+import { DocumentProcessingService } from '../law/documents/document-processing.service.js';
 import { LawModule } from '../law/law.module.js';
 import { DbLawSearchService } from './db-law-search.service.js';
 import { FakeDocProcessingService } from './fake-doc-processing.service.js';
@@ -35,8 +36,8 @@ import { DOC_PROCESSING, LAW_SEARCH } from './law-search.types.js';
         return useDb ? db : fake;
       },
     },
-    // Document extraction is not built yet (law plan): text and PDF only.
-    { provide: DOC_PROCESSING, useExisting: FakeDocProcessingService },
+    // Real PDF/DOCX/text extraction (law plan Phase 11). applyEdits is Phase 13.
+    { provide: DOC_PROCESSING, useExisting: DocumentProcessingService },
   ],
   exports: [LAW_SEARCH, DOC_PROCESSING],
 })

@@ -163,7 +163,7 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** baseline keyword recall@10 recorded; embedding model chosen with numbers.
 
-**Status (2026-11-20):** 102 queries in `apps/api/eval/search/queries.jsonl`; `pnpm eval:search`; keyword baseline on codes + laws: R@10 91.3%, MRR 0.765. Embedding harness (`src/law/embeddings/`, `test/law/embed-eval.full.spec.ts`) ready; Voyage / bge-m3 runs pending a key and a server. Numbers and next steps: `docs/decisions/embeddings.md`.
+**Status (2026-11-20):** 102 queries in `apps/api/eval/search/queries.jsonl`; `pnpm eval:search`; keyword baseline on codes + laws: R@10 91.3%, MRR 0.765. **Done 2026-11-21: Voyage `voyage-3.5` chosen** (vector-only R@10 93.5% vs keyword 93.1% on the sample; they miss different queries, so Phase 8 goes hybrid). Numbers and next steps: `docs/decisions/embeddings.md`.
 
 ### Phase 8 — Embeddings + hybrid search (2 days)
 **Build**
@@ -202,6 +202,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** e2e tests with real PDF/DOCX fixtures (uz Latin, uz Cyrillic, ru); a scanned PDF returns `scanned: true`; a 20 MB+ file → 413; a renamed `.exe` → 415.
 
+**Status (2026-11-21):** built in `apps/api/src/law/documents/` as `DocumentProcessingService` behind the AI track's `DOC_PROCESSING` (no separate HTTP route: one backend). File type checked by bytes; upload route returns 413 / 415. Text is kept exactly as in the file (no transliteration), because AI edits must match it. Tests: `test/law/documents.spec.ts`, `test/law/upload-validation.spec.ts` (generated PDF/DOCX, uz Latin / uz Cyrillic / ru).
+
 ### Phase 12 — Clause splitter (2 days)
 **Build** `src/documents/clauses.ts`:
 - Detect numbering: `1.`, `1.1.`, `4.2)`, `I.`, `5-band`, `7-modda`, `Статья 7`, `Пункт 3`
@@ -209,6 +211,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 - Fallback: paragraph-based clauses when no numbering is found
 
 **Done when:** tests on 10 real contracts; the offsets slice `text` back to each clause exactly.
+
+**Status (2026-11-21):** built in `apps/api/src/law/documents/clauses.ts`. Also handles Roman sections, `N-bob` / `N-ilova` / `Глава` / `Раздел` / `Приложение`, Uzbek Cyrillic word numbering, a `preamble` clause for text before the first number, and keeps numbered lists inside their clause (clause numbers must count up). Each clause is exactly `text.slice(start, end)`. Tested on 10 realistic sample contracts (`test/law/fixtures/contracts.ts`: uz Latin, uz Cyrillic, ru); **to do: add anonymised real contracts** when the team has them.
 
 ### Phase 13 — `applyEdits` for DOCX (3–4 days) → Sync 3 with B
 **Build** `src/documents/apply-edits.ts` + `POST /documents/apply-edits`:

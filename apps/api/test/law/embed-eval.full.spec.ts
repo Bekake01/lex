@@ -8,7 +8,6 @@ import { lawActs, lawArticles } from '../../src/db/schema/index.js';
 import {
   embedAll,
   nearest,
-  openaiEmbeddingProvider,
   teiProvider,
   voyageProvider,
   type EmbeddingProvider,
@@ -21,7 +20,6 @@ import { createTestDb } from '../helpers/test-db.js';
 
 /**
  * Opt-in: Phase 7 embedding comparison on a sample of ~30 acts.
- *   HF_PARQUET=data/hf/articles.parquet OPENAI_API_KEY=… pnpm vitest run test/law/embed-eval.full.spec.ts   (text-embedding-3-large)
  *   HF_PARQUET=data/hf/articles.parquet VOYAGE_API_KEY=… pnpm vitest run test/law/embed-eval.full.spec.ts
  *   HF_PARQUET=… EMBEDDING_URL=http://localhost:8080 pnpm vitest run test/law/embed-eval.full.spec.ts   (bge-m3 via TEI)
  *
@@ -131,7 +129,6 @@ describe.runIf(FILE)('embedding comparison on a ~30-act sample', () => {
 
   // Each provider runs only when its key or server is configured.
   const providers: [string, string | undefined, () => EmbeddingProvider][] = [
-    ['openai', process.env.OPENAI_API_KEY, () => openaiEmbeddingProvider(process.env.OPENAI_API_KEY!)],
     ['voyage', process.env.VOYAGE_API_KEY, () => voyageProvider(process.env.VOYAGE_API_KEY!)],
     ['bge-m3', process.env.EMBEDDING_URL, () => teiProvider(process.env.EMBEDDING_URL!)],
   ];
