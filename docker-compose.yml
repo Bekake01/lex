@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: lex-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lex
+      POSTGRES_PASSWORD: lex
+      POSTGRES_DB: lex
+    ports:
+      - '5434:5432'
+    volumes:
+      - lex-postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U lex -d lex']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  lex-postgres-data:
