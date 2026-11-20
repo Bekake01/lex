@@ -2,6 +2,7 @@
 
 Newest first. Format: `YYYY-MM-DD · area · what changed · action needed (if any)`
 
+- 2026-11-20 · lex-api · Phase 6: keyword search routes `POST /search`, `POST /articles/batch`, `GET /meta` (all need `x-lex-api-key`; shapes in `apps/lex-api/src/contract.ts`). `apps/api` can start calling `/search` now. No migration.
 - 2026-11-20 · lex-api · New app `apps/lex-api` (law search service for the AI review), port **5001**, run with `pnpm dev:lex`. Needs Postgres + pgvector (`docker compose up -d` in that folder) and its own `.env` from `.env.example`. Run `pnpm install` at the root. Not needed to run web/sign/api.
 - 2026-11-20 · db · Auth schema (based on tms, no tenancy): `agencies`, `users` (agency_id null = individual, else one agency + agency_role), `sessions` (refresh rotation, like tms), `email_codes` (6-digit code via Resend for reset/set password). Replaced the test `users` table; migration regenerated as `0000_init`. Action: reset your local DB (`docker compose down -v && pnpm db:up && pnpm db:migrate`). Test endpoints now take `{ email, fullName }`.
 - 2026-11-20 · api, db · Postgres in Docker (`pnpm db:up`, port **5434**) + Drizzle ORM in `apps/api`. First table `users` (id, email, name, created_at); test endpoints `GET/POST /users`. Action: `cp apps/api/.env.example apps/api/.env`, `pnpm install`, `pnpm db:up`, `pnpm db:migrate`.
