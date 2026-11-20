@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, desc, eq, inArray, max, ne, sql, type SQL } from 'drizzle-orm';
+import { count, eq, inArray, max, sql, type SQL } from 'drizzle-orm';
 import type { LawArticleHit, MetaResponse } from '../law.types.js';
 import { DB, type Db } from '../../db/db.module.js';
 import { lawActs, lawArticles, lawSyncRuns } from '../../db/schema/index.js';
