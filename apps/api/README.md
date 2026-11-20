@@ -9,7 +9,7 @@ for the repo rules and [`../../ROADMAP.md`](../../ROADMAP.md) for the plan.
 ```bash
 cp .env.example .env         # then fill OPENAI_API_KEY
 pnpm install                 # from the repo root
-pnpm services:up             # Postgres 5434 + Redis 6379, from the root
+pnpm services:up             # Postgres 5434 + Redis 6391, from the root
 pnpm db:migrate              # from the root
 pnpm dev:api                 # from the root
 ```
@@ -24,8 +24,12 @@ fixtures in `src/law-search/fixtures/`. `LAW_SEARCH_MODE` forces one side
 ```bash
 pnpm seed:demo               # a sender, a finished review, a signing link
 pnpm eval:review             # review quality (spends tokens — see eval/ai-review/README.md)
-pnpm --filter api test       # 98 tests, in-process Postgres, no Docker needed
+pnpm --filter api test       # in-process Postgres, no Docker needed
 ```
+
+Every test file starts its own in-process Postgres, so on a small laptop run
+`pnpm --filter api test -- --maxWorkers=2` (the flag belongs to vitest, not to
+turbo, so `pnpm test --maxWorkers=2` at the root is rejected).
 
 ## The API
 

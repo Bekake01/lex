@@ -21,8 +21,10 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     // The suites in test/ start an in-process Postgres (PGlite) and apply the
     // migrations in beforeAll. That takes seconds on an idle machine and much
-    // longer when turbo runs this app's tests alongside lex-api's.
+    // longer when every file does it at once: on a small laptop a 60s hook
+    // timeout is reached, so run the suite as
+    // `pnpm --filter api test -- --maxWorkers=2` there.
     testTimeout: 30_000,
-    hookTimeout: 60_000,
+    hookTimeout: 120_000,
   },
 });

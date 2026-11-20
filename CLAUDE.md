@@ -20,7 +20,7 @@ The goal is a **working MVP**. Keep everything simple.
 | Signing app `apps/sign` (Next.js, public users, no login) | **3001** | http://localhost:3001 |
 | Backend `apps/api` (NestJS) | **5000** | http://localhost:5000 |
 | Postgres (Docker, `lex-postgres`) | **5434** | `postgres://lex:lex@localhost:5434/lex` |
-| Redis (Docker, `lex-redis`, BullMQ jobs) | **6379** | `redis://localhost:6379` |
+| Redis (Docker, `lex-redis`, BullMQ jobs) | **6391** | `redis://localhost:6391` |
 
 - Backend: `PORT` env (default 5000); CORS allows `WEB_ORIGIN` (default `http://localhost:3000`).
 - Frontend and signing app: `API_URL` env (default `http://localhost:5000`).
