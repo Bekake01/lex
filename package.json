@@ -14,7 +14,8 @@
     "dev:web": "pnpm --filter web dev",
     "dev:sign": "pnpm --filter sign dev",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "dev:lex": "pnpm --filter lex-api start:dev"
   },
   "devDependencies": {
     "prettier": "^3.10.1",

@@ -19,6 +19,7 @@ The goal is a **working MVP**. Keep everything simple.
 | Frontend `apps/web` (Next.js, sender dashboard) | **3000** | http://localhost:3000 |
 | Signing app `apps/sign` (Next.js, public users, no login) | **3001** | http://localhost:3001 |
 | Backend `apps/api` (NestJS) | **5000** | http://localhost:5000 |
+| Law service `apps/lex-api` (NestJS, called only by `apps/api`) | **5001** | http://localhost:5001 |
 
 - Backend: `PORT` env (default 5000); CORS allows `WEB_ORIGIN` (default `http://localhost:3000`).
 - Frontend and signing app: `API_URL` env (default `http://localhost:5000`).
