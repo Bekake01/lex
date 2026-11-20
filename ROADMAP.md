@@ -159,12 +159,12 @@ Durations assume 1–2 developers. Phases 0–3 are the **MVP**.
 **Done when:** citation accuracy ≥ 95% and issue precision ≥ 80% on the eval set.
 
 ### Phase 3 — Receiver summary (2 weeks)
-- [ ] Extract parties; party → recipient mapping on the send screen
-- [ ] `summarize-for-recipients` job at send time (uz/ru/en)
-- [ ] `recipient_summaries` table + `summaryHash`
+- [x] Extract parties; party → recipient mapping on the send screen (one party per send, AI-review suggestions)
+- [x] `summarize-for-recipients` job at send time (uz/ru/en) — one summary per send
+- [x] `recipient_summaries` table + `summaryHash`
 - [x] `GET /sign/:token/summary` reachable from the sign app (pass-through, uniform 404)
 - [x] `apps/sign`: summary, your obligations, other party's obligations, key conditions → consent → sign
-- [ ] Certificate of Completion records the summary hash shown to the signer
+- [x] Certificate of Completion records the summary hash shown to the signer (one sealed copy + certificate per person)
 
 **Done when:** a receiver can read their obligations and sign; the certificate proves which summary they saw. **→ MVP launch (closed beta).**
 

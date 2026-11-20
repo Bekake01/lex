@@ -1,6 +1,6 @@
 # Signing plan: one PDF → many people → one sealed copy each
 
-Status: **planned, not built yet** (2026-11-21). Work it phase by phase from `phases/`.
+Status: **built** (2026-11-21), in 11 phases (the temporary `phases/` folder is deleted). What ended up different is in §9.
 
 The signing part of `President-tech-award-e-signsoft` (`/Users/bek/lex/President-tech-award-e-signsoft`, "tech award" below) is
 ported into lex, with a different core model and without its enterprise layers.
@@ -113,7 +113,19 @@ Password ticket: `POST …/unlock` returns `<exp>.<hmac>` (HMAC-SHA256 of `token
 - PDF only for sending; the user converts Word → PDF themselves.
 - Channels are stored and shown, not delivered (share buttons use the sender's own apps).
 
-## 8. Phases
+## 8. Phases (done)
 
-See `phases/README.md`. Order: contracts → database → storage → crypto → sender API → public API → jobs →
-web editor → web people/send/detail → sign app → end-to-end demo.
+Contracts → database → storage → crypto → sender API → public API → jobs → web editor → web people/send/detail →
+sign app → end-to-end cleanup. Each one has its own `memory/CHANGELOG.md` entry ("signing phase NN").
+
+## 9. What ended up different from this plan
+
+- **Sign app pass-through** is a plain forward (`apps/sign/src/app/api/[...path]/route.ts`: GET + POST, `sign/…`
+  paths only, passes `x-sign-ticket`, sets `x-client-ip` from the first `x-forwarded-for` hop). No relay secret,
+  no edge rate limit, no structural allowlist like tech award's relay → ROADMAP "Later".
+- Downloads in web and sign go fetch → blob (the bearer token / password ticket can't ride on a plain `<a href>`).
+- The PDF pages in the sign app stay white in dark mode: theme tokens `paper` / `paper-ink`, and
+  `data-theme="light"` on an element keeps its subtree light.
+- The `complete-submission` start-up sweep logs and carries on when the DB or Redis is down (it used to stop boot).
+- `pnpm seed:demo` still seeds the **old** one-recipient request on a DOCX (no fields, no PDF) — it shows the
+  summary, not the new signing screens. Make a real send from the web app to demo signing.

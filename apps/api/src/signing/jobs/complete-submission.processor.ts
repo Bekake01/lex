@@ -50,28 +50,36 @@ export class CompleteSubmissionProcessor
 
   /**
    * One sweep at start-up: signed copies with no sealed file (the enqueue
-   * failed, or the API died mid-job) are queued again. No cron.
+   * failed, or the API died mid-job) are queued again. No cron. Never blocks
+   * boot: with the database or Redis down the API still starts (and /health
+   * says so); the next restart sweeps again.
    */
   async onApplicationBootstrap(): Promise<void> {
-    const stuck = await this.db
-      .select({ id: recipients.id })
-      .from(recipients)
-      .where(
-        and(eq(recipients.status, 'signed'), isNull(recipients.signedPdfKey)),
-      );
-    for (const { id } of stuck) {
-      await this.queue.add(
-        QUEUE.completeSubmission,
-        { recipientId: id },
-        {
-          jobId: jobIdForComplete(id),
-          ...COMPLETE_JOB_OPTIONS,
-        },
-      );
-    }
-    if (stuck.length > 0) {
-      this.logger.warn(
-        `re-queued ${stuck.length} signed copies with no sealed file`,
+    try {
+      const stuck = await this.db
+        .select({ id: recipients.id })
+        .from(recipients)
+        .where(
+          and(eq(recipients.status, 'signed'), isNull(recipients.signedPdfKey)),
+        );
+      for (const { id } of stuck) {
+        await this.queue.add(
+          QUEUE.completeSubmission,
+          { recipientId: id },
+          {
+            jobId: jobIdForComplete(id),
+            ...COMPLETE_JOB_OPTIONS,
+          },
+        );
+      }
+      if (stuck.length > 0) {
+        this.logger.warn(
+          `re-queued ${stuck.length} signed copies with no sealed file`,
+        );
+      }
+    } catch (err) {
+      this.logger.error(
+        `start-up sweep skipped: ${err instanceof Error ? err.message : String(err)}`,
       );
     }
   }
