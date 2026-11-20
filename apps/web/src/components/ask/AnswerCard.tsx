@@ -16,11 +16,11 @@ import {
 } from '../Icons';
 
 const contactIcon: Record<ContactKind, { Icon: typeof ShieldIcon; tone: string }> = {
-  police: { Icon: ShieldIcon, tone: 'bg-sky-50 text-sky-700' },
-  medical: { Icon: HeartPulseIcon, tone: 'bg-red-50 text-red-600' },
-  court: { Icon: ScaleIcon, tone: 'bg-amber-50 text-amber-700' },
-  lawyer: { Icon: UserIcon, tone: 'bg-violet-50 text-violet-700' },
-  gov: { Icon: BuildingIcon, tone: 'bg-emerald-50 text-emerald-700' },
+  police: { Icon: ShieldIcon, tone: 'bg-info-soft text-info' },
+  medical: { Icon: HeartPulseIcon, tone: 'bg-danger-soft text-danger' },
+  court: { Icon: ScaleIcon, tone: 'bg-warning-soft text-warning' },
+  lawyer: { Icon: UserIcon, tone: 'bg-violet-soft text-violet' },
+  gov: { Icon: BuildingIcon, tone: 'bg-success-soft text-success' },
 };
 
 export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onFollowUp: (q: string) => void }) {
@@ -30,15 +30,15 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
   return (
     <div className="flex flex-col gap-5">
       {a.urgent && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-          <AlertIcon className="size-5 shrink-0 text-red-600" />
-          <p className="min-w-0 flex-1 text-sm text-red-900">{a.urgent.text}</p>
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-danger-line bg-danger-soft px-4 py-3">
+          <AlertIcon className="size-5 shrink-0 text-danger" />
+          <p className="min-w-0 flex-1 text-sm text-danger">{a.urgent.text}</p>
           <div className="flex gap-2">
             {a.urgent.numbers.map((n) => (
               <a
                 key={n.number}
                 href={`tel:${n.number}`}
-                className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-700"
+                className="btn btn-danger btn-sm font-semibold"
               >
                 <PhoneIcon className="size-3.5" />
                 {n.number}
@@ -56,7 +56,7 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
 
       {a.consequences && (
         <Section title="Qonun böyiça nima böladi">
-          <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white">
+          <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
             {a.consequences.map((c) => (
               <div key={c.title} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:gap-4">
                 <div className="min-w-0 flex-1">
@@ -67,7 +67,7 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
                   href={c.citation.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-line bg-cream px-2 py-1 text-xs hover:border-accent/40 hover:text-accent"
+                  className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-line bg-page px-2 py-1 text-xs hover:border-accent/40 hover:text-accent"
                 >
                   <ScaleIcon className="size-3.5" />
                   {c.citation.law.replace(' töğrisidagi kodeks', '')}, {c.citation.article}
@@ -95,11 +95,11 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
                         return n;
                       })
                     }
-                    className="flex w-full items-start gap-3 rounded-xl border border-line bg-white px-4 py-3 text-left text-sm transition hover:border-slate-300"
+                    className="flex w-full items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-left text-sm transition hover:border-line-strong"
                   >
                     <span
                       className={`grid size-6 shrink-0 place-items-center rounded-full text-xs font-semibold transition ${
-                        checked ? 'bg-emerald-500 text-white' : 'bg-sand text-ink/70'
+                        checked ? 'bg-success text-on-color' : 'bg-subtle text-ink/70'
                       }`}
                     >
                       {checked ? <CheckIcon className="size-3.5" /> : i + 1}
@@ -115,16 +115,16 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
 
       {a.template && (
         <Section title={a.template.title}>
-          <div className="relative rounded-xl border border-line bg-white">
+          <div className="relative rounded-xl border border-line bg-surface">
             <button
               onClick={() => {
                 navigator.clipboard.writeText(a.template!.text);
                 setCopied(true);
                 setTimeout(() => setCopied(false), 1500);
               }}
-              className="absolute top-2 right-2 flex items-center gap-1 rounded-md border border-line bg-cream px-2 py-1 text-xs hover:bg-sand"
+              className="absolute top-2 right-2 flex items-center gap-1 rounded-md border border-line bg-page px-2 py-1 text-xs hover:bg-subtle"
             >
-              {copied ? <CheckIcon className="size-3.5 text-emerald-600" /> : <CopyIcon className="size-3.5" />}
+              {copied ? <CheckIcon className="size-3.5 text-success" /> : <CopyIcon className="size-3.5" />}
               {copied ? 'Nusxalandi' : 'Nusxalaş'}
             </button>
             <pre className="overflow-x-auto p-4 pt-10 font-mono text-[13px] leading-relaxed whitespace-pre-wrap text-ink/85">
@@ -149,16 +149,16 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
                     <span className="block text-xs text-muted">{c.detail}</span>
                   </span>
                   {c.phone && (
-                    <span className="flex items-center gap-1 rounded-md bg-ink px-2 py-1 font-mono text-sm font-semibold text-cream">
+                    <span className="flex items-center gap-1 rounded-md bg-ink px-2 py-1 font-mono text-sm font-semibold text-page">
                       <PhoneIcon className="size-3" />
                       {c.phone}
                     </span>
                   )}
                 </>
               );
-              const cls = 'flex items-center gap-3 rounded-xl border border-line bg-white p-3';
+              const cls = 'flex items-center gap-3 rounded-xl border border-line bg-surface p-3';
               return c.phone ? (
-                <a key={c.name} href={`tel:${c.phone}`} className={`${cls} transition hover:border-slate-300`}>
+                <a key={c.name} href={`tel:${c.phone}`} className={`${cls} transition hover:border-line-strong`}>
                   {body}
                 </a>
               ) : (
@@ -178,7 +178,7 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
             <button
               key={q}
               onClick={() => onFollowUp(q)}
-              className="rounded-full border border-line bg-white px-3 py-1 text-xs text-ink/75 hover:border-accent/40 hover:text-accent"
+              className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink/75 hover:border-accent/40 hover:text-accent"
             >
               {q}
             </button>

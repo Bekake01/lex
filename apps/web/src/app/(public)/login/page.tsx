@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ChevronRight, MessageCircle, PenLine, ScanSearch } from 'lucide-react';
+import { ThemeToggle } from '@lex/theme';
 import { Wordmark } from '@/components/Brand';
 import { LoginForm } from './login-form';
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 
 const STEPS = [
   { label: 'Sörang', Icon: MessageCircle, tone: 'bg-accent-soft text-accent' },
-  { label: 'Tekşiring', Icon: ScanSearch, tone: 'bg-violet/20 text-[#6c47ff]' },
+  { label: 'Tekşiring', Icon: ScanSearch, tone: 'bg-violet-soft text-violet' },
   { label: 'Imzolang', Icon: PenLine, tone: 'bg-coral/15 text-coral' },
 ];
 
@@ -25,13 +26,14 @@ export default function LoginPage() {
     <main className="flex min-h-dvh flex-1 flex-col">
       <header className="flex h-[72px] items-center px-4 sm:px-8">
         <Wordmark />
+        <ThemeToggle className="ml-auto" />
       </header>
 
       <div className="mx-auto grid w-full max-w-6xl flex-1 items-center gap-12 px-4 pb-12 sm:px-8 lg:grid-cols-[1.1fr_1fr]">
         {/* Hero */}
         <section className="hidden lg:block lg:pl-6">
           {/* Three steps as one pill */}
-          <div className="inline-flex items-center gap-1 rounded-full bg-white/75 p-1.5 pr-4 shadow-[0_6px_20px_rgb(0_31_41/0.06)] ring-1 ring-white backdrop-blur">
+          <div className="inline-flex items-center gap-1 rounded-full bg-surface/75 p-1.5 pr-4 shadow-[0_6px_20px_var(--shadow)] ring-1 ring-edge backdrop-blur">
             {STEPS.map(({ label, Icon, tone }, i) => (
               <span key={label} className="flex items-center gap-1">
                 {i > 0 && <ChevronRight className="mx-0.5 size-3.5 text-ink/25" aria-hidden />}
@@ -54,7 +56,7 @@ export default function LoginPage() {
           </p>
 
           {/* Short facts */}
-          <dl className="mt-10 grid max-w-xl grid-cols-3 divide-x divide-ink/10 rounded-2xl bg-white/60 py-4 ring-1 ring-white backdrop-blur">
+          <dl className="mt-10 grid max-w-xl grid-cols-3 divide-x divide-ink/10 rounded-2xl bg-surface/60 py-4 ring-1 ring-edge backdrop-blur">
             {FACTS.map((f) => (
               <div key={f.value} className="px-5">
                 <dt className="font-display text-2xl font-medium tracking-tight text-ink">{f.value}</dt>
@@ -66,9 +68,9 @@ export default function LoginPage() {
 
         {/* Form card with halo */}
         <section className="halo mx-auto w-full max-w-[26rem]">
-          <div className="rounded-[1.15rem] bg-white px-7 pt-8 pb-7 sm:px-9">
+          <div className="rounded-[1.15rem] bg-surface px-7 pt-8 pb-7 sm:px-9">
             <h2 className="text-[1.75rem] leading-tight font-medium tracking-tight">Xuş kelibsiz</h2>
-            <p className="mt-1.5 mb-7 text-[15px] text-muted-foreground">Davom etiş uçun hisobingizga kiring.</p>
+            <p className="mt-1.5 mb-7 text-[15px] text-muted">Davom etiş uçun hisobingizga kiring.</p>
             <LoginForm />
           </div>
         </section>

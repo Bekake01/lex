@@ -44,13 +44,13 @@ export function SessionGate({ children }: { children: ReactNode }) {
     <div className="flex flex-1 items-center justify-center p-8">
       {state === 'checking' ? (
         <LoaderCircle
-          className="size-6 animate-spin text-muted-foreground"
+          className="size-6 animate-spin text-muted"
           aria-label="Loading"
         />
       ) : (
         <div className="flex max-w-sm flex-col items-center gap-3 text-center">
-          <CloudOff className="size-8 text-muted-foreground" aria-hidden />
-          <p className="text-sm text-muted-foreground">
+          <CloudOff className="size-8 text-muted" aria-hidden />
+          <p className="text-sm text-muted">
             Can&apos;t reach Lex. Check your connection and try again.
           </p>
           <button
@@ -59,7 +59,7 @@ export function SessionGate({ children }: { children: ReactNode }) {
               setState('checking');
               setAttempt((value) => value + 1);
             }}
-            className="flex h-8 items-center gap-1.5 rounded-md bg-brand px-3 text-sm font-medium text-brand-foreground"
+            className="btn btn-primary btn-sm"
           >
             <RotateCw className="size-4" aria-hidden />
             Try again

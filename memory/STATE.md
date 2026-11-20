@@ -14,8 +14,9 @@ Edit in place to keep this current.
 - Review eval harness: `pnpm eval:review` (citation accuracy ≥ 95%, issue precision ≥ 80%). Three synthetic starter cases.
 - For the frontend: **`docs/ai-frontend-handoff.md`** (routes, polling, 413/415, clause highlighting, signing summary), `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
 - `apps/web` UI (demo data, no API yet; all under `(app)/`, needs login): `/contracts` inbox of contracts sent to the user, `/review` (auto AI review → risk + issues with lex.uz cites → AI change suggestions → request changes or sign in a dialog).
-- `apps/web` `/` (home): general legal Q&A chat (`?q=` prefills) (demo keyword answers in `src/lib/legalQa.ts`: assault, labor, moral damage, statement template, fallback).
+- `apps/web` `/` (home, centered input like Claude): general legal Q&A chat (`?q=` prefills) (demo keyword answers in `src/lib/legalQa.ts`: assault, labor, moral damage, statement template, fallback).
 - `apps/sign` UI (demo data): `/sign/[token]` summary → obligations → typed name + drawn signature + consent → signed screen.
+- Theme: light + dark in `apps/web` and `apps/sign` from one palette, `packages/theme/theme.css` (tokens only; Tailwind default colors disabled). Toggle via `ThemeToggle`, default follows the system. Buttons: shared `btn btn-primary|secondary|soft|ghost|danger` (+ `btn-sm|lg|icon`) classes from the same file.
 - Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
@@ -38,6 +39,7 @@ Edit in place to keep this current.
 - Snapshot, don't reference: `signature_requests.document_hash` + `summary_hash`, and `recipient_summaries.summary_hash` per signer.
 - Plan limits checked at enqueue: individual per user, agency pooled (`ai_usage.scope_key`), 402 with `REVIEW_LIMIT_REACHED`.
 - `AI_PROMPT_VERSION` is part of a review's idempotency key, so old reviews keep the prompt they ran under.
+- Colors: only the `@lex/theme` tokens, each with light + dark values; add new colors there (both modes), never hard-coded hex / Tailwind palette in components (exception: logo + avatar gradient).
 - UI language: Uzbek in the **new Latin alphabet** (ş ç ğ ö, ʼ). Login form / SessionGate texts (auth team files) are still English.
 - Users don't upload contracts in `apps/web`; contracts arrive from the backend. User reviews with AI, then signs or requests changes.
 - Scope: besides contract review, users can ask general legal questions ("what happens / where do I go"). Answer shape: summary · consequences+cites · steps · contacts · optional template.

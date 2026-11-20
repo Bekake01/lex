@@ -26,22 +26,22 @@ export function SignDialog({
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/40 p-4 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="w-full max-w-lg animate-fade-up rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-overlay p-4 backdrop-blur-[2px]" onClick={onClose}>
+      <div className="w-full max-w-lg animate-fade-up rounded-2xl bg-surface shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
             <div className="font-semibold">Imzolaş</div>
             <div className="text-xs text-muted">{contract.title}</div>
           </div>
-          <button onClick={onClose} className="rounded-md p-1.5 text-muted hover:bg-sand" aria-label="Yopiş">
+          <button onClick={onClose} className="btn btn-ghost btn-icon btn-sm" aria-label="Yopiş">
             <XIcon className="size-4" />
           </button>
         </div>
 
         <div className="space-y-4 p-5">
           {openHigh > 0 && (
-            <div className="flex gap-2.5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
-              <AlertIcon className="size-5 shrink-0 text-red-600" />
+            <div className="flex gap-2.5 rounded-xl border border-danger-line bg-danger-soft px-4 py-3 text-sm text-danger">
+              <AlertIcon className="size-5 shrink-0 text-danger" />
               {openHigh} ta yuqori xavfli band hal qilinmagan. Imzolaşdan oldin özgartiriş söraşni öylab köring.
             </div>
           )}
@@ -52,7 +52,7 @@ export function SignDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Familiya Ism Şarif"
-              className="mt-1 w-full rounded-lg border border-line px-3 py-2.5 outline-none placeholder:text-slate-400 focus:border-accent/50"
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2.5 outline-none placeholder:text-faint focus:border-accent/50"
             />
           </label>
 
@@ -66,14 +66,14 @@ export function SignDialog({
               type="checkbox"
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
-              className="mt-1 size-4 accent-[#0767ee]"
+              className="mt-1 size-4 accent-accent"
             />
             Şartnoma bilan tanişdim va elektron imzo qölda qöyilgan imzoga teng ekanligiga roziman.
           </label>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-line px-5 py-4">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-muted hover:text-ink">
+          <button onClick={onClose} className="btn btn-ghost">
             Bekor qiliş
           </button>
           <button
@@ -82,10 +82,10 @@ export function SignDialog({
               setTimeout(onSigned, 1200);
             }}
             disabled={!ready || busy}
-            className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-sm font-medium text-white hover:bg-accent-dark disabled:opacity-40"
+            className="btn btn-primary px-5"
           >
             {busy ? (
-              <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+              <span className="size-4 animate-spin rounded-full border-2 border-on-color/40 border-t-on-color" />
             ) : (
               <PenIcon className="size-4" />
             )}
@@ -112,7 +112,6 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#001f29';
   }, []);
 
   const point = (e: PointerEvent<HTMLCanvasElement>) => {
@@ -124,11 +123,12 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
     <div className="relative mt-1">
       <canvas
         ref={canvas}
-        className="h-36 w-full touch-none rounded-xl border border-dashed border-slate-300 bg-cream"
+        className="h-36 w-full touch-none rounded-xl border border-dashed text-ink border-line-strong bg-page"
         onPointerDown={(e) => {
           drawing.current = true;
           e.currentTarget.setPointerCapture(e.pointerId);
           const ctx = e.currentTarget.getContext('2d')!;
+          ctx.strokeStyle = getComputedStyle(e.currentTarget).color; // ink of the current theme
           ctx.beginPath();
           ctx.moveTo(...point(e));
         }}
@@ -145,7 +145,7 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
         onPointerUp={() => (drawing.current = false)}
       />
       {empty ? (
-        <span className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-slate-400">
+        <span className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-faint">
           Şu yerga çizing
         </span>
       ) : (
@@ -156,7 +156,7 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
             setEmpty(true);
             onChange(false);
           }}
-          className="absolute top-2 right-2 rounded-md bg-white px-2 py-1 text-xs text-muted shadow-sm hover:text-ink"
+          className="absolute top-2 right-2 rounded-md bg-surface px-2 py-1 text-xs text-muted shadow-sm hover:text-ink"
         >
           Tozalaş
         </button>

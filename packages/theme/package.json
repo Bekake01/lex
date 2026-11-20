@@ -1,0 +1,17 @@
+{
+  "name": "@lex/theme",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme.css": "./theme.css"
+  },
+  "peerDependencies": {
+    "react": "^19"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "react": "19.3.0"
+  }
+}

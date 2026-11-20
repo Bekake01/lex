@@ -39,7 +39,7 @@ export function SigningFlow({ token }: { token: string }) {
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{req.title}</h1>
         {req.note && (
-          <p className="mt-4 rounded-xl border-l-[3px] border-accent bg-white px-4 py-3 text-[15px] text-ink/85 italic">
+          <p className="mt-4 rounded-xl border-l-[3px] border-accent bg-surface px-4 py-3 text-[15px] text-ink/85 italic">
             “{req.note}”
           </p>
         )}
@@ -51,18 +51,18 @@ export function SigningFlow({ token }: { token: string }) {
           <li key={s} className="flex flex-1 items-center gap-2">
             <button
               onClick={() => i < step && setStep(i)}
-              className={`flex items-center gap-2 text-sm ${i <= step ? 'text-ink' : 'text-slate-400'} ${i < step ? 'cursor-pointer' : 'cursor-default'}`}
+              className={`flex items-center gap-2 text-sm ${i <= step ? 'text-ink' : 'text-faint'} ${i < step ? 'cursor-pointer' : 'cursor-default'}`}
             >
               <span
                 className={`grid size-6 place-items-center rounded-full text-xs font-semibold transition ${
-                  i < step ? 'bg-emerald-500 text-white' : i === step ? 'bg-accent text-white' : 'bg-sand text-slate-500'
+                  i < step ? 'bg-success text-on-color' : i === step ? 'bg-accent text-on-color' : 'bg-subtle text-muted'
                 }`}
               >
                 {i < step ? <CheckIcon className="size-3.5" /> : i + 1}
               </span>
               <span className="hidden sm:inline">{s}</span>
             </button>
-            {i < STEPS.length - 1 && <span className={`h-px flex-1 ${i < step ? 'bg-emerald-400' : 'bg-line'}`} />}
+            {i < STEPS.length - 1 && <span className={`h-px flex-1 ${i < step ? 'bg-success' : 'bg-line'}`} />}
           </li>
         ))}
       </ol>
@@ -74,7 +74,7 @@ export function SigningFlow({ token }: { token: string }) {
             <p className="mt-2 text-lg leading-relaxed">{req.summary}</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {req.keyTerms.map((t) => (
-                <div key={t.label} className="rounded-xl bg-cream px-4 py-3">
+                <div key={t.label} className="rounded-xl bg-page px-4 py-3">
                   <div className="text-xs text-muted">{t.label}</div>
                   <div className="mt-0.5 font-medium">{t.value}</div>
                 </div>
@@ -96,13 +96,13 @@ export function SigningFlow({ token }: { token: string }) {
             </Card>
             <Card>
               <div className="flex items-center gap-2">
-                <span className="size-2.5 rounded-full bg-slate-400" />
+                <span className="size-2.5 rounded-full bg-faint" />
                 <Label>Boşqa tomon majburiyatlari</Label>
               </div>
               <p className="mt-1 text-xs text-muted">
                 {req.sender.role} — {req.sender.name}
               </p>
-              <List items={req.otherObligations} dot="bg-slate-400" />
+              <List items={req.otherObligations} dot="bg-faint" />
             </Card>
           </div>
         )}
@@ -116,19 +116,19 @@ export function SigningFlow({ token }: { token: string }) {
                 value={typedName}
                 onChange={(e) => setTypedName(e.target.value)}
                 placeholder={req.recipient.name}
-                className="mt-1 w-full rounded-lg border border-line bg-cream px-3 py-2.5 outline-none placeholder:text-slate-400 focus:border-accent/50 focus:bg-white"
+                className="mt-1 w-full rounded-lg border border-line bg-page px-3 py-2.5 outline-none placeholder:text-faint focus:border-accent/50 focus:bg-surface"
               />
             </label>
             <div className="mt-4">
               <span className="text-xs text-muted">Imzo çizing</span>
               <SignaturePad onChange={setHasDrawn} />
             </div>
-            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl bg-cream p-4 text-sm leading-relaxed">
+            <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl bg-page p-4 text-sm leading-relaxed">
               <input
                 type="checkbox"
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
-                className="mt-0.5 size-4 accent-[#0767ee]"
+                className="mt-0.5 size-4 accent-accent"
               />
               <span>
                 Şartnoma matni va xulosasi bilan tanişdim. Uşbu elektron imzo qölda qöyilgan imzo bilan teng
@@ -143,20 +143,20 @@ export function SigningFlow({ token }: { token: string }) {
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <button
           onClick={() => setDocOpen(true)}
-          className="flex items-center gap-2 rounded-lg border border-line bg-white px-4 py-2.5 text-sm hover:bg-sand"
+          className="btn btn-secondary"
         >
           <FileIcon className="size-4" /> Töliq matnni öqiş
         </button>
         <div className="ml-auto flex gap-2">
           {step > 0 && (
-            <button onClick={() => setStep(step - 1)} className="rounded-lg px-4 py-2.5 text-sm text-muted hover:text-ink">
+            <button onClick={() => setStep(step - 1)} className="btn btn-ghost">
               Orqaga
             </button>
           )}
           {step < 2 ? (
             <button
               onClick={() => setStep(step + 1)}
-              className="flex items-center gap-1.5 rounded-lg bg-ink px-5 py-2.5 text-sm font-medium text-cream hover:bg-black"
+              className="btn btn-primary px-5"
             >
               Davom etiş <ChevronRightIcon className="size-4" />
             </button>
@@ -164,10 +164,10 @@ export function SigningFlow({ token }: { token: string }) {
             <button
               onClick={sign}
               disabled={!canSign || signing}
-              className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent-dark disabled:bg-accent/40"
+              className="btn btn-primary px-5"
             >
               {signing ? (
-                <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                <span className="size-4 animate-spin rounded-full border-2 border-on-color/40 border-t-on-color" />
               ) : (
                 <PenIcon className="size-4" />
               )}
@@ -183,7 +183,7 @@ export function SigningFlow({ token }: { token: string }) {
 }
 
 function Card({ children }: { children: ReactNode }) {
-  return <div className="rounded-2xl border border-line bg-white p-6 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">{children}</div>;
+  return <div className="rounded-2xl border border-line bg-surface p-6 shadow-[0_2px_12px_rgba(15,23,42,0.04)]">{children}</div>;
 }
 
 function Label({ children }: { children: ReactNode }) {
@@ -221,17 +221,17 @@ function DocumentDrawer({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-ink/30 backdrop-blur-[2px]" onClick={onClose}>
-      <div className="flex h-full w-full max-w-2xl animate-fade-up flex-col bg-sand" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex justify-end bg-overlay backdrop-blur-[2px]" onClick={onClose}>
+      <div className="flex h-full w-full max-w-2xl animate-fade-up flex-col bg-subtle" onClick={(e) => e.stopPropagation()}>
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-line px-5 text-sm">
           <FileIcon className="size-4 text-muted" />
           <span className="font-medium">Töliq matn</span>
-          <button onClick={onClose} className="ml-auto rounded-md p-1.5 text-muted hover:bg-sand" aria-label="Yopiş">
+          <button onClick={onClose} className="btn btn-ghost btn-icon btn-sm ml-auto" aria-label="Yopiş">
             <XIcon className="size-4" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-6">
-          <article className="rounded-sm bg-white px-8 py-10 font-doc text-[15px] leading-7 text-slate-800 shadow-sm">
+          <article className="rounded-sm bg-surface px-8 py-10 font-doc text-[15px] leading-7 text-ink shadow-sm">
             <h2 className="text-center text-lg font-semibold uppercase tracking-wide">{req.title}</h2>
             {req.clauses.map((c) => (
               <section key={c.n} className="mt-5">
@@ -243,7 +243,7 @@ function DocumentDrawer({ onClose }: { onClose: () => void }) {
                 </p>
               </section>
             ))}
-            <p className="mt-8 font-mono text-[11px] break-all text-slate-400">SHA-256: {req.documentHash}</p>
+            <p className="mt-8 font-mono text-[11px] break-all text-faint">SHA-256: {req.documentHash}</p>
           </article>
         </div>
       </div>
@@ -266,7 +266,6 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
     ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.strokeStyle = '#001f29';
   }, []);
 
   function point(e: PointerEvent<HTMLCanvasElement>) {
@@ -285,11 +284,12 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
     <div className="relative mt-1">
       <canvas
         ref={canvas}
-        className="h-40 w-full touch-none rounded-xl border border-dashed border-slate-300 bg-cream"
+        className="h-40 w-full touch-none rounded-xl border border-dashed text-ink border-line-strong bg-page"
         onPointerDown={(e) => {
           drawing.current = true;
           e.currentTarget.setPointerCapture(e.pointerId);
           const ctx = e.currentTarget.getContext('2d')!;
+          ctx.strokeStyle = getComputedStyle(e.currentTarget).color; // ink of the current theme
           const [x, y] = point(e);
           ctx.beginPath();
           ctx.moveTo(x, y);
@@ -308,15 +308,15 @@ function SignaturePad({ onChange }: { onChange: (hasInk: boolean) => void }) {
         onPointerUp={() => (drawing.current = false)}
       />
       {empty ? (
-        <span className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-slate-400">
+        <span className="pointer-events-none absolute inset-0 grid place-items-center text-sm text-faint">
           Barmoq yoki siçqonça bilan şu yerga çizing
         </span>
       ) : (
-        <button onClick={clear} className="absolute top-2 right-2 rounded-md bg-white px-2 py-1 text-xs text-muted shadow-sm hover:text-ink">
+        <button onClick={clear} className="btn btn-secondary btn-sm absolute top-2 right-2 h-7 px-2 text-xs">
           Tozalaş
         </button>
       )}
-      <span className="pointer-events-none absolute right-6 bottom-8 left-6 border-b border-slate-300" />
+      <span className="pointer-events-none absolute right-6 bottom-8 left-6 border-b border-line-strong" />
     </div>
   );
 }
@@ -325,14 +325,14 @@ function Done({ signedAt, token }: { signedAt: string; token: string }) {
   return (
     <div className="flex flex-1 items-center justify-center px-5 py-16">
       <div className="w-full max-w-md animate-fade-up text-center">
-        <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+        <div className="mx-auto grid size-16 place-items-center rounded-full bg-success-soft text-success">
           <CheckIcon className="size-8" />
         </div>
         <h1 className="mt-5 text-3xl font-semibold">Şartnoma imzolandi</h1>
         <p className="mt-2 text-muted">
           Muhrlangan nusxa va imzo sertifikati sizga va {req.sender.name}ga yuboriladi.
         </p>
-        <dl className="mt-8 divide-y divide-line rounded-xl border border-line bg-white text-left text-sm">
+        <dl className="mt-8 divide-y divide-line rounded-xl border border-line bg-surface text-left text-sm">
           <Row k="Hujjat" v={req.title} />
           <Row k="Imzolangan vaqt" v={signedAt} />
           <Row k="Havola" v={`…/${token}`} mono />

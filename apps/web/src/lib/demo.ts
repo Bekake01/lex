@@ -26,31 +26,31 @@ export const severityMeta: Record<
 > = {
   high: {
     label: 'Yuqori',
-    dot: 'bg-red-500',
-    badge: 'bg-red-50 text-red-700 ring-red-200',
-    doc: 'bg-red-50/80 border-red-300',
+    dot: 'bg-danger',
+    badge: 'bg-danger-soft text-danger ring-danger-line',
+    doc: 'bg-danger-soft border-danger/50',
     weight: 18,
   },
   medium: {
     label: 'Örta',
-    dot: 'bg-amber-500',
-    badge: 'bg-amber-50 text-amber-800 ring-amber-200',
-    doc: 'bg-amber-50/80 border-amber-300',
+    dot: 'bg-warning',
+    badge: 'bg-warning-soft text-warning ring-warning-line',
+    doc: 'bg-warning-soft border-warning/50',
     weight: 10,
   },
   low: {
     label: 'Past',
-    dot: 'bg-sky-500',
-    badge: 'bg-sky-50 text-sky-700 ring-sky-200',
-    doc: 'bg-sky-50/80 border-sky-300',
+    dot: 'bg-info',
+    badge: 'bg-info-soft text-info ring-info-line',
+    doc: 'bg-info-soft border-info/50',
     weight: 4,
   },
 };
 
 export const statusMeta: Record<ContractStatus, { label: string; className: string }> = {
   new: { label: 'Yangi', className: 'bg-accent-soft text-accent' },
-  changes: { label: 'Özgartiriş söralgan', className: 'bg-amber-50 text-amber-800' },
-  signed: { label: 'Imzolangan', className: 'bg-emerald-50 text-emerald-700' },
+  changes: { label: 'Özgartiriş söralgan', className: 'bg-warning-soft text-warning' },
+  signed: { label: 'Imzolangan', className: 'bg-success-soft text-success' },
 };
 
 export const contract = {

@@ -11,12 +11,12 @@ export function AppHeader() {
   const [pending, setPending] = useState(false);
 
   return (
-    <header className="flex items-center justify-between border-b border-border px-6 py-3">
+    <header className="flex items-center justify-between border-b border-line px-6 py-3">
       <span className="text-xl font-bold tracking-tight">
-        Lex<span className="text-brand">.</span>
+        Lex<span className="text-accent">.</span>
       </span>
       <div className="flex items-center gap-4">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted">
           {user?.fullName}{' '}
           <span className="hidden sm:inline">({user?.email})</span>
         </span>
@@ -28,7 +28,7 @@ export function AppHeader() {
             // SessionGate sends the tab to /login once the session ends.
             void logout();
           }}
-          className="flex h-8 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium transition-colors hover:border-brand hover:text-brand disabled:opacity-70"
+          className="flex h-8 items-center gap-1.5 rounded-md border border-line px-3 text-sm font-medium transition-colors hover:border-accent hover:text-accent disabled:opacity-70"
         >
           <LogOut className="size-4" aria-hidden />
           Log out

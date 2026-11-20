@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Figtree, Geist_Mono, Outfit, Source_Serif_4 } from 'next/font/google';
+import { ThemeScript } from '@lex/theme';
 import './globals.css';
 
 const figtree = Figtree({
@@ -32,7 +33,11 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html
       lang="uz"
       className={`${figtree.variable} ${outfit.variable} ${geistMono.variable} ${sourceSerif.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <ThemeScript />
+      </head>
       <body className="flex min-h-full flex-col font-sans">{children}</body>
     </html>
   );

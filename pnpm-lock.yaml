@@ -323,6 +323,9 @@ importers:
 
   apps/sign:
     dependencies:
+      '@lex/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       next:
         specifier: 16.4.6
         version: 16.4.6(@babel/core@7.29.13(supports-color@7.2.0))(@opentelemetry/api@1.10.0)(@types/node@24.19.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -360,6 +363,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@lex/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       lucide-react:
         specifier: ^1.76.0
         version: 1.76.0(@types/react@19.3.0)(react@19.3.0)
@@ -416,6 +422,15 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
+
+  packages/theme:
+    devDependencies:
+      '@types/react':
+        specifier: ^19
+        version: 19.3.0
+      react:
+        specifier: 19.3.0
+        version: 19.3.0
 
 packages:
 

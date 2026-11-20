@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { ChevronsUpDown, FileText, LogOut, MessageCircle, PanelLeft, SquarePen } from 'lucide-react';
+import { ThemeToggle } from '@lex/theme';
 import { currentUser, logout } from '@/lib/auth';
 import { contracts, recentChats } from '@/lib/demo';
 import { Wordmark } from './Brand';
@@ -61,14 +62,15 @@ export function AppSidebar() {
             title={label}
             aria-label={label}
             className={`relative grid size-10 place-items-center rounded-xl transition ${
-              match(pathname) ? 'bg-white text-accent shadow-sm' : 'text-ink/55 hover:bg-white/70 hover:text-ink'
+              match(pathname) ? 'bg-surface text-accent shadow-sm' : 'text-ink/55 hover:bg-surface/70 hover:text-ink'
             }`}
           >
             <Icon className="size-[18px]" />
-            {badge > 0 && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-coral ring-2 ring-white" />}
+            {badge > 0 && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-coral ring-2 ring-surface" />}
           </Link>
         ))}
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col items-center gap-2">
+          <ThemeToggle className="size-10 rounded-xl" />
           <UserMenu compact />
         </div>
       </aside>
@@ -77,25 +79,28 @@ export function AppSidebar() {
 
   return (
     <aside className="hidden w-[272px] shrink-0 p-3 md:flex">
-      <div className="flex min-h-0 flex-1 flex-col rounded-[1.4rem] bg-white/60 shadow-[0_8px_30px_rgb(0_31_41/0.05)] ring-1 ring-white backdrop-blur-xl">
+      <div className="flex min-h-0 flex-1 flex-col rounded-[1.4rem] bg-surface/60 shadow-[0_8px_30px_var(--shadow)] ring-1 ring-edge backdrop-blur-xl">
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <Link href="/" aria-label="Lex">
             <Wordmark small />
           </Link>
+          <div className="flex items-center gap-0.5">
+          <ThemeToggle />
           <button
             onClick={() => setOpen(false)}
-            className="grid size-8 place-items-center rounded-lg text-ink/45 hover:bg-white hover:text-ink"
+            className="btn btn-ghost btn-icon btn-sm"
             aria-label="Panelni yopiş"
             title="Panelni yopiş"
           >
             <PanelLeft className="size-[18px]" />
           </button>
+          </div>
         </div>
 
         <div className="px-3">
           <button
             onClick={newChat}
-            className="group flex w-full items-center gap-2.5 rounded-xl bg-ink px-3.5 py-2.5 text-sm font-medium text-white shadow-[0_6px_16px_rgb(0_31_41/0.18)] transition hover:bg-[#08303d]"
+            className="btn btn-primary w-full justify-start px-3.5"
           >
             <SquarePen className="size-4" />
             Yangi savol
@@ -110,13 +115,13 @@ export function AppSidebar() {
                 key={href}
                 href={href}
                 className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
-                  active ? 'bg-white font-medium text-ink shadow-sm' : 'text-ink/70 hover:bg-white/70 hover:text-ink'
+                  active ? 'bg-surface font-medium text-ink shadow-sm' : 'text-ink/70 hover:bg-surface/70 hover:text-ink'
                 }`}
               >
                 <Icon className={`size-[18px] ${active ? 'text-accent' : 'text-ink/45'}`} />
                 <span className="flex-1">{label}</span>
                 {badge > 0 && (
-                  <span className="grid min-w-5 place-items-center rounded-full bg-coral px-1.5 text-[11px] leading-5 font-bold text-white">
+                  <span className="grid min-w-5 place-items-center rounded-full bg-coral px-1.5 text-[11px] leading-5 font-bold text-on-color">
                     {badge}
                   </span>
                 )}
@@ -136,7 +141,7 @@ export function AppSidebar() {
                 <Link
                   href={`/?q=${encodeURIComponent(c.q)}`}
                   className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
-                    active ? 'bg-white text-ink shadow-sm' : 'text-ink/70 hover:bg-white/70 hover:text-ink'
+                    active ? 'bg-surface text-ink shadow-sm' : 'text-ink/70 hover:bg-surface/70 hover:text-ink'
                   }`}
                 >
                   <span className={`size-1.5 shrink-0 rounded-full ${active ? 'bg-accent' : 'bg-ink/15 group-hover:bg-ink/30'}`} />
@@ -147,7 +152,7 @@ export function AppSidebar() {
           })}
         </ul>
 
-        <div className="border-t border-white p-2">
+        <div className="border-t border-edge p-2">
           <UserMenu />
         </div>
       </div>
@@ -171,9 +176,7 @@ function RailButton({
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`grid size-10 place-items-center rounded-xl transition ${
-        primary ? 'bg-ink text-white hover:bg-[#08303d]' : 'text-ink/55 hover:bg-white/70'
-      }`}
+      className={`btn btn-icon ${primary ? 'btn-primary' : 'btn-ghost'}`}
     >
       {children}
     </button>
@@ -198,7 +201,7 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
   }, [open]);
 
   const avatar = (
-    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#ff7f66,#ff8ace)] text-xs font-bold text-white">
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-coral text-xs font-bold text-on-color">
       {initials(user?.fullName)}
     </span>
   );
@@ -210,7 +213,7 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={compact ? 'rounded-full' : 'flex w-full items-center gap-2.5 rounded-xl p-2 text-left transition hover:bg-white/80'}
+        className={compact ? 'rounded-full' : 'flex w-full items-center gap-2.5 rounded-xl p-2 text-left transition hover:bg-surface/80'}
       >
         {avatar}
         {!compact && (
@@ -227,7 +230,7 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
       {open && (
         <div
           role="menu"
-          className={`absolute bottom-full z-40 mb-2 w-60 animate-fade-up rounded-2xl bg-white p-1.5 shadow-[0_16px_40px_rgb(0_31_41/0.14)] ring-1 ring-line ${
+          className={`absolute bottom-full z-40 mb-2 w-60 animate-fade-up rounded-2xl bg-surface p-1.5 shadow-[0_16px_40px_var(--shadow)] ring-1 ring-line ${
             compact ? 'left-0' : 'right-0 left-0 w-auto'
           }`}
         >
@@ -246,7 +249,7 @@ function UserMenu({ compact = false }: { compact?: boolean }) {
               // SessionGate sends the tab to /login once the session ends.
               void logout();
             }}
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm text-danger hover:bg-danger-soft disabled:opacity-60"
           >
             <LogOut className="size-4" />
             Çiqiş
@@ -265,12 +268,13 @@ export function MobileBar() {
       <Link href="/" aria-label="Lex">
         <Wordmark small />
       </Link>
-      <nav className="ml-auto flex rounded-full bg-white/70 p-1 ring-1 ring-white">
+      <ThemeToggle className="ml-auto" />
+      <nav className="flex rounded-full bg-surface/70 p-1 ring-1 ring-edge">
         {NAV.map(({ href, label, match }) => (
           <Link
             key={href}
             href={href}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium ${match(pathname) ? 'bg-ink text-white' : 'text-ink/60'}`}
+            className={`rounded-full px-3 py-1.5 text-xs font-medium ${match(pathname) ? 'bg-ink text-page' : 'text-ink/60'}`}
           >
             {label}
           </Link>

@@ -140,7 +140,7 @@ export function ReviewWorkspace() {
 
   return (
     <div className="halo mx-3 mt-3 mb-3 flex min-h-0 flex-1 flex-col !p-1.5 sm:mx-6">
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.1rem] bg-white">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[1.1rem] bg-surface">
       <header className="flex h-16 shrink-0 items-center gap-3 border-b border-line px-5">
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-medium tracking-tight">{contract.title}</h1>
@@ -150,7 +150,7 @@ export function ReviewWorkspace() {
         </div>
         <button
           onClick={() => setDocOpen(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-sand lg:hidden"
+          className="btn btn-secondary btn-sm lg:hidden"
         >
           <FileIcon className="size-4" /> Hujjat
         </button>
@@ -159,17 +159,17 @@ export function ReviewWorkspace() {
             {suggested.size > 0 && (
               <button
                 onClick={requestChanges}
-                className="flex h-10 items-center gap-1.5 rounded-xl border border-accent/40 px-4 text-sm font-medium text-accent hover:bg-accent-soft"
+                className="btn btn-soft"
               >
                 <SendIcon className="size-4" />
                 <span className="hidden sm:inline">Özgartiriş söraş</span>
-                <span className="rounded-full bg-coral px-1.5 text-[11px] font-bold text-navy">{suggested.size}</span>
+                <span className="rounded-full bg-coral px-1.5 text-[11px] font-bold text-on-color">{suggested.size}</span>
               </button>
             )}
             <button
               onClick={() => setSignOpen(true)}
               disabled={analyzing}
-              className="flex h-10 items-center gap-1.5 rounded-xl bg-accent px-5 text-sm font-semibold text-white transition hover:bg-accent-dark disabled:opacity-40"
+              className="btn btn-primary px-5"
             >
               <PenIcon className="size-4" /> Imzolaş
             </button>
@@ -177,7 +177,7 @@ export function ReviewWorkspace() {
         ) : (
           <span
             className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
-              status === 'signed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
+              status === 'signed' ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'
             }`}
           >
             {status === 'signed' ? <CheckIcon className="size-4" /> : <SendIcon className="size-4" />}
@@ -193,7 +193,7 @@ export function ReviewWorkspace() {
               {messages.map((m) =>
                 m.role === 'user' ? (
                   <div key={m.id} className="flex animate-fade-up justify-end">
-                    <div className="max-w-[85%] rounded-2xl bg-sand px-4 py-2.5 text-[15px]">{m.text}</div>
+                    <div className="max-w-[85%] rounded-2xl bg-subtle px-4 py-2.5 text-[15px]">{m.text}</div>
                   </div>
                 ) : (
                   <AssistantRow key={m.id}>
@@ -218,13 +218,13 @@ export function ReviewWorkspace() {
                 <AssistantRow>
                   <ol className="flex flex-col gap-2 text-sm">
                     {STEPS.map((s, i) => (
-                      <li key={s} className={`flex items-center gap-2.5 ${i > step ? 'text-slate-400' : 'text-muted'}`}>
+                      <li key={s} className={`flex items-center gap-2.5 ${i > step ? 'text-faint' : 'text-muted'}`}>
                         {i < step ? (
-                          <CheckIcon className="size-4 text-emerald-600" />
+                          <CheckIcon className="size-4 text-success" />
                         ) : i === step ? (
                           <span className="size-4 animate-spin rounded-full border-2 border-accent/25 border-t-accent" />
                         ) : (
-                          <span className="size-4 rounded-full border border-dashed border-slate-300" />
+                          <span className="size-4 rounded-full border border-dashed border-line-strong" />
                         )}
                         {s}
                       </li>
@@ -254,14 +254,14 @@ export function ReviewWorkspace() {
                     <button
                       key={q}
                       onClick={() => send(q)}
-                      className="rounded-full border border-line bg-white px-3 py-1 text-xs text-ink/75 hover:border-accent/40 hover:text-accent"
+                      className="rounded-full border border-line bg-surface px-3 py-1 text-xs text-ink/75 hover:border-accent/40 hover:text-accent"
                     >
                       {q}
                     </button>
                   ))}
                 </div>
               )}
-              <div className="flex items-end gap-2 rounded-2xl border border-line bg-white p-2 pl-4 shadow-sm focus-within:border-accent/40">
+              <div className="flex items-end gap-2 rounded-2xl border border-line bg-surface p-2 pl-4 shadow-sm focus-within:border-accent/40">
                 <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
@@ -274,12 +274,12 @@ export function ReviewWorkspace() {
                   rows={1}
                   disabled={analyzing}
                   placeholder={analyzing ? 'Tahlil qilinmoqda…' : 'Şartnoma haqida sörang'}
-                  className="block max-h-40 flex-1 resize-none bg-transparent py-1.5 text-[15px] outline-none placeholder:text-slate-400"
+                  className="block max-h-40 flex-1 resize-none bg-transparent py-1.5 text-[15px] outline-none placeholder:text-faint"
                 />
                 <button
                   onClick={() => send(input)}
                   disabled={!input.trim() || thinking || analyzing}
-                  className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-white transition hover:bg-accent-dark disabled:opacity-30"
+                  className="btn btn-primary btn-icon btn-sm"
                   aria-label="Yuboriş"
                 >
                   <ArrowUpIcon className="size-4" />
@@ -329,16 +329,16 @@ function EditCard({
 }) {
   const n = clauseNo(issue.clauseId);
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-white" onMouseEnter={onFocus}>
-      <div className="flex items-center justify-between gap-3 border-b border-line bg-cream px-4 py-2 text-xs">
+    <div className="overflow-hidden rounded-xl border border-line bg-surface" onMouseEnter={onFocus}>
+      <div className="flex items-center justify-between gap-3 border-b border-line bg-page px-4 py-2 text-xs">
         <span className="font-semibold">{n}-band uçun taklif</span>
         <span className="truncate text-muted">
           {issue.citation.law}, {issue.citation.article}
         </span>
       </div>
       <div className="space-y-2 p-4 font-doc text-[15px] leading-relaxed">
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-red-900/80 line-through decoration-red-400/70">{original}</p>
-        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-emerald-950">{issue.fix?.replacement}</p>
+        <p className="rounded-lg bg-danger-soft px-3 py-2 text-danger/80 line-through decoration-danger/60">{original}</p>
+        <p className="rounded-lg bg-success-soft px-3 py-2 text-success">{issue.fix?.replacement}</p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line px-4 py-2.5">
         <span className="text-xs text-muted">{issue.fix?.reason}</span>
@@ -346,13 +346,13 @@ function EditCard({
           <div className="flex gap-2">
             <button
               onClick={() => onDecide(false)}
-              className="flex items-center gap-1 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-sand"
+              className="btn btn-secondary btn-sm"
             >
               <XIcon className="size-3.5" /> Kerak emas
             </button>
             <button
               onClick={() => onDecide(true)}
-              className="flex items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-dark"
+              className="btn btn-primary btn-sm"
             >
               <CheckIcon className="size-3.5" /> Taklifga qöşiş
             </button>
@@ -360,7 +360,7 @@ function EditCard({
         ) : (
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-              status === 'accepted' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
+              status === 'accepted' ? 'bg-success-soft text-success' : 'bg-subtle text-muted'
             }`}
           >
             {status === 'accepted' ? 'Taklifga qöşildi' : 'Qöşilmadi'}

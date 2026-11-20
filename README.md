@@ -12,7 +12,7 @@ A sender uploads a contract and **AI checks it against Uzbek legislation** (lex.
 | `apps/sign`    | Next.js public signing app for receivers (no login) | 3001 |
 | `apps/api`     | NestJS backend + AI jobs, Drizzle ORM               | 5000 |
 | Postgres       | Docker (`docker-compose.yml`)                       | 5434 |
-| Redis          | Docker, BullMQ jobs                                 | 6379 |
+| Redis          | Docker, BullMQ jobs                                 | 6391 |
 
 | Package              | What                                                          |
 | -------------------- | ------------------------------------------------------------- |
@@ -30,7 +30,7 @@ pnpm install
 cp apps/web/.env.example apps/web/.env.local
 cp apps/sign/.env.example apps/sign/.env.local
 cp apps/api/.env.example apps/api/.env
-pnpm services:up      # Postgres (5434) + Redis (6379) in Docker
+pnpm services:up      # Postgres (5434) + Redis (6391) in Docker
 pnpm db:migrate       # apply Drizzle migrations
 pnpm dev              # all apps
 # or: pnpm dev:api / pnpm dev:web / pnpm dev:sign

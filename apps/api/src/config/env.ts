@@ -37,7 +37,7 @@ export const envSchema = z.object({
     .string()
     .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// URL'),
 
-  /** BullMQ. docker-compose starts redis on 6379. */
+  /** BullMQ. docker-compose starts redis on host port 6391. */
   REDIS_URL: z.string().regex(/^rediss?:\/\//, 'must be a redis:// URL'),
 
   /** Signs access tokens (HS256). HS256 needs at least 256 bits of key. */

@@ -26,25 +26,25 @@ export function ContractList() {
               key={t.id}
               onClick={() => setTab(t.id)}
               className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm transition ${
-                tab === t.id ? 'bg-ink font-medium text-white' : 'bg-white/70 text-ink/70 shadow-[inset_0_0_0_1px_white] hover:text-ink'
+                tab === t.id ? 'bg-ink font-medium text-page' : 'bg-surface/70 text-ink/70 shadow-[inset_0_0_0_1px_var(--edge)] hover:text-ink'
               }`}
             >
               {t.label}
-              <span className={`rounded-full px-1.5 text-[11px] ${tab === t.id ? 'bg-white/20 text-white' : 'bg-sand text-muted'}`}>{n}</span>
+              <span className={`rounded-full px-1.5 text-[11px] ${tab === t.id ? 'bg-page/20 text-page' : 'bg-subtle text-muted'}`}>{n}</span>
             </button>
           );
         })}
       </div>
 
       <div className="halo mt-5">
-      <ul className="divide-y divide-line overflow-hidden rounded-[1.1rem] bg-white">
+      <ul className="divide-y divide-line overflow-hidden rounded-[1.1rem] bg-surface">
         {rows.map((c) => (
           <li key={c.id}>
             <Link href="/review" className="flex items-center gap-4 px-5 py-4 transition hover:bg-accent-soft/50">
-              <span className="relative grid size-10 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,#e6effd,#e7e5ff)] text-sm font-semibold text-accent">
+              <span className="relative grid size-10 shrink-0 place-items-center rounded-full bg-[linear-gradient(135deg,var(--accent-soft),var(--violet-soft))] text-sm font-semibold text-accent">
                 {c.sender.replace(/[“”"]/g, '').split(/\s+/).slice(0, 2).map((w) => w[0]).join('')}
                 {c.status === 'new' && (
-                  <span className="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-coral ring-2 ring-white" title="Yangi" />
+                  <span className="absolute -top-0.5 -right-0.5 size-3 rounded-full bg-coral ring-2 ring-surface" title="Yangi" />
                 )}
               </span>
               <div className="min-w-0 flex-1">

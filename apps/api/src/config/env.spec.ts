@@ -2,7 +2,7 @@ import { parseEnv } from './env.js';
 
 const valid = {
   DATABASE_URL: 'postgres://lex:lex@localhost:5434/lex',
-  REDIS_URL: 'redis://localhost:6379',
+  REDIS_URL: 'redis://localhost:6391',
   JWT_SECRET: 's'.repeat(32),
 };
 

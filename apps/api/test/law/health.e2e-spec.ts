@@ -9,7 +9,7 @@ process.env.NODE_ENV = 'test';
 // Never connected to: the DB provider is replaced in every test app below.
 process.env.DATABASE_URL = 'postgres://lex:lex@localhost:5434/lex';
 process.env.JWT_SECRET ??= 'e2e-test-secret-at-least-32-characters-long';
-process.env.REDIS_URL ??= 'redis://localhost:6379';
+process.env.REDIS_URL ??= 'redis://localhost:6391';
 
 const { AppModule } = await import('../../src/app.module.js');
 const { DB } = await import('../../src/db/db.module.js');
