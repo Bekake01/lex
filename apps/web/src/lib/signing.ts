@@ -1,10 +1,20 @@
 import {
+  API_PATHS,
   SIGNING_ROUTES,
+  type AddRecipientsBody,
   type CreateSigningDraftBody,
+  type DocumentList,
+  type PartyWire,
+  type SendSigningResponse,
+  type SigningBox,
   type SigningRequestDetailWire,
+  type SigningRequestList,
+  type UpdateSigningAccessBody,
   type UpdateSigningDraftBody,
 } from '@lex/contracts';
+import demoDetail from '@lex/contracts/mocks/signing-request-detail.json';
 import demoDraft from '@lex/contracts/mocks/signing-draft.json';
+import demoList from '@lex/contracts/mocks/signing-request-list.json';
 import { apiFetch, DEMO_LOGIN } from '@/lib/auth';
 
 // Browser only, like lib/auth.ts. The sender's signing calls (phase 05 API).
@@ -56,7 +66,30 @@ export async function updateDraft(
   body: UpdateSigningDraftBody,
 ): Promise<SigningRequestDetailWire> {
   if (isDemo(id)) {
-    demoState = { ...demoState, ...(body as Partial<SigningRequestDetailWire>) };
+    const { recipients, ...rest } = body;
+    demoState = {
+      ...demoState,
+      ...(rest as Partial<SigningRequestDetailWire>),
+      ...(recipients
+        ? {
+            recipientCount: recipients.length,
+            recipients: recipients.map((r, i) => ({
+              id: `demo-recipient-${i}`,
+              name: r.name ?? null,
+              channel: r.channel,
+              contact: r.contact ?? null,
+              source: 'invite' as const,
+              status: 'pending' as const,
+              viewedAt: null,
+              signedAt: null,
+              signUrl: `http://localhost:3001/sign/demo-token-${i}`,
+              ready: false,
+              signerName: null,
+              fieldValues: {},
+            })),
+          }
+        : {}),
+    };
     return demoState;
   }
   return json(
@@ -114,4 +147,142 @@ export function sendStartError(err: unknown): string {
   }
   if (err instanceof ApiError) return err.message;
   return 'Xatolik yuz berdi. Qaytadan urinib köring.';
+}
+
+/* ------------------------------------------------------- send + after it -- */
+
+const DEMO_SENT_ID = (demoDetail as SigningRequestDetailWire).id;
+
+function patchJson(body: unknown): RequestInit {
+  return { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+}
+function postJson(body?: unknown): RequestInit {
+  return {
+    method: 'POST',
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  };
+}
+
+/** Open link on/off and the password (`PATCH …/access`). */
+export async function updateAccess(id: string, body: UpdateSigningAccessBody): Promise<SigningRequestDetailWire> {
+  if (isDemo(id)) {
+    const base = id === DEMO_DRAFT_ID ? demoState : getDemoSent();
+    const next: SigningRequestDetailWire = {
+      ...base,
+      ...(body.openLinkEnabled !== undefined
+        ? {
+            openLinkEnabled: body.openLinkEnabled,
+            openLinkUrl: body.openLinkEnabled ? 'http://localhost:3001/open/demo-open-link-token' : null,
+          }
+        : {}),
+      ...(body.password !== undefined ? { hasPassword: body.password !== null } : {}),
+    };
+    if (id === DEMO_DRAFT_ID) demoState = next;
+    else demoSent = next;
+    return next;
+  }
+  return json(await apiFetch(SIGNING_ROUTES.requestAccess(id), patchJson(body)));
+}
+
+/** Send the draft: every link comes back. */
+export async function sendDraft(id: string): Promise<SendSigningResponse> {
+  if (isDemo(id)) {
+    return {
+      id: DEMO_SENT_ID,
+      recipients: demoState.recipients.map((r) => ({
+        id: r.id,
+        name: r.name,
+        channel: r.channel,
+        contact: r.contact,
+        signUrl: r.signUrl,
+      })),
+      openLinkUrl: demoState.openLinkUrl,
+    };
+  }
+  return json(await apiFetch(SIGNING_ROUTES.requestSend(id), postJson()));
+}
+
+/** More people on a sent send; their links come back. */
+export async function addRecipients(id: string, body: AddRecipientsBody): Promise<SendSigningResponse> {
+  if (isDemo(id)) {
+    return {
+      id,
+      recipients: body.recipients.map((r, i) => ({
+        id: `demo-new-${Date.now()}-${i}`,
+        name: r.name ?? null,
+        channel: r.channel,
+        contact: r.contact ?? null,
+        signUrl: `http://localhost:3001/sign/demo-token-${Date.now()}-${i}`,
+      })),
+      openLinkUrl: null,
+    };
+  }
+  return json(await apiFetch(SIGNING_ROUTES.requestRecipients(id), postJson(body)));
+}
+
+export async function cancelSend(id: string): Promise<SigningRequestDetailWire> {
+  if (isDemo(id)) return (demoSent = { ...getDemoSent(), status: 'cancelled' });
+  return json(await apiFetch(SIGNING_ROUTES.requestCancel(id), postJson()));
+}
+
+let demoSent: SigningRequestDetailWire | null = null;
+function getDemoSent(): SigningRequestDetailWire {
+  return (demoSent ??= demoDetail as SigningRequestDetailWire);
+}
+
+/** A send with everyone in it (any status). */
+export async function getSend(id: string): Promise<SigningRequestDetailWire> {
+  if (isDemo(id)) return id === DEMO_DRAFT_ID ? demoState : getDemoSent();
+  return json(await apiFetch(SIGNING_ROUTES.request(id)));
+}
+
+/** `sent`: my sends (drafts included). `inbox`: sends where my email is a recipient. */
+export async function listSends(box: SigningBox): Promise<SigningRequestList> {
+  if (DEMO_LOGIN) {
+    const rows = (demoList as SigningRequestList).requests;
+    return { requests: box === 'sent' ? rows : [] };
+  }
+  return json(await apiFetch(SIGNING_ROUTES.requestList(box)));
+}
+
+/** My documents, latest versions only. */
+export async function listDocuments(): Promise<DocumentList> {
+  if (DEMO_LOGIN) return { documents: [] };
+  return json(await apiFetch(API_PATHS.documents));
+}
+
+/** The contract parties the AI review found (empty without a review). */
+export async function documentParties(documentId: string): Promise<PartyWire[]> {
+  if (DEMO_LOGIN) return [];
+  try {
+    return await json<PartyWire[]>(await apiFetch(API_PATHS.documentParties(documentId)));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save a signed copy or certificate. A plain `<a href>` has no auth header,
+ * so: fetch with the token → blob → object URL → click.
+ */
+export async function downloadCopy(
+  id: string,
+  recipientId: string,
+  kind: 'signed' | 'certificate',
+  fileName: string,
+): Promise<void> {
+  if (isDemo(id)) throw new ApiError(404, undefined, 'Demo rejimida yuklab bölmaydi');
+  const path =
+    kind === 'signed'
+      ? SIGNING_ROUTES.recipientSigned(id, recipientId)
+      : SIGNING_ROUTES.recipientCertificate(id, recipientId);
+  const res = await apiFetch(path);
+  if (!res.ok) throw new ApiError(res.status, undefined, 'Fayl hali tayyor emas');
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

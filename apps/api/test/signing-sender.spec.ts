@@ -297,4 +297,31 @@ describe('sender signing API', () => {
       .where(eq(signatureRequests.id, draft.id));
     expect((await service.list(me, 'inbox')).requests).toEqual([]);
   });
+
+  it('GET /documents lists my latest versions only, newest first', async () => {
+    const a = await documents.upload(user, {
+      name: 'a.pdf',
+      contentType: 'application/pdf',
+      bytes: makePdf([['a']]),
+    });
+    const b = await documents.upload(user, {
+      name: 'b.pdf',
+      contentType: 'application/pdf',
+      bytes: makePdf([['b']]),
+    });
+    const a2 = await documents.createVersion(a, {
+      name: 'a.pdf',
+      contentType: 'application/pdf',
+      bytes: makePdf([['a v2']]),
+    });
+    const other = await seedUser(db);
+    await documents.upload(other, {
+      name: 'theirs.pdf',
+      contentType: 'application/pdf',
+      bytes: makePdf([['x']]),
+    });
+
+    const mine = await documents.listForUser(user);
+    expect(mine.map((d) => d.id)).toEqual([a2.id, b.id]);
+  });
 });

@@ -81,3 +81,7 @@ export const CircleDotIcon = (p: P) => <Svg {...p}><circle cx="12" cy="12" r="8"
 export const StampIcon = (p: P) => <Svg {...p}><path d="M9 13V9a3 3 0 116 0v4M5 13h14v4H5zM6 21h12" /></Svg>;
 export const InitialsIcon = (p: P) => <Svg {...p}><path d="M4 17c2-6 4-9 5-9s-1 6 1 6 3-5 4-5-1 4 1 4 3-2 5-2M4 21h16" /></Svg>;
 export const SearchIcon = (p: P) => <Svg {...p}><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></Svg>;
+export const LinkIcon = (p: P) => <Svg {...p}><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" /></Svg>;
+export const ShareIcon = (p: P) => <Svg {...p}><path d="M12 15V3M8 7l4-4 4 4M5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7" /></Svg>;
+export const DownloadIcon = (p: P) => <Svg {...p}><path d="M12 4v12M7 11l5 5 5-5M4 20h16" /></Svg>;
+export const TelegramIcon = (p: P) => <Svg {...p}><path d="M21 4L3 11l6 2.5M21 4l-3 16-6-6.5M21 4L9 13.5v5.5l3-5" /></Svg>;

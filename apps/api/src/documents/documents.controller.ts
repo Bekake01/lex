@@ -19,7 +19,11 @@ import {
   kindOfContentType,
   sniffDocumentKind,
 } from '../law/documents/file-type.js';
-import type { DocumentVersionWire, DocumentWire } from '@lex/contracts';
+import type {
+  DocumentList,
+  DocumentVersionWire,
+  DocumentWire,
+} from '@lex/contracts';
 import {
   CurrentUserGuard,
   User,
@@ -81,6 +85,18 @@ export class DocumentsController {
       bytes: new Uint8Array(file.buffer),
     });
     return toDocumentWire(document, true);
+  }
+
+  /** My documents, latest versions only (no clause data), newest first. */
+  @Get()
+  async list(@User() user: CurrentUser): Promise<DocumentList> {
+    const docs = await this.documents.listForUser(user);
+    return {
+      documents: docs.map((d) => {
+        const { clauses: _clauses, ...wire } = toDocumentWire(d, true);
+        return wire;
+      }),
+    };
   }
 
   @Get(':id')

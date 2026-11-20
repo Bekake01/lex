@@ -1,12 +1,22 @@
 'use client';
 
-import type { Field, SigningRequestDetailWire } from '@lex/contracts';
+import type {
+  Field,
+  RecipientInput,
+  SendSigningResponse,
+  SigningRequestDetailWire,
+  UpdateSigningDraftBody,
+} from '@lex/contracts';
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { documentPdf, getDraft, updateDraft } from '@/lib/signing';
+import { blankRow, isEmptyRow, rowProblem, toInput, type PersonRow } from '@/lib/people';
+import { ApiError, documentPdf, getDraft, sendDraft, updateDraft } from '@/lib/signing';
 import { usePdf } from '@/lib/use-pdf';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '../Icons';
 import { FieldEditor } from './FieldEditor';
+import { PeopleEditor } from './PeopleEditor';
+import { SendResult } from './SendResult';
+import { SendStep } from './SendStep';
 
 const STEPS = [
   { id: 'fields', label: 'Maydonlar' },
@@ -20,9 +30,11 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 /** Wait this long after the last edit before saving. */
 const SAVE_DELAY_MS = 800;
 
+type Patch = Pick<UpdateSigningDraftBody, 'fields' | 'title' | 'message' | 'partyName' | 'recipients'>;
+
 /**
  * Sending one PDF for signature, in three steps: place fields → add people →
- * send. Step 1 (this phase) is the field editor; changes save themselves.
+ * send; then every link to share. Every change saves itself to the draft.
  */
 export function SendFlow({ id }: { id: string }) {
   const [draft, setDraft] = useState<SigningRequestDetailWire | null>(null);
@@ -30,7 +42,13 @@ export function SendFlow({ id }: { id: string }) {
   const [step, setStep] = useState<Step>('fields');
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
+  const [people, setPeople] = useState<PersonRow[]>([]);
+  const [message, setMessage] = useState('');
+  const [partyName, setPartyName] = useState('');
   const [save, setSave] = useState<SaveState>('idle');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [result, setResult] = useState<SendSigningResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +58,13 @@ export function SendFlow({ id }: { id: string }) {
         setDraft(d);
         setTitle(d.title);
         setFields(d.fields);
+        setMessage(d.message ?? '');
+        setPartyName(d.partyName ?? '');
+        setPeople(
+          d.recipients.length > 0
+            ? d.recipients.map((r) => ({ key: r.id, name: r.name ?? '', channel: r.channel, contact: r.contact ?? '' }))
+            : [blankRow()],
+        );
       })
       .catch(() => !cancelled && setLoadError('Qoralamani oçib bölmadi.'));
     return () => {
@@ -50,13 +75,13 @@ export function SendFlow({ id }: { id: string }) {
   const { pdf, error: pdfError } = usePdf(draft ? draft.id : null, () => documentPdf(draft!));
 
   // Autosave: the latest unsaved patch waits SAVE_DELAY_MS, then goes out.
-  const pending = useRef<{ fields?: Field[]; title?: string }>({});
+  const pending = useRef<Patch>({});
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const flush = useCallback(async (): Promise<boolean> => {
     clearTimeout(timer.current);
     const patch = pending.current;
-    if (patch.fields === undefined && patch.title === undefined) return true;
+    if (Object.keys(patch).length === 0) return true;
     pending.current = {};
     setSave('saving');
     try {
@@ -72,7 +97,7 @@ export function SendFlow({ id }: { id: string }) {
   }, [id]);
 
   const queue = useCallback(
-    (patch: { fields?: Field[]; title?: string }) => {
+    (patch: Patch) => {
       pending.current = { ...pending.current, ...patch };
       setSave('saving');
       clearTimeout(timer.current);
@@ -84,11 +109,44 @@ export function SendFlow({ id }: { id: string }) {
   // Leaving the page with unsaved edits: save them on the way out.
   useEffect(() => () => void flush(), [flush]);
 
+  /** People rows → the draft, once every non-empty row is valid. */
+  const changePeople = (rows: PersonRow[]) => {
+    setPeople(rows);
+    const filled = rows.filter((r) => !isEmptyRow(r));
+    if (filled.some((r) => rowProblem(r))) return;
+    queue({ recipients: filled.map(toInput) as RecipientInput[] });
+  };
+
+  async function send() {
+    setSending(true);
+    setSendError('');
+    try {
+      if (!(await flush())) throw new Error('save');
+      setResult(await sendDraft(id));
+    } catch (err) {
+      setSendError(err instanceof ApiError ? err.message : 'Yuborib bölmadi. Qaytadan urinib köring.');
+    } finally {
+      setSending(false);
+    }
+  }
+
   if (loadError) {
     return <Centered text={loadError} />;
   }
   if (!draft) {
     return <Centered text="Yuklanmoqda…" />;
+  }
+  if (result) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <SendResult
+          result={result}
+          title={title}
+          message={message || null}
+          detailHref={`/documents/sends/${result.id}`}
+        />
+      </div>
+    );
   }
   if (draft.status !== 'draft') {
     return <Centered text="Bu hujjat allaqaçon yuborilgan." />;
@@ -96,6 +154,9 @@ export function SendFlow({ id }: { id: string }) {
 
   const hasSignature = fields.some((f) => f.type === 'signature');
   const stepIndex = STEPS.findIndex((s) => s.id === step);
+  const filledPeople = people.filter((r) => !isEmptyRow(r));
+  const peopleOk = !filledPeople.some((r) => rowProblem(r));
+  const canNext = step === 'fields' ? hasSignature : peopleOk;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -141,29 +202,38 @@ export function SendFlow({ id }: { id: string }) {
           {save === 'error' && <span className="text-danger">Saqlanmadi</span>}
         </span>
 
-        {step === 'fields' ? (
-          <button
-            type="button"
-            disabled={!hasSignature}
-            title={hasSignature ? undefined : 'Avval kamida bitta Imzo maydoni qöying'}
-            onClick={async () => {
-              if (await flush()) setStep('people');
-            }}
-            className="btn btn-primary btn-sm"
-          >
-            Keyingi
-            <ChevronRightIcon className="size-4" />
-          </button>
-        ) : (
-          <button type="button" onClick={() => setStep('fields')} className="btn btn-secondary btn-sm">
-            <ChevronLeftIcon className="size-4" />
-            Orqaga
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {step !== 'fields' && (
+            <button type="button" onClick={() => setStep(STEPS[stepIndex - 1].id)} className="btn btn-ghost btn-sm">
+              <ChevronLeftIcon className="size-4" />
+              Orqaga
+            </button>
+          )}
+          {step !== 'send' && (
+            <button
+              type="button"
+              disabled={!canNext}
+              title={
+                canNext
+                  ? undefined
+                  : step === 'fields'
+                    ? 'Avval kamida bitta Imzo maydoni qöying'
+                    : 'Xato kontaktlarni tuzating'
+              }
+              onClick={async () => {
+                if (await flush()) setStep(STEPS[stepIndex + 1].id);
+              }}
+              className="btn btn-primary btn-sm"
+            >
+              Keyingi
+              <ChevronRightIcon className="size-4" />
+            </button>
+          )}
+        </div>
       </header>
 
-      {step === 'fields' ? (
-        pdfError ? (
+      {step === 'fields' &&
+        (pdfError ? (
           <Centered text={pdfError} />
         ) : !pdf ? (
           <Centered text="Hujjat yuklanmoqda…" />
@@ -177,10 +247,46 @@ export function SendFlow({ id }: { id: string }) {
               queue({ fields: next });
             }}
           />
-        )
-      ) : (
-        // Odamlar and Yuboriş come in the next phase (09).
-        <Centered text={`${STEPS[stepIndex].label} — tez orada.`} />
+        ))}
+
+      {step === 'people' && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-3xl px-5 py-8 sm:px-6">
+            <h2 className="text-xl font-medium">Odamlar</h2>
+            <p className="mt-1 mb-5 text-sm text-muted">
+              Har bir odam öz havolasini oladi va hujjatning öz nusxasini imzolaydi. Bu yerda hech kim bölmasa ham
+              böladi — keyingi qadamda oçiq havolani yoqiş mumkin.
+            </p>
+            <PeopleEditor rows={people} onChange={changePeople} />
+          </div>
+        </div>
+      )}
+
+      {step === 'send' && (
+        <SendStep
+          draft={draft}
+          peopleCount={filledPeople.length}
+          fieldCount={fields.length}
+          title={title}
+          message={message}
+          partyName={partyName}
+          onTitle={(v) => {
+            setTitle(v);
+            if (v.trim()) queue({ title: v.trim() });
+          }}
+          onMessage={(v) => {
+            setMessage(v);
+            queue({ message: v.trim() || null });
+          }}
+          onPartyName={(v) => {
+            setPartyName(v);
+            queue({ partyName: v.trim() || null });
+          }}
+          onAccess={setDraft}
+          sending={sending}
+          error={sendError}
+          onSend={() => void send()}
+        />
       )}
     </div>
   );

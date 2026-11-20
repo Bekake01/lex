@@ -223,11 +223,6 @@ export const contracts: {
 ];
 
 // The user's own uploaded files ("Hujjatlarim"). TODO: list from the API once it has GET /documents.
-export const myDocuments: { id: string; name: string; size: string; added: string }[] = [
-  { id: 'd1', name: 'ijara_şartnomasi_12.pdf', size: '240 KB', added: 'Bugun' },
-  { id: 'd2', name: 'mehnat_şartnomasi.docx', size: '86 KB', added: 'Keça' },
-  { id: 'd3', name: 'işonçnoma_namuna.docx', size: '34 KB', added: '15-noy' },
-];
 
 /** Recent Q&A chats for the sidebar (demo until the API stores chats). */
 export const recentChats: { id: string; title: string; q: string; when: string }[] = [

@@ -1,27 +1,48 @@
 'use client';
 
+import type { DocumentWire, SigningRequestRow } from '@lex/contracts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEMO_LOGIN } from '@/lib/auth';
-import { contracts, myDocuments, severityMeta } from '@/lib/demo';
-import { createDraft, DEMO_DRAFT_ID, sendStartError, startSending } from '@/lib/signing';
+import { formatWhen } from '@/lib/format';
+import {
+  createDraft,
+  DEMO_DRAFT_ID,
+  listDocuments,
+  listSends,
+  sendStartError,
+  startSending,
+  uploadDocument,
+} from '@/lib/signing';
 import { formatSize, SEND_ACCEPT, sendUploadError, UPLOAD_ACCEPT, UPLOAD_MAX_MB, uploadError } from '@/lib/upload';
 import { CheckIcon, ChevronRightIcon, FileIcon, PenIcon, UploadIcon } from './Icons';
 
-type Contract = (typeof contracts)[number];
+/** One row of the signing list: a send of mine, or my own copy in someone else's send. */
+type SigningRow = SigningRequestRow & { box: 'sent' | 'inbox' };
 
-// Signing list filters. Whose turn it is decides the filter:
-// mine to sign → "Imzolaşim kerak"; waiting on the other side (sent by me, or I asked for changes) → "Javob kutilmoqda".
-const FILTERS: { id: string; label: string; empty: string; match: (c: Contract) => boolean }[] = [
-  { id: 'sign', label: 'Imzolaşim kerak', empty: 'Hozirça imzolaşingiz kerak bölgan hujjat yöq', match: (c) => c.status === 'new' },
+/** Fully signed: everyone invited signed (an open-link-only send stays "waiting"). */
+const isDone = (r: SigningRow) =>
+  r.box === 'inbox'
+    ? r.mine?.status === 'signed'
+    : r.status === 'sent' && r.recipientCount > 0 && r.signedCount >= r.recipientCount;
+
+// Whose turn it is decides the filter: mine to sign → "Imzolaşim kerak";
+// my sends still collecting signatures (and drafts) → "Javob kutilmoqda".
+const FILTERS: { id: string; label: string; empty: string; match: (r: SigningRow) => boolean }[] = [
+  {
+    id: 'sign',
+    label: 'Imzolaşim kerak',
+    empty: 'Hozirça imzolaşingiz kerak bölgan hujjat yöq',
+    match: (r) => r.box === 'inbox' && !isDone(r),
+  },
   {
     id: 'waiting',
     label: 'Javob kutilmoqda',
     empty: 'Javob kutayotgan hujjat yöq',
-    match: (c) => c.status === 'waiting' || c.status === 'changes',
+    match: (r) => r.box === 'sent' && !isDone(r),
   },
-  { id: 'signed', label: 'Imzolangan', empty: 'Hali imzolangan hujjat yöq', match: (c) => c.status === 'signed' },
+  { id: 'signed', label: 'Imzolangan', empty: 'Hali imzolangan hujjat yöq', match: isDone },
 ];
 
 type View = 'signing' | 'files';
@@ -29,55 +50,89 @@ type View = 'signing' | 'files';
 /** "Hujjatlar" page: documents in a signing flow (with filters) and the user's own files. */
 export function Documents() {
   const [view, setView] = useState<View>('signing');
-  const [files, setFiles] = useState<FileRow[]>(myDocuments);
+  const [sends, setSends] = useState<SigningRow[] | null>(null);
+  const [files, setFiles] = useState<DocumentWire[] | null>(null);
   const [error, setError] = useState('');
-  const [starting, setStarting] = useState(false);
+  const [busy, setBusy] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const sendInput = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  /** PDF → upload → draft → the field editor. */
+  const loadFiles = useCallback(async () => {
+    try {
+      setFiles((await listDocuments()).documents);
+    } catch {
+      setFiles([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([listSends('sent'), listSends('inbox')])
+      .then(([sent, inbox]) => {
+        if (cancelled) return;
+        setSends([
+          ...inbox.requests.map((r) => ({ ...r, box: 'inbox' as const })),
+          ...sent.requests.map((r) => ({ ...r, box: 'sent' as const })),
+        ]);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSends([]);
+        setError('Röyxatni yuklab bölmadi.');
+      });
+    listDocuments()
+      .then((list) => !cancelled && setFiles(list.documents))
+      .catch(() => !cancelled && setFiles([]));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** "Hujjat yuklaş": files for the AI review (PDF / DOCX / TXT). */
+  async function upload(list: FileList | null | undefined) {
+    const picked = Array.from(list ?? []);
+    if (picked.length === 0) return;
+    setError(picked.map(uploadError).find(Boolean) ?? '');
+    const ok = picked.filter((f) => !uploadError(f));
+    if (ok.length === 0) return;
+    setView('files');
+    if (DEMO_LOGIN) return;
+    setBusy(true);
+    try {
+      for (const f of ok) await uploadDocument(f);
+    } catch (err) {
+      setError(sendStartError(err));
+    } finally {
+      setBusy(false);
+      void loadFiles();
+    }
+  }
+
+  /** "Imzoga yuboriş": PDF → upload → draft → the field editor. */
   async function sendForSignature(file: File | undefined) {
     if (!file) return;
     const problem = sendUploadError(file);
     if (problem) return setError(problem);
     setError('');
-    setStarting(true);
+    setBusy(true);
     try {
-      const { documentId, draftId } = await startSending(file);
-      setFiles((prev) => [
-        { id: draftId, name: file.name, size: formatSize(file.size), added: 'Hozirgina', documentId },
-        ...prev,
-      ]);
-      router.push(`/documents/send/${draftId}`);
+      router.push(`/documents/send/${(await startSending(file)).draftId}`);
     } catch (err) {
       setError(sendStartError(err));
-      setStarting(false);
+      setBusy(false);
     }
   }
 
-  /** A file already uploaded (or the demo one) → a new draft. */
-  async function sendExisting(row: FileRow) {
+  /** A PDF already uploaded → a new draft. */
+  async function sendExisting(doc: DocumentWire) {
     setError('');
-    if (DEMO_LOGIN || !row.documentId) return router.push(`/documents/send/${DEMO_DRAFT_ID}`);
+    if (DEMO_LOGIN) return router.push(`/documents/send/${DEMO_DRAFT_ID}`);
     try {
-      router.push(`/documents/send/${(await createDraft(row.documentId)).id}`);
+      router.push(`/documents/send/${(await createDraft(doc.id)).id}`);
     } catch (err) {
       setError(sendStartError(err));
     }
-  }
-
-  // Demo: uploads live in this list only until the page reloads. TODO: POST /documents + list from the API.
-  function add(list: FileList | null | undefined) {
-    const picked = Array.from(list ?? []);
-    if (picked.length === 0) return;
-    setError(picked.map(uploadError).find(Boolean) ?? '');
-    const ok = picked.filter((f) => !uploadError(f));
-    setFiles((prev) => [
-      ...ok.map((f) => ({ id: `${f.name}-${f.lastModified}-${Math.random()}`, name: f.name, size: formatSize(f.size), added: 'Hozirgina' })),
-      ...prev,
-    ]);
-    if (ok.length) setView('files');
   }
 
   return (
@@ -89,11 +144,10 @@ export function Documents() {
         multiple
         hidden
         onChange={(e) => {
-          add(e.target.files);
+          void upload(e.target.files);
           e.target.value = '';
         }}
       />
-
       <input
         ref={sendInput}
         type="file"
@@ -108,13 +162,13 @@ export function Documents() {
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl font-medium tracking-tight">Hujjatlar</h1>
         <div className="flex items-center gap-2">
-          <button onClick={() => input.current?.click()} className="btn btn-secondary btn-sm">
+          <button onClick={() => input.current?.click()} disabled={busy} className="btn btn-secondary btn-sm">
             <UploadIcon className="size-4" />
             Hujjat yuklaş
           </button>
-          <button onClick={() => sendInput.current?.click()} disabled={starting} className="btn btn-primary btn-sm">
+          <button onClick={() => sendInput.current?.click()} disabled={busy} className="btn btn-primary btn-sm">
             <PenIcon className="size-4" />
-            {starting ? 'Tayyorlanmoqda…' : 'Imzoga yuboriş'}
+            {busy ? 'Tayyorlanmoqda…' : 'Imzoga yuboriş'}
           </button>
         </div>
       </div>
@@ -139,21 +193,26 @@ export function Documents() {
         ))}
       </div>
 
-      {view === 'signing' ? <SigningList /> : <MyFiles files={files} onDrop={add} onSend={sendExisting} />}
+      {view === 'signing' ? (
+        <SigningList rows={sends} />
+      ) : (
+        <MyFiles files={files} onDrop={(l) => void upload(l)} onSend={(d) => void sendExisting(d)} />
+      )}
     </div>
   );
 }
 
-function SigningList() {
+function SigningList({ rows }: { rows: SigningRow[] | null }) {
   const [filter, setFilter] = useState(FILTERS[0].id);
   const active = FILTERS.find((f) => f.id === filter)!;
-  const rows = contracts.filter(active.match);
+  if (!rows) return <p className="mt-8 text-center text-sm text-muted">Yuklanmoqda…</p>;
+  const shown = rows.filter(active.match);
 
   return (
     <>
       <div className="mt-5 flex flex-wrap gap-1.5">
         {FILTERS.map((f) => {
-          const n = contracts.filter(f.match).length;
+          const n = rows.filter(f.match).length;
           const on = f.id === filter;
           return (
             <button
@@ -172,38 +231,13 @@ function SigningList() {
         })}
       </div>
 
-      {rows.length === 0 ? (
+      {shown.length === 0 ? (
         <Empty text={active.empty} />
       ) : (
         <ul className="mt-4 flex flex-col gap-2">
-          {rows.map((c) => (
-            <li key={c.id}>
-              <Link
-                href="/review"
-                className="group flex items-center gap-4 rounded-2xl border border-line bg-surface px-4 py-3.5 transition hover:border-line-strong hover:shadow-[0_4px_16px_var(--shadow)] sm:px-5"
-              >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-                  <FileIcon className="size-5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate font-medium">{c.title}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
-                    <span className="truncate">{c.direction === 'in' ? `${c.sender} yubordi` : `${c.sender}ga yuborildi`}</span>
-                    <span className="text-faint">·</span>
-                    <span>{c.received}</span>
-                    {c.risk && c.status !== 'signed' && (
-                      <>
-                        <span className="text-faint">·</span>
-                        <span className="flex items-center gap-1.5">
-                          <span className={`size-1.5 rounded-full ${severityMeta[c.risk].dot}`} />
-                          {severityMeta[c.risk].label} xavf
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-                <RowAction status={c.status} />
-              </Link>
+          {shown.map((r) => (
+            <li key={`${r.box}-${r.id}-${r.mine?.recipientId ?? ''}`}>
+              <SigningRowLink row={r} />
             </li>
           ))}
         </ul>
@@ -212,12 +246,57 @@ function SigningList() {
   );
 }
 
-/** What the row means for the user right now, said plainly. */
-function RowAction({ status }: { status: Contract['status'] }) {
-  if (status === 'new') {
-    return <span className="btn btn-primary btn-sm shrink-0">Körib çiqiş</span>;
+/** Inbox rows open my own signing link; my sends open the detail (drafts: the editor). */
+function SigningRowLink({ row: r }: { row: SigningRow }) {
+  const className =
+    'group flex items-center gap-4 rounded-2xl border border-line bg-surface px-4 py-3.5 transition hover:border-line-strong hover:shadow-[0_4px_16px_var(--shadow)] sm:px-5';
+  const body = (
+    <>
+      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
+        <FileIcon className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate font-medium">{r.title}</div>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-muted">
+          {r.box === 'inbox' ? (
+            <span className="truncate">{r.senderName ?? 'Kimdir'} yubordi</span>
+          ) : r.status === 'draft' ? (
+            <span>Qoralama</span>
+          ) : (
+            <span>
+              {r.signedCount} / {r.recipientCount} imzoladi
+              {r.openLinkEnabled && ' · oçiq havola'}
+            </span>
+          )}
+          <span className="text-faint">·</span>
+          <span>{formatWhen(r.sentAt ?? r.createdAt)}</span>
+        </div>
+      </div>
+      <RowAction row={r} />
+    </>
+  );
+
+  if (r.box === 'inbox' && r.mine) {
+    return (
+      <a href={r.mine.signUrl} target="_blank" rel="noreferrer" className={className}>
+        {body}
+      </a>
+    );
   }
-  if (status === 'signed') {
+  const href = r.status === 'draft' ? `/documents/send/${r.id}` : `/documents/sends/${r.id}`;
+  return (
+    <Link href={href} className={className}>
+      {body}
+    </Link>
+  );
+}
+
+/** What the row means for the user right now, said plainly. */
+function RowAction({ row: r }: { row: SigningRow }) {
+  if (r.box === 'inbox' && r.mine?.status !== 'signed') {
+    return <span className="btn btn-primary btn-sm shrink-0">Imzolaş</span>;
+  }
+  if (isDone(r)) {
     return (
       <span className="flex shrink-0 items-center gap-1 text-sm text-success">
         <CheckIcon className="size-4" />
@@ -227,23 +306,22 @@ function RowAction({ status }: { status: Contract['status'] }) {
   }
   return (
     <span className="flex shrink-0 items-center gap-2 text-sm text-muted">
-      <span className="hidden sm:inline">{status === 'changes' ? 'Özgartiriş söralgan' : 'Imzo kutilmoqda'}</span>
+      <span className="hidden sm:inline">
+        {r.status === 'draft' ? 'Davom ettiriş' : r.status === 'cancelled' ? 'Bekor qilingan' : 'Imzo kutilmoqda'}
+      </span>
       <ChevronRightIcon className="size-4 transition group-hover:translate-x-0.5" />
     </span>
   );
 }
-
-/** `documentId` is set once the file is on the server (POST /documents). */
-type FileRow = { id: string; name: string; size: string; added: string; documentId?: string };
 
 function MyFiles({
   files,
   onDrop,
   onSend,
 }: {
-  files: FileRow[];
+  files: DocumentWire[] | null;
   onDrop: (list: FileList) => void;
-  onSend: (row: FileRow) => void;
+  onSend: (doc: DocumentWire) => void;
 }) {
   const [dragging, setDragging] = useState(false);
 
@@ -269,7 +347,9 @@ function MyFiles({
           : `Faylni şu yerga taşlang yoki «Hujjat yuklaş»ni bosing · PDF, DOCX, ${UPLOAD_MAX_MB} MB gaça`}
       </p>
 
-      {files.length === 0 ? (
+      {!files ? (
+        <p className="mt-8 text-center text-sm text-muted">Yuklanmoqda…</p>
+      ) : files.length === 0 ? (
         <Empty text="Hali hujjat yuklanmagan" />
       ) : (
         <ul
@@ -286,13 +366,14 @@ function MyFiles({
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[15px]">{f.name}</div>
                   <div className="text-sm text-muted">
-                    {f.size} · {f.added}
+                    {formatSize(f.sizeBytes)} · {formatWhen(f.createdAt)}
+                    {f.version > 1 && ` · ${f.version}-versiya`}
                   </div>
                 </div>
                 <span className="hidden text-sm text-muted transition group-hover:text-accent sm:inline">AI bilan tekşiriş</span>
                 <ChevronRightIcon className="size-4 text-muted transition group-hover:translate-x-0.5" />
               </Link>
-              {/\.pdf$/i.test(f.name) && (
+              {f.contentType === 'application/pdf' && (
                 <button onClick={() => onSend(f)} className="btn btn-soft btn-sm mr-4 shrink-0 sm:mr-5">
                   Imzoga yuboriş
                 </button>
