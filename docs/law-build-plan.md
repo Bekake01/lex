@@ -163,6 +163,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** baseline keyword recall@10 recorded; embedding model chosen with numbers.
 
+**Status (2026-11-20):** 102 queries in `apps/api/eval/search/queries.jsonl`; `pnpm eval:search`; keyword baseline on codes + laws: R@10 91.3%, MRR 0.765. Embedding harness (`src/law/embeddings/`, `test/law/embed-eval.full.spec.ts`) ready; Voyage / bge-m3 runs pending a key and a server. Numbers and next steps: `docs/decisions/embeddings.md`.
+
 ### Phase 8 — Embeddings + hybrid search (2 days)
 **Build**
 - `EmbeddingService` (one interface, two providers): batching, retry with backoff, rate limit
