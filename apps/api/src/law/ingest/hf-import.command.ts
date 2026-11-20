@@ -1,5 +1,8 @@
 /**
- * pnpm ingest:hf [path-to-articles.parquet]
+ * pnpm ingest:hf [path-to-articles.parquet] [--types code,law,constitution]
+ *
+ * `--types` imports only those act types: codes + laws + Constitution is
+ * ~12% of the text but holds every contract-relevant article (small laptops).
  *
  * Imports the Hugging Face dataset sukhrobnurali/uzbek-legal-corpus
  * (articles config) into the database. Download the file first:
@@ -22,6 +25,7 @@ function printReport(r: HfImportReport): void {
   line('skipped (too-short)', r.skipped['too-short']);
   line('skipped (empty text)', r.skipped['empty-text']);
   line('skipped (missing id)', r.skipped['missing-id']);
+  line('skipped (from lex.uz)', r.skipped['from-lexuz']);
   line('renamed duplicate ids', r.renamedDuplicateIds);
   line('acts', `${r.acts.inserted} inserted, ${r.acts.updated} updated, ${r.acts.unchanged} unchanged`);
   line('articles', `${r.articles.inserted} inserted, ${r.articles.updated} updated, ${r.articles.unchanged} unchanged`);
@@ -33,14 +37,20 @@ function printReport(r: HfImportReport): void {
 async function main(): Promise<void> {
   if (existsSync('.env')) process.loadEnvFile('.env');
   const env = parseEnv(process.env);
-  const path = process.argv[2] ?? DEFAULT_PATH;
+  // pnpm ingest:hf [path] [--types code,law,constitution]
+  const args = process.argv.slice(2);
+  const typesAt = args.indexOf('--types');
+  const docTypes = typesAt >= 0 ? (args[typesAt + 1] ?? '').split(',').map((t) => t.trim()).filter(Boolean) : undefined;
+  const path = args.find((a, i) => !a.startsWith('--') && i !== typesAt + 1) ?? DEFAULT_PATH;
   if (!path.includes('*') && !existsSync(path)) {
     throw new Error(`Parquet file not found: ${path} (see the download link at the top of hf-import.command.ts)`);
   }
+  if (docTypes) console.log(`Importing only: ${docTypes.join(', ')}`);
 
   const pool = new pg.Pool({ connectionString: env.DATABASE_URL, max: 2 });
   try {
     const report = await importHf(drizzle(pool, { schema }), path, {
+      docTypes,
       onProgress: (n) => {
         if (n % 10_240 < 2048) console.log(`  … ${n} rows`);
       },

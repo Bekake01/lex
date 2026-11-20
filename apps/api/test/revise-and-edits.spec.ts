@@ -30,6 +30,9 @@ import type {
   ExtractedDoc,
 } from '../src/law-search/law-search.types.js';
 import { EditNotFoundError } from '../src/law-search/law-search.types.js';
+import { DocumentProcessingService } from '../src/law/documents/document-processing.service.js';
+import { extractDocument } from '../src/law/documents/extract.js';
+import { makeDocx } from './helpers/doc-fixtures.js';
 import type { ReviseDocumentJob } from '../src/queue/queue.constants.js';
 import { StorageService } from '../src/storage/storage.service.js';
 import { AiUsageService } from '../src/usage/ai-usage.service.js';
@@ -502,6 +505,66 @@ describe('corrections', () => {
 
       expect(result.rejected).toBe(1);
       expect(await documentsService.isLatest(document)).toBe(true);
+    });
+
+    describe('with a real DOCX and the law track DocumentProcessingService', () => {
+      const processing = new DocumentProcessingService();
+
+      async function seedDocxEdit() {
+        const document = await documentsService.upload(user, {
+          name: 'ijara.docx',
+          contentType: DOCX_CONTENT_TYPE,
+          bytes: await makeDocx(CONTRACT.split('\n')),
+        });
+        const [review] = await db
+          .insert(aiReviews)
+          .values({
+            documentId: document.id,
+            requestedByUserId: user.id,
+            agencyId: user.agencyId,
+            status: 'done',
+            language: 'uz',
+            docType: 'rental',
+            promptVersion: 'v1',
+            model: 'gpt-5',
+            riskLevel: 'high',
+            verdict: 'needs_changes',
+            idempotencyKey: `${document.id}:${document.sha256}:v1:uz`,
+          })
+          .returning();
+        const { service } = reviewService();
+        await service.createMessage(user, review.id, 'tuzating');
+        await runProposal(review.id, document.id);
+        const [edit] = await db.select().from(aiEdits).where(eq(aiEdits.reviewId, review.id));
+        const edits = new EditsService(db, processing, documentsService, service, storage);
+        return { document, review, edit, edits };
+      }
+
+      it('accepting creates a real DOCX version 2 with the edit applied', async () => {
+        const { document, review, edit, edits } = await seedDocxEdit();
+        const result = await edits.accept(user, review.id, [edit.id]);
+        expect(result.version).toBe(2);
+
+        const [v2] = await db.select().from(documents).where(eq(documents.id, result.documentId));
+        const v2Doc = await extractDocument(await storage.get(v2.storageKey), DOCX_CONTENT_TYPE);
+        expect(v2Doc.text).toContain('30 kun oldin ogohlantirib oshirishi mumkin');
+        expect(v2Doc.text).not.toContain(UNIQUE);
+
+        const v1Doc = await extractDocument(await storage.get(document.storageKey), DOCX_CONTENT_TYPE);
+        expect(v1Doc.text).toContain(UNIQUE);
+      });
+
+      it('a changed document gives 422 EDIT_NOT_APPLICABLE and puts the edit back', async () => {
+        const { document, review, edit, edits } = await seedDocxEdit();
+        await storage.put(document.storageKey, await makeDocx(['1. Butunlay boshqa matn.']));
+
+        await expect(edits.accept(user, review.id, [edit.id])).rejects.toMatchObject({
+          status: 422,
+          response: { code: 'EDIT_NOT_APPLICABLE', editId: edit.id },
+        });
+        const [after] = await db.select().from(aiEdits).where(eq(aiEdits.id, edit.id));
+        expect(after.status).toBe('proposed');
+      });
     });
   });
 });

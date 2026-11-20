@@ -9,6 +9,16 @@ const xmlEscape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').
 
 /** A minimal but valid DOCX: one `<w:p>` per paragraph. */
 export async function makeDocx(paragraphs: string[]): Promise<Uint8Array> {
+  const body = paragraphs.map((p) => `<w:p><w:r><w:t xml:space="preserve">${xmlEscape(p)}</w:t></w:r></w:p>`).join('');
+  return makeDocxXml(body);
+}
+
+/** Placeholder styles part, used to prove that untouched parts survive byte for byte. */
+export const STYLES_XML =
+  '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/></w:style></w:styles>';
+
+/** A DOCX whose `<w:body>` is the given raw WordprocessingML (runs, tables, lists…). */
+export async function makeDocxXml(bodyXml: string): Promise<Uint8Array> {
   const zip = new JSZip();
   zip.file(
     '[Content_Types].xml',
@@ -26,12 +36,12 @@ export async function makeDocx(paragraphs: string[]): Promise<Uint8Array> {
       '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
       '</Relationships>',
   );
-  const body = paragraphs.map((p) => `<w:p><w:r><w:t xml:space="preserve">${xmlEscape(p)}</w:t></w:r></w:p>`).join('');
+  zip.file('word/styles.xml', STYLES_XML);
   zip.file(
     'word/document.xml',
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
       '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
-      `<w:body>${body}</w:body></w:document>`,
+      `<w:body>${bodyXml}</w:body></w:document>`,
   );
   return zip.generateAsync({ type: 'uint8array' });
 }

@@ -174,6 +174,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** all rows embedded; `eval:search` recall@10 is clearly above the keyword baseline (target ≥ 0.75 at this point); `/search` p95 < 300 ms for 5 queries.
 
+**Status (2026-11-21): code done, measurement pending.** `EmbeddingService` (`src/law/embeddings/embedding.service.ts`: Voyage from env, query cache of 2,000, Cyrillic queries embedded in Latin, keyword-only fallback when the provider fails or is not configured); hybrid `SearchService.search` (keyword + vector top 50 per query, RRF); `pnpm ingest:embed [--limit N]` (resumable, token-budget batches); `pnpm eval:search [--keyword-only] --out`; `pnpm ingest:hf --types …` for a small subset. Tests use a fake provider (`test/law/hybrid-search.spec.ts`). The full embed + measurement runs on the MacBook: Job E in `docs/heavy-jobs-mac.md`.
+
 ### Phase 9 — Core acts from lex.uz (3 days)
 **Build**
 - `data/core-acts.yaml`: about 50 acts (Civil Code, Labor Code 2023, Tax, Housing, Family codes; laws on consumer rights, personal data, the rental market, contract-related laws…) with lex.uz ids and the `docType`s each one anchors
@@ -183,6 +185,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 - Anchor sets: `/search` always adds the top matches from the anchor acts for the given `docType`
 
 **Done when:** all core acts present in uz (and ru where lex.uz has it) with current edition dates; parser tests on saved HTML fixtures; anchor acts appear in results for each `docType`.
+
+**Status (2026-11-21): built, uz only.** `src/law/lexuz/`: `core-acts.ts` (16 acts with anchor contract types, in code since `data/` is git-ignored), `fetcher.ts` (one request per 20 s, lex.uz's published crawl delay; retries; stops after 3 failures in a row; disk cache `data/lexuz/`), `parser.ts` (cheerio: ACT_TITLE / CLAUSE_DEFAULT / ACT_TEXT / TEXT_HEADER_DEFAULT, header number and dates, newest `ONDATE` edition, "Hujjat kuchini yoʻqotgan" → repealed), `ingest-core.ts` + `pnpm ingest:core` (replaces the act, keeps embeddings of unchanged rows, idempotent). A later `ingest:hf` skips lex.uz acts. Anchors: `SearchService.search({ docType })` adds rankings restricted to that type's anchor acts. Tests on two saved pages (`test/law/fixtures/lexuz/`). **Not done:** Russian versions (Phase 15); the list is 16 acts, not ~50, and needs a lawyer's review; `status_checked` is set from the lex.uz page itself, not a human check.
 
 ### Phase 10 — Search quality pass (1–2 days) → Sync 2 with B
 **Build**
@@ -222,6 +226,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 - Apply edits in order; re-zip; output opens in Word and LibreOffice
 
 **Done when:** fixtures pass (text split across runs, bold inside a sentence, tables, numbered lists, Uzbek apostrophes); the round-trip test shows unchanged paragraphs are byte-identical in the XML; **B's accept-edits route works with it**.
+
+**Status (2026-11-21):** built in `apps/api/src/law/documents/apply-edits.ts`, behind `DocumentProcessingService.applyEdits` (no separate route: one backend). Also handles an `original` that spans paragraphs. Tests: `test/law/apply-edits.spec.ts` (14) and two real-DOCX tests in B's `test/revise-and-edits.spec.ts` (accept → version 2; changed document → 422 `EDIT_NOT_APPLICABLE`). **Not yet checked by hand in Word / LibreOffice**: open one edited file in each before release.
 
 ### Phase 14 — lex.uz daily sync (2–3 days)
 **Build** `src/sync/`:

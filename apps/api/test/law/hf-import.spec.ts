@@ -214,3 +214,21 @@ describe('importHf splitting long rows', () => {
     expect((await storedIds()).every((id) => id.startsWith('-777-full-p'))).toBe(true);
   });
 });
+
+describe('importHf docTypes filter (pnpm ingest:hf --types)', () => {
+  it('imports only the chosen act types', async () => {
+    const { db, close } = await createTestDb();
+    const dir = mkdtempSync(join(tmpdir(), 'lex-hf-types-'));
+    try {
+      const file = join(dir, 'articles.parquet');
+      await writeParquet(file, ROWS);
+      const report = await importHf(db, file, { docTypes: ['code', 'law'] });
+      expect(report.actsByType).toEqual({ code: 1, law: 1 });
+      const types = (await db.select({ t: lawActs.actType }).from(lawActs)).map((r) => r.t).sort();
+      expect(types).toEqual(['code', 'law']);
+    } finally {
+      await close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+});

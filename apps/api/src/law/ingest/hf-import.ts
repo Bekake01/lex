@@ -1,5 +1,5 @@
 import { DuckDBInstance } from '@duckdb/node-api';
-import { sql, type SQL } from 'drizzle-orm';
+import { eq, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../../db/db.module.js';
 import { lawActs, lawArticles, type NewLawAct, type NewLawArticle } from '../../db/schema/index.js';
 import { chunkArticle } from './chunk.js';
@@ -31,7 +31,11 @@ const INSERT_SLICE = 2000;
 export interface HfImportOptions {
   batchSize?: number;
   onProgress?: (rowsRead: number) => void;
+  /** Import only these dataset `doc_type`s (e.g. code, law, constitution: a small-laptop subset). */
+  docTypes?: string[];
 }
+
+const DOC_TYPE = /^[a-z_]+$/;
 
 /** `excluded.<col>` for every column an upsert may overwrite. */
 const excluded = (column: string): SQL => sql.raw(`excluded.${column}`);
@@ -44,12 +48,12 @@ const excluded = (column: string): SQL => sql.raw(`excluded.${column}`);
 export async function importHf(
   db: Db,
   parquetPath: string,
-  { batchSize = 1000, onProgress }: HfImportOptions = {},
+  { batchSize = 1000, onProgress, docTypes }: HfImportOptions = {},
 ): Promise<HfImportReport> {
   const started = Date.now();
   const report: HfImportReport = {
     rows: 0,
-    skipped: { 'too-short': 0, 'empty-text': 0, 'missing-id': 0 },
+    skipped: { 'too-short': 0, 'empty-text': 0, 'missing-id': 0, 'from-lexuz': 0 },
     renamedDuplicateIds: 0,
     split: { articles: 0, parts: 0 },
     acts: { inserted: 0, updated: 0, unchanged: 0 },
@@ -59,6 +63,11 @@ export async function importHf(
   };
   const seenIds = new Map<string, number>();
   const actTypes = new Map<string, string>();
+  // Acts imported from lex.uz (Phase 9) are newer and authoritative: the
+  // dataset snapshot never overwrites them or their articles.
+  const fromLexUz = new Set(
+    (await db.select({ docId: lawActs.docId }).from(lawActs).where(eq(lawActs.source, 'lexuz'))).map((r) => r.docId),
+  );
 
   let acts = new Map<string, NewLawAct>();
   let articles: NewLawArticle[] = [];
@@ -91,7 +100,13 @@ export async function importHf(
     // which keeps the -dN renaming stable across runs.
     const columns = HF_COLUMNS.map((c) => (c === 'doc_id' ? 'CAST(doc_id AS VARCHAR) AS doc_id' : c));
     const result = await conn.stream(
-      `SELECT ${columns.join(', ')} FROM read_parquet('${parquetPath.replaceAll("'", "''")}')`,
+      `SELECT ${columns.join(', ')} FROM read_parquet('${parquetPath.replaceAll("'", "''")}')` +
+        (docTypes?.length
+          ? ` WHERE doc_type IN (${docTypes
+              .filter((t) => DOC_TYPE.test(t))
+              .map((t) => `'${t}'`)
+              .join(', ')})`
+          : ''),
     );
 
     for (;;) {
@@ -106,6 +121,10 @@ export async function importHf(
         const mapped = mapRow(row, id);
         if (!mapped.ok) {
           report.skipped[mapped.reason]++;
+          continue;
+        }
+        if (fromLexUz.has(mapped.act.docId)) {
+          report.skipped['from-lexuz']++;
           continue;
         }
         acts.set(mapped.act.docId, mapped.act);
