@@ -56,18 +56,31 @@ export const MARK_FIELD_TYPES = ['signature', 'initial', 'stamp'] as const;
  * the Uzbek apostrophes ʻ ʼ ‘ ’ and common typographic punctuation.
  */
 const PRINTABLE =
-  /^[\x20-\x7E\xA0-ɏЀ-ӿ‘’“”«»–—…•ʻʼ№]*$/u;
+  /^[\x20-\x7E\xA0-\u024F\u0400-\u04FF‘’“”«»–—…•ʻʼ№]*$/u;
+
+/**
+ * Letters a name may use, all present in Noto Sans: Latin (incl. Latin-1,
+ * Extended-A/B, Extended Additional) and Cyrillic (incl. Supplement). Explicit
+ * ranges, not `\p{Script=…}`, which also takes Roman numerals and new letters
+ * the font has no glyph for.
+ */
+const NAME_LETTERS =
+  'A-Za-z\\xC0-\\xD6\\xD8-\\xF6\\xF8-\\u024F\\u1E00-\\u1EFF\\u0400-\\u0481\\u048A-\\u052F';
+/** The joins names really use, plus combining accents. */
+const NAME_JOINS = " '`‘’ʻʼ.\\u0300-\\u036F-";
 
 /**
  * A person's name: Latin or Cyrillic letters and the joins names really use —
  * space, hyphen, full stop and every apostrophe Uzbek is typed with
  * (' ` ‘ ’ ʻ ʼ). At least one letter, so a box of punctuation is not a name.
  */
-const PERSON_NAME =
-  /^(?=.*[\p{Script=Latin}\p{Script=Cyrillic}])[\p{Script=Latin}\p{Script=Cyrillic}\p{M} '`‘’ʻʼ.-]+$/u;
+const PERSON_NAME = new RegExp(
+  `^(?=.*[${NAME_LETTERS}])[${NAME_LETTERS}${NAME_JOINS}]+$`,
+  'u',
+);
 
 /** What may be TYPED into a name box; digits and symbols are dropped. */
-const NAME_CHAR = /[\p{Script=Latin}\p{Script=Cyrillic}\p{M} '`‘’ʻʼ.-]/u;
+const NAME_CHAR = new RegExp(`[${NAME_LETTERS}${NAME_JOINS}]`, 'u');
 
 /** The range a date box accepts — also the calendar picker's min and max. */
 export const DATE_INPUT_MIN = '1900-01-01';

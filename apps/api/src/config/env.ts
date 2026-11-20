@@ -1,3 +1,4 @@
+import { parseSealRing } from '@lex/crypto';
 import { z } from 'zod';
 
 /**
@@ -50,6 +51,13 @@ export const envSchema = z
 
     /** Signs access tokens (HS256). HS256 needs at least 256 bits of key. */
     JWT_SECRET: z.string().min(32, 'must be at least 32 characters'),
+
+    /**
+     * Ed25519 seal key ring (JSON, same format as tech award's ESIGN_SEAL_KEYS):
+     * seals every signed copy. Make one with `pnpm --filter api seal:keygen`.
+     * Never delete an old key — mark it `retiring` so old seals still verify.
+     */
+    SEAL_KEYS: optionalSecret,
 
     /* ------------------------------------------------------------------ AI -- */
 
@@ -117,6 +125,24 @@ export const envSchema = z
     SUMMARY_WAIT_MS: z.coerce.number().int().min(0).default(60_000),
   })
   .superRefine((env, ctx) => {
+    if (env.SEAL_KEYS) {
+      try {
+        parseSealRing(env.SEAL_KEYS);
+      } catch {
+        // Never echo the value: it holds private keys.
+        ctx.addIssue({
+          code: 'custom',
+          path: ['SEAL_KEYS'],
+          message: 'not a valid seal ring (run pnpm --filter api seal:keygen)',
+        });
+      }
+    } else if (env.NODE_ENV === 'production') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SEAL_KEYS'],
+        message: 'required in production',
+      });
+    }
     if (env.STORAGE_DRIVER !== 'r2') return;
     for (const key of R2_KEYS) {
       if (!env[key]) {

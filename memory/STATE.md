@@ -20,11 +20,11 @@ Edit in place to keep this current.
 - Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
-- **Signing flow (planned):** one PDF + fields → many people, one sealed copy each; open link + password optional. Plan `docs/SIGNING-PLAN.md`, work it in order from `phases/` (01 contracts → 11 end-to-end) · Bekzod. **01 done:** signing shapes in `packages/contracts/src/signing.ts` + mocks — web and sign can build signing UI on the mocks now. **02 done:** migration `0006_signing`. **03 done:** R2 storage driver. Next: 04 crypto.
+- **Signing flow (planned):** one PDF + fields → many people, one sealed copy each; open link + password optional. Plan `docs/SIGNING-PLAN.md`, work it in order from `phases/` (01 contracts → 11 end-to-end) · Bekzod. **01 done:** signing shapes in `packages/contracts/src/signing.ts` + mocks — web and sign can build signing UI on the mocks now. **02 done:** migration `0006_signing`. **03 done:** R2 storage driver. **04 done:** seal, Noto stamping, certificate, field values (pure functions, not wired yet). Next: 05 sender API.
 - Law Phases 8–9 code done: hybrid search (keyword + Voyage) and core laws from lex.uz with anchors per contract type. Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
 - `apps/web` review screen, `apps/sign` summary step · frontend team. They need `GET /sign/:token/summary` in the sign relay allowlist.
 - Emails: `send-signing-invite` marks the request sent and logs the links; Resend delivery is the email track's.
-- Signing itself (consent, stamp, seal, certificate): `@lex/crypto` provides the hashing and the "Summary shown to signer: sha256 …" line, nothing renders a certificate yet.
+- Signing itself (consent, stamp, seal, certificate): the pieces exist (`@lex/crypto` seal + certificate PDF, `apps/api/src/signing/stamp-pdf.ts`); the completion job that runs them is phase 07.
 - Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
 
 ## Decisions
