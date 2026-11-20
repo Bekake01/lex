@@ -404,9 +404,27 @@ export const signingRequestDetailWireSchema = signingRequestWireSchema.extend({
 });
 export type SigningRequestDetailWire = z.infer<typeof signingRequestDetailWireSchema>;
 
+/** One list row: a send without its field layout. */
+export const signingRequestRowSchema = signingRequestWireSchema
+  .omit({ fields: true, pageSizes: true })
+  .extend({
+    /** `box=inbox`: who sent it. */
+    senderName: z.string().optional(),
+    /** `box=inbox`: the caller's own copy in this send (their email is a recipient). */
+    mine: z
+      .object({
+        recipientId: z.string(),
+        status: signingRecipientStatusSchema,
+        signedAt: z.string().datetime().nullable(),
+        signUrl: z.string(),
+      })
+      .optional(),
+  });
+export type SigningRequestRow = z.infer<typeof signingRequestRowSchema>;
+
 /** `GET /signature-requests?box=sent|inbox` — rows without the field layout. */
 export const signingRequestListSchema = z.object({
-  requests: z.array(signingRequestWireSchema.omit({ fields: true, pageSizes: true })),
+  requests: z.array(signingRequestRowSchema),
 });
 export type SigningRequestList = z.infer<typeof signingRequestListSchema>;
 
@@ -513,6 +531,28 @@ export type SubmitSigningBody = z.infer<typeof submitSigningBodySchema>;
 /** `GET /sign/:token/status` — the sealed copy is ready to download. */
 export const signingStatusSchema = z.object({ ready: z.boolean() });
 export type SigningStatus = z.infer<typeof signingStatusSchema>;
+
+/* ------------------------------------------------------------ errors -- */
+
+/** `code` values on signing error responses the frontend branches on. */
+export const SIGNING_ERROR_CODES = {
+  /** Only a PDF can be sent for signing (415). */
+  pdfOnly: 'PDF_ONLY',
+  /** The PDF could not be read, or has rotated pages (400). */
+  pdfUnreadable: 'PDF_UNREADABLE',
+  /** The change needs a draft; this send is already sent or cancelled (409). */
+  notDraft: 'NOT_DRAFT',
+  /** The change needs a sent send (409). */
+  notSent: 'NOT_SENT',
+  /** The send was cancelled (409). */
+  cancelled: 'REQUEST_CANCELLED',
+  /** Send needs at least one signature field (422). */
+  needsSignatureField: 'NEEDS_SIGNATURE_FIELD',
+  /** Send needs at least one person, or the open link on (422). */
+  needsRecipients: 'NEEDS_RECIPIENTS',
+  /** A field points past the last page, or two fields share an id (400). */
+  badFields: 'BAD_FIELDS',
+} as const;
 
 /* ----------------------------------------------------------------- paths -- */
 

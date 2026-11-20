@@ -11,7 +11,7 @@ Tech award repo, referred to below as `TA/`: `/Users/bek/lex/President-tech-awar
 | 02 ✅ | [Database](02-database.md) | 01 | api |
 | 03 ✅ | [R2 storage](03-r2-storage.md) | — | api |
 | 04 ✅ | [Crypto, stamping, certificate](04-crypto-stamp-seal.md) | 01 | packages/crypto |
-| 05 | [Sender API](05-api-sender.md) | 02, 03 | api |
+| 05 ✅ | [Sender API](05-api-sender.md) | 02, 03 | api |
 | 06 | [Public signing API](06-api-public-signing.md) | 05 | api |
 | 07 | [Jobs: completion, invite, summary](07-jobs.md) | 04, 06 | api |
 | 08 | [Web: field editor](08-web-editor.md) | 01 (mocks) / 05 | apps/web |

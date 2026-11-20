@@ -43,6 +43,8 @@ export interface SendSigningInviteJob {
   signatureRequestId: string;
   /** Epoch ms after which the invite is sent even without summaries. */
   summaryDeadline: number;
+  /** Only these people (people added after the send); all when absent. */
+  recipientIds?: string[];
 }
 
 /**
@@ -55,5 +57,8 @@ export const jobIdForRevise = (reviewId: string, userMessageId: string) =>
   `revise.${reviewId}.${userMessageId}`;
 export const jobIdForSummarize = (signatureRequestId: string) =>
   `summarize.${signatureRequestId}`;
-export const jobIdForInvite = (signatureRequestId: string) =>
-  `invite.${signatureRequestId}`;
+/** `invite.<requestId>` at send; `invite.<requestId>.<firstNewRecipientId>` per added batch. */
+export const jobIdForInvite = (signatureRequestId: string, batchId?: string) =>
+  batchId
+    ? `invite.${signatureRequestId}.${batchId}`
+    : `invite.${signatureRequestId}`;
