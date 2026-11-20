@@ -11,7 +11,8 @@ async function bootstrap() {
   const env = parseEnv(process.env);
 
   const app = await NestFactory.create(AppModule);
-  app.enableCors({ origin: env.WEB_ORIGIN });
+  // credentials: the browser sends the refresh cookie to /auth.
+  app.enableCors({ origin: env.WEB_ORIGIN, credentials: true });
   app.enableShutdownHooks();
   await app.listen(env.PORT);
 }
