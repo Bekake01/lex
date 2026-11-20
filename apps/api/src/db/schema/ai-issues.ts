@@ -42,7 +42,7 @@ export const aiIssues = pgTable(
     recommendation: text().notNull(),
 
     citation: jsonb().$type<CitationSnapshot>(),
-    /** Keeps the order Claude returned, which is roughly by importance. */
+    /** Keeps the order the model returned, which is roughly by importance. */
     orderIndex: integer().notNull().default(0),
 
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

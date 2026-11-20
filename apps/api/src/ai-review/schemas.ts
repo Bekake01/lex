@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Schemas for Claude's structured output.
+ * Schemas for the model's structured output (OpenAI, strict JSON Schema).
  *
  * Structured outputs want every property present, so "absent" is modelled with
  * `.nullable()` rather than `.optional()`. These are the model's shapes, not

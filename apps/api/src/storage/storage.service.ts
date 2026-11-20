@@ -1,5 +1,5 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { Inject, Injectable } from '@nestjs/common';
 import { ENV, type Env } from '../config/env.js';
 
@@ -35,10 +35,15 @@ export class StorageService {
     await unlink(this.pathFor(key)).catch(() => undefined);
   }
 
-  /** Rejects any key that would escape the storage root. */
+  /**
+   * Rejects any key that would escape the storage root. Uses `relative()`
+   * rather than a '/' prefix check, which rejected every key on Windows
+   * (resolve() returns backslash paths there).
+   */
   private pathFor(key: string): string {
     const path = resolve(join(this.root, key));
-    if (path !== this.root && !path.startsWith(this.root + '/')) {
+    const rel = relative(this.root, path);
+    if (rel.startsWith('..') || isAbsolute(rel)) {
       throw new Error('Invalid storage key');
     }
     return path;

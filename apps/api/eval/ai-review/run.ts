@@ -1,9 +1,9 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type Anthropic from '@anthropic-ai/sdk';
 import {
   AiService,
+  type AiContentBlock,
   addUsage,
   emptyUsage,
 } from '../../src/ai-review/ai.service.js';
@@ -110,7 +110,7 @@ async function runCase(
   };
 
   try {
-    const documentBlocks: Anthropic.Beta.BetaContentBlockParam[] = [
+    const documentBlocks: AiContentBlock[] = [
       { type: 'text', text: documentBlockText(evalCase.text) },
     ];
 
@@ -213,7 +213,7 @@ async function main(): Promise<void> {
 
   const ai = new AiService(env);
   if (!ai.configured) {
-    console.error('ANTHROPIC_API_KEY is not set, so there is nothing to run.');
+    console.error('OPENAI_API_KEY is not set, so there is nothing to run.');
     process.exit(1);
   }
 

@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { describe, expect, it } from 'vitest';
 import { AI_ERROR, AiError, toAiError } from './ai-errors.js';
 
@@ -6,7 +6,7 @@ import { AI_ERROR, AiError, toAiError } from './ai-errors.js';
 describe('toAiError', () => {
   it('retries a rate limit', () => {
     const error = toAiError(
-      new Anthropic.RateLimitError(429, undefined, 'slow down', new Headers()),
+      new OpenAI.RateLimitError(429, undefined, 'slow down', new Headers()),
     );
     expect(error.code).toBe(AI_ERROR.rateLimited);
     expect(error.retryable).toBe(true);
@@ -14,14 +14,14 @@ describe('toAiError', () => {
 
   it('retries a connection failure', () => {
     const error = toAiError(
-      new Anthropic.APIConnectionError({ message: 'socket' }),
+      new OpenAI.APIConnectionError({ message: 'socket' }),
     );
     expect(error.retryable).toBe(true);
   });
 
   it('does not retry a 400', () => {
     const error = toAiError(
-      new Anthropic.BadRequestError(400, undefined, 'bad', new Headers()),
+      new OpenAI.BadRequestError(400, undefined, 'bad', new Headers()),
     );
     expect(error.code).toBe(AI_ERROR.badRequest);
     expect(error.retryable).toBe(false);
@@ -29,7 +29,7 @@ describe('toAiError', () => {
 
   it('retries a 500', () => {
     const error = toAiError(
-      new Anthropic.InternalServerError(
+      new OpenAI.InternalServerError(
         503,
         undefined,
         'overloaded',

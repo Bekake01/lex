@@ -36,7 +36,7 @@ pnpm dev              # all apps
 # or: pnpm dev:api / pnpm dev:web / pnpm dev:sign
 ```
 
-Fill `ANTHROPIC_API_KEY` in `apps/api/.env` for the AI review. Then:
+Fill `OPENAI_API_KEY` in `apps/api/.env` for the AI review. Then:
 
 ```bash
 pnpm seed:demo        # a sender with a finished review and a signing link

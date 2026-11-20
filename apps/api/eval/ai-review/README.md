@@ -19,7 +19,7 @@ pnpm eval:review              # every case
 pnpm eval:review rental-01    # one case
 ```
 
-It needs `ANTHROPIC_API_KEY` in `apps/api/.env`. **It spends real tokens**: one
+It needs `OPENAI_API_KEY` in `apps/api/.env`. **It spends real tokens**: one
 classify call and one review call per case, roughly $0.10–0.50 each depending
 on the contract's length.
 

@@ -11,7 +11,7 @@ import { SummarizeForRecipientsProcessor } from './jobs/summarize-for-recipients
 import { ReviewService } from './review.service.js';
 
 /**
- * The AI slice: the Claude calls, the three jobs, and the review API.
+ * The AI slice: the AI model calls, the three jobs, and the review API.
  *
  * The queues themselves come from the global `QueueModule`; `LawSearchModule`
  * and `StorageModule` are global too, so this module only wires its own

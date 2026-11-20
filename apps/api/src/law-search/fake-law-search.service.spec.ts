@@ -71,7 +71,7 @@ describe('FakeDocProcessingService', () => {
     expect(extracted.clauses).toHaveLength(2);
   });
 
-  it('marks a PDF as scanned so the review sends it to Claude directly', async () => {
+  it('marks a PDF as scanned so the review sends it to the model directly', async () => {
     const extracted = await service.extractText(
       new Uint8Array([1]),
       'application/pdf',

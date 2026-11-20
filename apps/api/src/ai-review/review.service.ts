@@ -41,7 +41,7 @@ import { toPartyWire, toReviewMessageWire, toReviewWire } from './mappers.js';
 /**
  * Everything the review routes do, so the controllers stay thin.
  *
- * Nothing here calls Claude: a POST enqueues a job and returns an id, and the
+ * Nothing here calls the model: a POST enqueues a job and returns an id, and the
  * frontend polls the GET. That keeps the request path free of AI latency and
  * makes every AI step retryable.
  */

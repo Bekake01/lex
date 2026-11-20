@@ -43,8 +43,10 @@ export const envSchema = z.object({
 
   /* ------------------------------------------------------------------ AI -- */
 
-  ANTHROPIC_API_KEY: optionalSecret,
-  AI_MODEL: z.string().default('claude-opus-5-5'),
+  /** OpenAI (Responses API). Without it the AI jobs fail fast with AI_NOT_CONFIGURED. */
+  OPENAI_API_KEY: optionalSecret,
+  /** Any OpenAI reasoning model with structured outputs, e.g. gpt-5, gpt-5-mini. */
+  AI_MODEL: z.string().default('gpt-5'),
   /** Effort for the review call. Summaries run one level lower (see ai.service). */
   AI_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('high'),
   /** Bumped whenever a prompt changes; old reviews keep their version. */
@@ -58,8 +60,8 @@ export const envSchema = z.object({
    */
   LAW_SEARCH_MODE: z.enum(['auto', 'fake', 'db']).default('auto'),
 
-  /** Embeddings, decided in Phase 7. */
-  EMBEDDING_PROVIDER: z.enum(['voyage', 'bge-m3']).default('voyage'),
+  /** Embeddings, decided in Phase 7. `openai` reuses OPENAI_API_KEY, so it is the default until then. */
+  EMBEDDING_PROVIDER: z.enum(['openai', 'voyage', 'bge-m3']).default('openai'),
   VOYAGE_API_KEY: z.string().min(1).optional(),
   EMBEDDING_URL: z.url().optional(),
 

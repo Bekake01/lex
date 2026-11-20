@@ -1,4 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { AiContentBlock } from './ai.service.js';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import { DB, type Db } from '../db/db.module.js';
@@ -24,7 +24,7 @@ export interface DocumentContent {
 }
 
 /**
- * Turns a stored document into something Claude can read, and caches the
+ * Turns a stored document into something the model can read, and caches the
  * extraction on the document row so a file is extracted once however many
  * reviews, revisions and summaries it goes through.
  */
@@ -85,7 +85,7 @@ export class DocumentContentService {
   asContentBlocks(
     doc: Document,
     content: DocumentContent,
-  ): Anthropic.Beta.BetaContentBlockParam[] {
+  ): AiContentBlock[] {
     if (content.text.trim().length > 0) {
       return [{ type: 'text', text: documentBlockText(content.text) }];
     }

@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 /**
  * Everything the AI layer throws. `retryable` is what the BullMQ processors
@@ -35,34 +35,27 @@ export const AI_ERROR = {
 export function toAiError(error: unknown): AiError {
   if (error instanceof AiError) return error;
 
-  if (error instanceof Anthropic.RateLimitError) {
-    return new AiError('Claude rate limit reached', AI_ERROR.rateLimited, true);
+  if (error instanceof OpenAI.RateLimitError) {
+    // 429 is also "quota exhausted"; retrying that is harmless and short.
+    return new AiError('AI rate limit reached', AI_ERROR.rateLimited, true);
   }
-  if (error instanceof Anthropic.APIConnectionError) {
-    return new AiError('Could not reach Claude', AI_ERROR.connection, true);
+  if (error instanceof OpenAI.APIConnectionError) {
+    return new AiError('Could not reach the AI service', AI_ERROR.connection, true);
   }
-  if (error instanceof Anthropic.NotFoundError) {
-    return new AiError('Claude model not found', AI_ERROR.badRequest, false);
+  if (error instanceof OpenAI.NotFoundError) {
+    return new AiError('AI model not found', AI_ERROR.badRequest, false);
   }
-  if (error instanceof Anthropic.AuthenticationError) {
-    return new AiError(
-      'Claude rejected the API key',
-      AI_ERROR.badRequest,
-      false,
-    );
+  if (error instanceof OpenAI.AuthenticationError) {
+    return new AiError('The AI service rejected the API key', AI_ERROR.badRequest, false);
   }
-  if (error instanceof Anthropic.BadRequestError) {
-    return new AiError(
-      'Claude rejected the request',
-      AI_ERROR.badRequest,
-      false,
-    );
+  if (error instanceof OpenAI.BadRequestError) {
+    return new AiError('The AI service rejected the request', AI_ERROR.badRequest, false);
   }
-  if (error instanceof Anthropic.APIError) {
+  if (error instanceof OpenAI.APIError) {
     const status = error.status ?? 0;
     const retryable = status === 408 || status === 409 || status >= 500;
     return new AiError(
-      `Claude returned ${status || 'an error'}`,
+      `The AI service returned ${status || 'an error'}`,
       retryable ? AI_ERROR.overloaded : AI_ERROR.badRequest,
       retryable,
     );

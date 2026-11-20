@@ -21,7 +21,7 @@ export function notValid(): never {
 /**
  * The public signing slice.
  *
- * It reads stored rows and nothing else: no Claude call is reachable from a
+ * It reads stored rows and nothing else: no model call is reachable from a
  * signing link, so a recipient's page cannot be made to spend tokens and can
  * only ever show the text that was snapshotted at send time.
  */

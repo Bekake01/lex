@@ -20,7 +20,7 @@ import {
 } from './enums.js';
 import { users } from './users.js';
 
-/** A contract party Claude found, mapped to recipients on the send screen. */
+/** A contract party the model found, mapped to recipients on the send screen. */
 export interface ReviewParty {
   name: string;
   role: string;
@@ -63,7 +63,7 @@ export const aiReviews = pgTable(
 
     /**
      * `documentId:sha256:promptVersion:language`. A re-delivered job finds the
-     * existing row instead of making a second pair of Claude calls.
+     * existing row instead of making a second pair of model calls.
      */
     idempotencyKey: text()
       .notNull()

@@ -1,30 +1,40 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import OpenAI from 'openai';
 import type { ZodType } from 'zod';
 import { ENV, type Env } from '../config/env.js';
 import { AI_ERROR, AiError, toAiError } from './ai-errors.js';
+import { strictJsonSchema } from './json-schema.js';
 
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 
 export interface AiUsageTotals {
+  /** Input tokens billed at the full rate (cached ones are counted separately). */
   inputTokens: number;
   outputTokens: number;
   cacheReadTokens: number;
+  /** Always 0 with OpenAI: caching is automatic and writing to it is free. */
   cacheCreationTokens: number;
   costUsd: number;
 }
+
+/**
+ * Provider-neutral input blocks. The job processors build these; AiService
+ * turns them into the provider's format.
+ */
+export type AiContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'pdf'; data: string; filename: string };
 
 export interface StructuredCall<T> {
   /** Short name for logs and metrics, e.g. `classify`. Never prompt text. */
   label: string;
   /**
-   * Stable, cacheable instructions. The last block gets the cache breakpoint,
-   * so keep volatile content out of here and put it in `content`.
+   * Stable instructions, sent first. OpenAI caches the longest repeated
+   * prefix automatically, so keep volatile content out of here.
    */
   system: string[];
   /** Volatile content: the document and the retrieved articles. */
-  content: Anthropic.Beta.BetaContentBlockParam[];
+  content: AiContentBlock[];
   schema: ZodType<T>;
   effort?: Effort;
   maxTokens?: number;
@@ -36,29 +46,33 @@ export interface StructuredResult<T> {
   model: string;
 }
 
-/** USD per million tokens. Unknown models fall back to Opus 5.5 pricing. */
-const PRICES: Record<
-  string,
-  { input: number; output: number; cacheRead: number }
-> = {
-  'claude-opus-5-5': { input: 4, output: 20, cacheRead: 0.2 },
-  'claude-opus-5': { input: 5, output: 25, cacheRead: 0.5 },
-  'claude-sonnet-5-5': { input: 2, output: 10, cacheRead: 0.1 },
-  'claude-haiku-5-5': { input: 0.1, output: 0.5, cacheRead: 0.01 },
+/** USD per million tokens. Unknown models are priced as gpt-5 (an estimate). */
+const PRICES: Record<string, { input: number; output: number; cacheRead: number }> = {
+  'gpt-5': { input: 1.25, output: 10, cacheRead: 0.125 },
+  'gpt-5-mini': { input: 0.25, output: 2, cacheRead: 0.025 },
+  'gpt-5-nano': { input: 0.05, output: 0.4, cacheRead: 0.005 },
 };
 
+/** "gpt-5-2025-08-07" → "gpt-5": the response reports a dated snapshot name. */
+function priceFor(model: string) {
+  const base = Object.keys(PRICES)
+    .sort((a, b) => b.length - a.length)
+    .find((name) => model === name || model.startsWith(`${name}-2`));
+  return PRICES[base ?? 'gpt-5'];
+}
+
 /**
- * The one place that talks to Claude.
+ * The one place that talks to the language model (OpenAI, Responses API).
  *
  * Every call is a structured-output call: a Zod schema goes in, a validated
- * object comes out, and the raw message never leaves this class. Requests are
- * streamed because a contract plus ~30 retrieved articles makes for long
- * input, and `stop_reason` is always checked before any content is read.
+ * object comes out, and the raw response never leaves this class. The schema
+ * is sent as strict JSON Schema, and the answer is validated again with Zod
+ * here, because length limits are enforced locally, not by the API.
  */
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private readonly client: Anthropic | null;
+  private readonly client: OpenAI | null;
   readonly model: string;
   readonly defaultEffort: Effort;
   readonly promptVersion: string;
@@ -67,8 +81,9 @@ export class AiService {
     this.model = env.AI_MODEL;
     this.defaultEffort = env.AI_EFFORT;
     this.promptVersion = env.AI_PROMPT_VERSION;
-    this.client = env.ANTHROPIC_API_KEY
-      ? new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+    this.client = env.OPENAI_API_KEY
+      ? // Long contracts plus ~30 articles can take a while at high effort.
+        new OpenAI({ apiKey: env.OPENAI_API_KEY, timeout: 10 * 60 * 1000, maxRetries: 0 })
       : null;
   }
 
@@ -76,138 +91,105 @@ export class AiService {
     return this.client !== null;
   }
 
-  /** A PDF sent to Claude as a native document block (no text layer needed). */
-  static documentBlock(
-    bytes: Uint8Array,
-    contentType: string,
-  ): Anthropic.Beta.BetaContentBlockParam {
+  /** A PDF sent to the model as a file (no text layer needed). */
+  static documentBlock(bytes: Uint8Array, contentType: string): AiContentBlock {
     if (contentType !== 'application/pdf') {
-      throw new AiError(
-        'Only PDF can be sent to Claude as a document',
-        AI_ERROR.badRequest,
-        false,
-      );
+      throw new AiError('Only PDF can be sent to the model as a document', AI_ERROR.badRequest, false);
     }
-    return {
-      type: 'document',
-      source: {
-        type: 'base64',
-        media_type: 'application/pdf',
-        data: Buffer.from(bytes).toString('base64'),
-      },
-    };
+    return { type: 'pdf', data: Buffer.from(bytes).toString('base64'), filename: 'contract.pdf' };
   }
 
   async structured<T>(call: StructuredCall<T>): Promise<StructuredResult<T>> {
     const client = this.client;
     if (!client) {
-      throw new AiError(
-        'ANTHROPIC_API_KEY is not set',
-        AI_ERROR.notConfigured,
-        false,
-      );
+      throw new AiError('OPENAI_API_KEY is not set', AI_ERROR.notConfigured, false);
     }
-
-    // Cache breakpoint on the last system block: the instructions and
-    // checklists are identical across documents, the document is not.
-    const system: Anthropic.Beta.BetaTextBlockParam[] = call.system.map(
-      (text, i) => ({
-        type: 'text',
-        text,
-        ...(i === call.system.length - 1
-          ? { cache_control: { type: 'ephemeral' as const } }
-          : {}),
-      }),
-    );
 
     const started = Date.now();
     try {
-      const stream = client.beta.messages.stream({
+      const response = await client.responses.create({
         model: this.model,
-        max_tokens: call.maxTokens ?? 32_000,
-        // Thinking is always on for Opus 5.5; effort is the depth control.
-        thinking: { type: 'adaptive' },
-        output_config: {
-          effort: call.effort ?? this.defaultEffort,
-          format: betaZodOutputFormat(call.schema),
+        instructions: call.system.join('\n\n'),
+        input: [
+          {
+            role: 'user',
+            content: call.content.map((block) =>
+              block.type === 'text'
+                ? { type: 'input_text' as const, text: block.text }
+                : {
+                    type: 'input_file' as const,
+                    filename: block.filename,
+                    file_data: `data:application/pdf;base64,${block.data}`,
+                  },
+            ),
+          },
+        ],
+        reasoning: { effort: call.effort ?? this.defaultEffort },
+        max_output_tokens: call.maxTokens ?? 32_000,
+        text: {
+          format: {
+            type: 'json_schema',
+            name: call.label.replace(/[^\w-]/g, '_').slice(0, 64) || 'output',
+            schema: strictJsonSchema(call.schema),
+            strict: true,
+          },
         },
-        // A safety decline re-runs the same request on a fallback model inside
-        // the same call instead of failing the job.
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
-        system,
-        messages: [{ role: 'user', content: call.content }],
+        // Same label → same cache shard, so repeated instructions hit the cache.
+        prompt_cache_key: `lex-${call.label}`,
+        // No prompt or document is kept on OpenAI's side for later retrieval.
+        store: false,
       });
 
-      const message = await stream.finalMessage();
-      const usage = this.priceUsage(message.usage, message.model);
-
+      const usage = this.priceUsage(response.usage, response.model);
       this.logger.log(
         [
-          `${call.label}: ${message.stop_reason}`,
+          `${call.label}: ${response.status}`,
           `${Date.now() - started}ms`,
-          `${usage.inputTokens} in / ${usage.outputTokens} out`,
+          `${usage.inputTokens + usage.cacheReadTokens} in / ${usage.outputTokens} out`,
           `cache read ${usage.cacheReadTokens}`,
           `cost ${usage.costUsd.toFixed(4)} USD`,
         ].join(', '),
       );
 
-      if (message.stop_reason === 'refusal') {
-        throw new AiError(
-          'Claude declined to process this document',
-          AI_ERROR.refusal,
-          false,
-        );
+      const refused = response.output.some(
+        (item) => item.type === 'message' && item.content.some((c) => c.type === 'refusal'),
+      );
+      if (refused || response.incomplete_details?.reason === 'content_filter') {
+        throw new AiError('The model declined to process this document', AI_ERROR.refusal, false);
       }
-      if (message.stop_reason === 'max_tokens') {
-        throw new AiError(
-          'The answer did not fit in the output limit',
-          AI_ERROR.truncated,
-          false,
-        );
-      }
-      if (!message.parsed_output) {
-        throw new AiError(
-          'Claude returned an answer that did not match the schema',
-          AI_ERROR.unparsable,
-          false,
-        );
+      if (response.status === 'incomplete') {
+        throw new AiError('The answer did not fit in the output limit', AI_ERROR.truncated, false);
       }
 
-      return { output: message.parsed_output, usage, model: message.model };
+      let raw: unknown;
+      try {
+        raw = JSON.parse(response.output_text);
+      } catch {
+        raw = undefined;
+      }
+      const parsed = call.schema.safeParse(raw);
+      if (!parsed.success) {
+        throw new AiError('The model returned an answer that did not match the schema', AI_ERROR.unparsable, false);
+      }
+
+      return { output: parsed.data, usage, model: response.model };
     } catch (error) {
       const aiError = toAiError(error);
       // Code and retryability only: no prompt, no document text, no key.
-      this.logger.warn(
-        `${call.label} failed: ${aiError.code} (retryable=${aiError.retryable})`,
-      );
+      this.logger.warn(`${call.label} failed: ${aiError.code} (retryable=${aiError.retryable})`);
       throw aiError;
     }
   }
 
-  private priceUsage(
-    usage: Anthropic.Beta.BetaUsage,
-    model: string,
-  ): AiUsageTotals {
-    const price = PRICES[model] ?? PRICES['claude-opus-5-5'];
-    const inputTokens = usage.input_tokens ?? 0;
-    const outputTokens = usage.output_tokens ?? 0;
-    const cacheReadTokens = usage.cache_read_input_tokens ?? 0;
-    const cacheCreationTokens = usage.cache_creation_input_tokens ?? 0;
+  private priceUsage(usage: OpenAI.Responses.ResponseUsage | undefined, model: string): AiUsageTotals {
+    const price = priceFor(model);
+    // OpenAI's input_tokens includes the cached ones; split them out.
+    const cacheReadTokens = usage?.input_tokens_details?.cached_tokens ?? 0;
+    const inputTokens = Math.max(0, (usage?.input_tokens ?? 0) - cacheReadTokens);
+    const outputTokens = usage?.output_tokens ?? 0;
     const costUsd =
-      (inputTokens * price.input +
-        // Writing to the cache costs about 1.25x the input rate.
-        cacheCreationTokens * price.input * 1.25 +
-        cacheReadTokens * price.cacheRead +
-        outputTokens * price.output) /
-      1_000_000;
-    return {
-      inputTokens,
-      outputTokens,
-      cacheReadTokens,
-      cacheCreationTokens,
-      costUsd,
-    };
+      (inputTokens * price.input + cacheReadTokens * price.cacheRead + outputTokens * price.output) / 1_000_000;
+    return { inputTokens, outputTokens, cacheReadTokens, cacheCreationTokens: 0, costUsd };
   }
 }
 

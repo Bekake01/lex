@@ -5,7 +5,7 @@ import { SigningService } from './signing.service.js';
 
 /**
  * Public: a recipient has no account, only a token. No login, and nothing here
- * reaches Claude — the summary was computed at send time.
+ * reaches the model — the summary was computed at send time.
  *
  * `apps/sign` has to allow `GET /sign/:token/summary` in its relay allowlist.
  */
