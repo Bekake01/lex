@@ -27,7 +27,7 @@ It also uses **Postgres** (with the `pgvector` extension, for law search) and **
 | **Developer A** (law track) | Law data, law search, reading contracts (PDF/Word), applying edits to Word files | `apps/api/src/law/` |
 | **Developer B** (AI track) | AI review, correction chat, summaries for signers, usage limits | `apps/api/src/ai-review/`, `src/documents/`, `src/signature-requests/`, `src/signing/`, `src/usage/` |
 | **Frontend team** | Dashboard and signing pages | `apps/web`, `apps/sign` |
-| **Friend's MacBook** | Heavy jobs (big imports, embeddings, measurements); no feature code | — |
+| **Friend's MacBook** | **Runs the whole project** (database, all law data, all three apps) and the heavy jobs; no feature code | — |
 
 Developer B's own task list is in [`dev-b-next-steps.md`](dev-b-next-steps.md).
 
@@ -44,11 +44,15 @@ Keys stay in each person's own `.env`. They're never committed or pasted in chat
 
 ## 3. The machines and what each one does
 
-| Machine | Good for | Not for |
+**The project runs on the MacBook.** That's where the full database lives (all laws, core laws from lex.uz, embeddings), where the three apps run, and where we try the whole flow. The other machines write and test code and send it through git.
+
+| Machine | Role | Not for |
 |---|---|---|
-| **Developer A's Windows laptop** (7.7 GB RAM, little free disk) | Writing code, small tests, the law subset | Full data imports, embedding all laws, running every test in parallel |
-| **Friend's MacBook** (fast, room to spare) | Heavy jobs: the full law import, embedding all laws, quality measurements | Writing feature code (that stays with A and B) |
-| **Developer B's machine** | AI work, real OpenAI runs | — |
+| **Friend's MacBook** (fast, room to spare) | **The run machine:** Postgres + Redis, all law data, embeddings, the API and both web apps, end-to-end tries, quality measurements | Writing feature code (that stays with A and B) |
+| **Developer A's Windows laptop** (7.7 GB RAM, little free disk) | Writing law-track code, small tests; quick checks against lex.uz | Full data imports, embedding all laws, running every test in parallel |
+| **Developer B's machine** | AI-track code, real OpenAI runs | — |
+
+To set the Mac up as the run machine, follow [`heavy-jobs-mac.md`](heavy-jobs-mac.md): section 1, then **Job E** (all law data), then **Job F** (start and try the app).
 
 **How work moves between machines:**
 
@@ -62,7 +66,7 @@ A's laptop ── git push ──►  GitHub (lex, branch z-ai)  ◄── git p
 ```
 
 - **Git carries code and small text reports only.** The law dataset (163 MB), the databases and the embeddings are **never** in git: they're too big, and git ignores them on purpose.
-- So each machine **builds its own database** with the same commands (`pnpm ingest:hf`, `pnpm ingest:embed`). The Mac's database is for **measuring**; production builds its own later.
+- So the data is built **on the Mac** with the same commands every machine uses (`pnpm ingest:hf`, `pnpm ingest:core`, `pnpm ingest:embed`). After a `git pull`, the Mac only re-runs what changed: `pnpm db:migrate` when a migration was added, and an ingest command when the CHANGELOG says so. Production builds its own database later.
 - **Branches:** A works on `z-ai` and merges into `main` when a piece is ready. Before starting work, run `git pull origin main` to get the team's changes.
 
 ---

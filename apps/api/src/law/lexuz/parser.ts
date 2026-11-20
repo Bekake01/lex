@@ -61,7 +61,8 @@ function articleHeading(heading: string): { number: string | null; title: string
   return { number: m[1].replace('–', '-'), title: m[2].trim() || null };
 }
 
-export function parseLexUzAct(html: string): ParsedAct {
+/** `today` (ISO date) decides which editions are already in force; defaults to the current date. */
+export function parseLexUzAct(html: string, { today = new Date().toISOString().slice(0, 10) }: { today?: string } = {}): ParsedAct {
   const $ = cheerio.load(html);
   const elementText = (el: Parameters<typeof $>[0]) => clean($(el).children('div[id]').text());
 
@@ -79,8 +80,12 @@ export function parseLexUzAct(html: string): ParsedAct {
   const pageText = $('body').text().replace(/\s+/g, ' ');
   const repealed = /Hujjat kuchini yo.qotgan\s*(\d{2}\.\d{2}\.\d{4})?/.exec(pageText);
 
-  // Edition dates: the edition dropdown and the "previous edition" links carry ONDATE=dd.mm.yyyy.
-  const editions = [...html.matchAll(/ONDATE=(\d{2}\.\d{2}\.\d{4})/g)].map((m) => iso(m[1])!).filter(Boolean);
+  // Edition dates: the edition dropdown and the amendment links carry ONDATE=dd.mm.yyyy.
+  // lex.uz also links amendments adopted but not yet in force (future dates);
+  // the page shows today's text, so its edition is the newest date up to today.
+  const editions = [...html.matchAll(/ONDATE=(\d{2}\.\d{2}\.\d{4})/g)]
+    .map((m) => iso(m[1])!)
+    .filter((d) => d && d <= today);
   const latestEdition = editions.sort().at(-1) ?? null;
 
   const articles: ParsedArticle[] = [];

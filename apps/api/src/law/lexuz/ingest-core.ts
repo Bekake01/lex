@@ -95,7 +95,7 @@ async function save(db: Db, act: CoreAct, parsed: ParsedAct): Promise<CoreActRes
     existing.title === parsed.title &&
     sameRows
   ) {
-    return { ...base, outcome: 'unchanged', keptEmbeddings: previous.length };
+    return { ...base, outcome: 'unchanged', keptEmbeddings: previous.filter((p) => p.embedding).length };
   }
 
   // Keep the embedding of any row whose text is unchanged (re-embedding costs money).
