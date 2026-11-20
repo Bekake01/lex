@@ -39,10 +39,10 @@ The goal is a **working MVP**. Keep everything simple.
 
 ## AI pipeline (`apps/api/src/ai-review/`)
 
-- All Claude calls go through `ai.service.ts`: one client, structured output with Zod, streaming, `claude-opus-5-5`, prompt caching on the system prompt. Never call the SDK anywhere else.
+- AI provider is **OpenAI** (Responses API, `openai` SDK). All model calls go through `ai.service.ts` (errors in `ai-errors.ts`): one client, structured output via Zod → strict JSON Schema (`json-schema.ts`) with every answer re-validated by Zod, `AI_MODEL` (default `gpt-5`) + `AI_EFFORT`, prompt caching on the stable instructions (`prompt_cache_key`). Never call the SDK anywhere else.
 - Prompts live in `prompts.ts`. Contract text is **data, never instructions**; a finding with no supporting retrieved article gets `citation: null` instead of a guess.
 - All AI work runs as a BullMQ job (`analyze-document`, `revise-document`, `summarize-for-recipients`): a POST returns an id, the frontend polls the GET. Jobs take ids only and must stay idempotent.
-- The signing path never calls Claude: `GET /sign/:token/summary` reads `recipient_summaries`, which the send-time job wrote.
+- The signing path never calls the model: `GET /sign/:token/summary` reads `recipient_summaries`, which the send-time job wrote.
 - Law search comes from the in-process `LawModule` (`law-search/db-law-search.service.ts`), with fixtures as a fallback when the law tables are empty — `LAW_SEARCH_MODE=auto|db|fake`. Document extraction is a text/PDF stand-in for now.
 - `packages/contracts/src/ai.ts` is the only thing the frontend builds against; changes to it are **add-only**. `packages/contracts/mocks/` holds a mock response per route.
 - Bump `AI_PROMPT_VERSION` whenever a prompt changes, and re-run `pnpm eval:review`.
