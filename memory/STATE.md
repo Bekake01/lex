@@ -4,7 +4,7 @@ Edit in place to keep this current.
 
 ## Works now
 - Monorepo: `apps/api` (NestJS, 5000), `apps/web` (Next.js sender dashboard, 3000), `apps/sign` (Next.js public signing app, 3001), packages `@lex/contracts` and `@lex/crypto`, pnpm + turbo.
-- Infra: Postgres + pgvector (Docker, 5434) + **Redis (Docker, 6379, BullMQ)** → `pnpm services:up`. Drizzle migrations `0000_init`, `0001_pgvector`, `0002_law`, `0003_law_article_parts`, `0004_ai_tables`.
+- Infra: Postgres + pgvector (Docker, 5434) + **Redis (Docker, 6391, BullMQ)** → `pnpm services:up`. Drizzle migrations `0000_init`, `0001_pgvector`, `0002_law`, `0003_law_article_parts`, `0004_ai_tables`, `0005_issue_clause_offsets`.
 - Database tables: `agencies`, `users`, `sessions`, `email_codes` (forgot password / Resend not implemented yet), `law_acts`, `law_articles`, `law_sync_runs`, `documents`, `ai_reviews`, `ai_issues`, `ai_review_messages`, `ai_edits`, `signature_requests`, `recipients`, `recipient_summaries`, `ai_usage`.
 - Login (`apps/api/src/auth/`, `apps/web` `/login`): login / refresh / logout + `GET /me`, global access-token guard (`@Public()` to opt out). Team accounts via `pnpm db:seed` (Bekzod, Malika, Zuxriddin, Quvomiddin; password = email part before `@`). No sign-up page, no forgot password yet. The AI routes use `CurrentUserGuard`, which loads the user from the JWT.
 - Law (in `apps/api/src/law/`, merged from lex-api): pgvector tables, Uzbek text utils, Hugging Face import (`pnpm ingest:hf`, 54k articles), keyword search (`POST /law/search`, `/law/articles/batch`, `GET /law/meta`; `SearchService` exported from `LawModule` for the AI review). `GET /health` reports db + law index date. Long articles/acts split into parts (≤ ~1,600 tokens, `parent_id`). Search eval: 102 queries, keyword R@10 91.3% on codes + laws (`docs/decisions/embeddings.md`). Contract reading (PDF / DOCX / text, scanned-PDF detection, language) and clause splitting. Not yet: embeddings, DOCX edits (Phase 13).
@@ -12,7 +12,7 @@ Edit in place to keep this current.
 - Law search for the review: in-process `LawModule` when the law tables have data, fixture articles otherwise (`LAW_SEARCH_MODE=auto|db|fake`). Document extraction: text + PDF stand-in (DOCX not yet).
 - Model settings: OpenAI Responses API, `AI_MODEL` (default `gpt-5`), reasoning effort `high` for the review and `medium` for classify and summaries, strict JSON Schema from the Zod schemas plus Zod re-validation, refusal / incomplete handled, `store: false`, automatic prompt caching (`prompt_cache_key` per call type).
 - Review eval harness: `pnpm eval:review` (citation accuracy ≥ 95%, issue precision ≥ 80%). Three synthetic starter cases.
-- For the frontend: `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
+- For the frontend: **`docs/ai-frontend-handoff.md`** (routes, polling, 413/415, clause highlighting, signing summary), `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
 - `apps/web` UI (demo data, no API yet; all under `(app)/`, needs login): `/contracts` inbox of contracts sent to the user, `/review` (auto AI review → risk + issues with lex.uz cites → AI change suggestions → request changes or sign in a dialog).
 - `apps/web` `/` (home): general legal Q&A chat (`?q=` prefills) (demo keyword answers in `src/lib/legalQa.ts`: assault, labor, moral damage, statement template, fallback).
 - `apps/sign` UI (demo data): `/sign/[token]` summary → obligations → typed name + drawn signature + consent → signed screen.
@@ -26,7 +26,7 @@ Edit in place to keep this current.
 - Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
 
 ## Decisions
-- Ports: web 3000, sign 3001, api 5000, Postgres 5434, Redis 6379.
+- Ports: web 3000, sign 3001, api 5000, Postgres 5434, Redis 6391.
 - Users: one table; `agency_id` null = individual, else member of exactly one agency. Receivers who sign by link are not users. No email verification for the hackathon. Login = tms-style sessions (JWT access + rotating refresh). Forgot password = 6-digit code via Resend (`email_codes`).
 - ORM: Drizzle (not Prisma), Postgres 18 (`uuidv7()`), camelCase in TS / snake_case in SQL. Image `pgvector/pgvector:pg18`; one database for users, law data and AI rows.
 - One backend only (`apps/api`). lex-api was merged in on 2026-11-20; the AI review calls `SearchService` in-process, no HTTP hop. Env is validated with zod in `src/config/env.ts`.

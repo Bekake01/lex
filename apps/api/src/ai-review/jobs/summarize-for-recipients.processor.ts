@@ -107,6 +107,8 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
           content,
           schema: summaryOutputSchema,
           // A summary is explanation, not analysis: it holds up a level down.
+          // Plain language from a document already read, so the cheap model.
+          tier: 'light',
           effort: 'medium',
           maxTokens: 16_000,
         });

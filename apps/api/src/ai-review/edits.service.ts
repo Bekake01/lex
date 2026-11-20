@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotImplementedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import { AI_ERROR_CODES, type AcceptEditsResponse } from '@lex/contracts';
@@ -112,6 +113,21 @@ export class EditsService {
             claimed.map((edit) => edit.id),
           ),
         );
+
+      // Until the law track's Phase 13 lands, `applyEdits` throws. Answering
+      // 501 with a code beats a 500 the frontend cannot explain; this branch
+      // is dead the day the real implementation arrives.
+      if (
+        error instanceof Error &&
+        error.message.includes('not built yet') &&
+        !(error instanceof EditNotFoundError)
+      ) {
+        throw new NotImplementedException({
+          code: AI_ERROR_CODES.editsNotAvailable,
+          message:
+            'Applying changes to a Word document is not available yet. The suggested wording is still here, and nothing was changed',
+        });
+      }
 
       if (error instanceof EditNotFoundError) {
         const edit = ordered[error.index];

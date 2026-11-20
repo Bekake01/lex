@@ -21,9 +21,11 @@ import { AiUsageService } from '../../usage/ai-usage.service.js';
 import { toAiError } from '../ai-errors.js';
 import { AiService } from '../ai.service.js';
 import { checkCitations } from '../citations.js';
+import { clauseOutline, resolveClause } from '../clauses.js';
 import { DocumentContentService } from '../document-content.service.js';
 import {
   articlesBlockText,
+  clausesBlockText,
   languageInstruction,
   REVISE_SYSTEM,
 } from '../prompts.js';
@@ -111,10 +113,12 @@ export class ReviseDocumentProcessor extends WorkerHost {
       const documentBlocks = this.content.asContentBlocks(document, loaded);
       const hits = await this.retrieve(instruction, review.docType);
 
+      const outline = clausesBlockText(clauseOutline(loaded.clauses));
       const content: AiContentBlock[] = [
         { type: 'text', text: languageInstruction(review.language) },
         { type: 'text', text: this.historyBlock(history, assistantMessageId) },
         { type: 'text', text: articlesBlockText(hits) },
+        ...(outline ? [{ type: 'text' as const, text: outline }] : []),
         ...documentBlocks,
       ];
 
@@ -146,7 +150,10 @@ export class ReviseDocumentProcessor extends WorkerHost {
         messageId: assistantMessageId,
         reviewId,
         documentId: document.id,
-        clauseRef: edit.clauseRef,
+        // `original` is what locates an edit; the ref is only shown, so it is
+        // canonicalised to the document's numbering and never dropped.
+        clauseRef: resolveClause(loaded.clauses, edit.clauseRef, edit.original)
+          .ref,
         original: edit.original,
         replacement: edit.replacement,
         reason: edit.reason,

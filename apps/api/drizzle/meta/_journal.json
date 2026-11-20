@@ -36,6 +36,13 @@
       "when": 1795198612596,
       "tag": "0004_ai_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795204130410,
+      "tag": "0005_issue_clause_offsets",
+      "breakpoints": true
     }
   ]
 }

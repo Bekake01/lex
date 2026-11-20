@@ -36,6 +36,13 @@ export const aiIssues = pgTable(
       .references(() => aiReviews.id, { onDelete: 'cascade' }),
 
     clauseRef: text().notNull(),
+    /**
+     * Where that clause sits in `documents.extracted_text`, when the ref
+     * matched a clause extraction found. Null means the model named a clause
+     * the document does not have, which is worth seeing rather than hiding.
+     */
+    clauseStart: integer(),
+    clauseEnd: integer(),
     quote: text().notNull(),
     problem: text().notNull(),
     severity: severity().notNull(),

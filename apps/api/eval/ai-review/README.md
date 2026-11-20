@@ -72,12 +72,24 @@ One JSON file per contract in `cases/`, shaped like `types.ts`:
   and loose enough to survive rewording — one or two stems, not a sentence.
 - Mark only issues a lawyer would actually raise. A padded expectation list
   makes precision look worse than it is and hides real regressions.
+- A case with no `expectedIssues` is allowed and useful: a clean contract
+  proves the review does not invent problems.
+
+Every case is validated before the run spends anything (`case-schema.ts`). A
+malformed file stops the run and names itself; text that still looks like a
+phone number, passport number, INN/PINFL or email address is warned about, so
+check the warning before committing.
 
 **Anonymise before committing.** No names, addresses, passport or company
 identifiers, phone numbers or bank details. The three cases in here now are
 synthetic starters written to exercise the harness — replace them as real
 anonymised contracts arrive. The target is 30–50 cases across rental,
-employment, sale, services and NDA.
+employment, sale, services and NDA; **15 is enough to start tuning**, so don't
+wait for the full set.
+
+Collecting them is the slowest part of this track and it needs people, not
+code: real contracts, anonymised, with someone who knows the law marking what
+is actually wrong in each.
 
 ## When a prompt changes
 

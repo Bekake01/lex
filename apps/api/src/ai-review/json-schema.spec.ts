@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { strictJsonSchema } from './json-schema.js';
-import { classifyOutputSchema, reviewOutputSchema, reviseOutputSchema, summaryOutputSchema } from './schemas.js';
+import {
+  classifyOutputSchema,
+  reviewOutputSchema,
+  reviseOutputSchema,
+  summaryOutputSchema,
+} from './schemas.js';
 
 type Node = Record<string, unknown>;
 
@@ -16,7 +21,9 @@ function objects(node: unknown, out: Node[] = []): Node[] {
 }
 
 const keys = (node: unknown): string[] =>
-  JSON.stringify(node).match(/"(\w+)":/g)?.map((k) => k.slice(1, -2)) ?? [];
+  JSON.stringify(node)
+    .match(/"(\w+)":/g)
+    ?.map((k) => k.slice(1, -2)) ?? [];
 
 describe('strictJsonSchema', () => {
   it.each([
@@ -24,20 +31,23 @@ describe('strictJsonSchema', () => {
     ['review', reviewOutputSchema],
     ['revise', reviseOutputSchema],
     ['summary', summaryOutputSchema],
-  ])('makes the %s schema acceptable to OpenAI strict mode', (_name, schema) => {
-    const json = strictJsonSchema(schema);
-    const objs = objects(json);
-    expect(objs.length).toBeGreaterThan(0);
-    for (const o of objs) {
-      // Closed, and every property required.
-      expect(o.additionalProperties).toBe(false);
-      expect(o.required).toEqual(Object.keys(o.properties as Node));
-    }
-    // String length limits are removed (enforced by Zod afterwards).
-    expect(keys(json)).not.toContain('maxLength');
-    expect(keys(json)).not.toContain('minLength');
-    expect(keys(json)).not.toContain('$schema');
-  });
+  ])(
+    'makes the %s schema acceptable to OpenAI strict mode',
+    (_name, schema) => {
+      const json = strictJsonSchema(schema);
+      const objs = objects(json);
+      expect(objs.length).toBeGreaterThan(0);
+      for (const o of objs) {
+        // Closed, and every property required.
+        expect(o.additionalProperties).toBe(false);
+        expect(o.required).toEqual(Object.keys(o.properties as Node));
+      }
+      // String length limits are removed (enforced by Zod afterwards).
+      expect(keys(json)).not.toContain('maxLength');
+      expect(keys(json)).not.toContain('minLength');
+      expect(keys(json)).not.toContain('$schema');
+    },
+  );
 
   it('keeps array size limits, enums, descriptions and null for absent values', () => {
     const json = JSON.stringify(strictJsonSchema(reviewOutputSchema));

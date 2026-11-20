@@ -49,6 +49,9 @@ export function toIssueWire(issue: AiIssue): IssueWire {
     severity: issue.severity,
     recommendation: issue.recommendation,
     citation: toCitationWire(issue.citation),
+    ...(issue.clauseStart !== null && issue.clauseEnd !== null
+      ? { clauseRange: { start: issue.clauseStart, end: issue.clauseEnd } }
+      : {}),
   };
 }
 
@@ -119,6 +122,19 @@ export function toDocumentWire(doc: Document, isLatest: boolean): DocumentWire {
     version: doc.version,
     parentDocumentId: doc.parentDocumentId,
     isLatest,
+    // Present once the document has been read; the offsets index the same
+    // extracted text the review quotes from.
+    ...(doc.extractedClauses && doc.extractedClauses.length > 0
+      ? {
+          clauses: doc.extractedClauses.map((c) => ({
+            ref: c.ref,
+            ...(c.heading ? { heading: c.heading } : {}),
+            start: c.start,
+            end: c.end,
+          })),
+        }
+      : {}),
+    ...(doc.scanned ? { scanned: true } : {}),
     createdAt: doc.createdAt.toISOString(),
   };
 }

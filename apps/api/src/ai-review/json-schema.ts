@@ -20,7 +20,11 @@ function walk(node: unknown): unknown {
   }
   // Strict mode: every object closed, every property required (absence is
   // modelled with nullable in the Zod schemas).
-  if (out.type === 'object' && out.properties && typeof out.properties === 'object') {
+  if (
+    out.type === 'object' &&
+    out.properties &&
+    typeof out.properties === 'object'
+  ) {
     out.additionalProperties = false;
     out.required = Object.keys(out.properties);
   }
@@ -34,5 +38,7 @@ function walk(node: unknown): unknown {
  * original Zod schema.
  */
 export function strictJsonSchema(schema: ZodType): JsonSchema {
-  return walk(z.toJSONSchema(schema, { target: 'draft-7', io: 'output' })) as JsonSchema;
+  return walk(
+    z.toJSONSchema(schema, { target: 'draft-7', io: 'output' }),
+  ) as JsonSchema;
 }

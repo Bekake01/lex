@@ -426,6 +426,37 @@ describe('corrections', () => {
       });
     });
 
+    it('says so plainly while DOCX editing is not built, and keeps the edit', async () => {
+      const { review, edit, service } = await seedProposedEdit();
+      // What the law track's DocumentProcessingService throws until Phase 13.
+      const notBuilt = {
+        extractText: (bytes: Uint8Array) =>
+          new TextDocProcessing().extractText(bytes),
+        applyEdits: () =>
+          Promise.reject(new Error('Applying edits to DOCX is not built yet')),
+      };
+
+      await expect(
+        new EditsService(
+          db,
+          notBuilt,
+          documentsService,
+          service,
+          storage,
+        ).accept(user, review.id, [edit.id]),
+      ).rejects.toMatchObject({
+        status: 501,
+        response: { code: 'EDITS_NOT_AVAILABLE' },
+      });
+
+      // The sender can accept it again once the feature lands.
+      const [after] = await db
+        .select()
+        .from(aiEdits)
+        .where(eq(aiEdits.id, edit.id));
+      expect(after.status).toBe('proposed');
+    });
+
     it('puts the edits back when applying them fails', async () => {
       const { document, review, edit, service } = await seedProposedEdit();
       // The document moved on, so `original` no longer matches.

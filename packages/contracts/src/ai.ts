@@ -95,6 +95,20 @@ export const citationWireSchema = z.object({
 });
 export type CitationWire = z.infer<typeof citationWireSchema>;
 
+/**
+ * One clause of a document, as the document numbers it, with the offsets it
+ * occupies in the extracted text. Added after the first release: absent on a
+ * document uploaded before extraction learned to find clauses.
+ */
+export const clauseWireSchema = z.object({
+  /** The document's own ref: "4.2", "7-modda", "Статья 7", or "p3". */
+  ref: z.string(),
+  heading: z.string().optional(),
+  start: z.number().int(),
+  end: z.number().int(),
+});
+export type ClauseWire = z.infer<typeof clauseWireSchema>;
+
 export const issueWireSchema = z.object({
   id: z.string(),
   clauseRef: z.string(),
@@ -104,6 +118,14 @@ export const issueWireSchema = z.object({
   recommendation: z.string(),
   /** null when no retrieved article supports the finding. */
   citation: citationWireSchema.nullable(),
+  /**
+   * Where `clauseRef` is in the document, when it matched a real clause.
+   * Absent means the model named a clause the document does not have, so
+   * `clauseRef` is its own wording: show it, but do not try to highlight it.
+   */
+  clauseRange: z
+    .object({ start: z.number().int(), end: z.number().int() })
+    .optional(),
 });
 export type IssueWire = z.infer<typeof issueWireSchema>;
 
@@ -205,6 +227,13 @@ export const documentWireSchema = z.object({
   parentDocumentId: z.string().nullable(),
   /** False once a newer version exists; only the latest version can be sent. */
   isLatest: z.boolean(),
+  /**
+   * The document's clauses, once it has been read (the first review reads it).
+   * Offsets index the extracted text, which is the text the review quotes.
+   */
+  clauses: z.array(clauseWireSchema).optional(),
+  /** True for a PDF with no text layer: a scan the model read as an image. */
+  scanned: z.boolean().optional(),
   createdAt: z.string(),
 });
 export type DocumentWire = z.infer<typeof documentWireSchema>;
@@ -295,4 +324,9 @@ export const AI_ERROR_CODES = {
   editNotApplicable: 'EDIT_NOT_APPLICABLE',
   /** Only the latest version of a document can be sent (409). */
   notLatestVersion: 'NOT_LATEST_VERSION',
+  /**
+   * Applying edits to a DOCX is not built yet (501). Temporary: it disappears
+   * when the law track's `applyEdits` lands, and nothing else answers 501.
+   */
+  editsNotAvailable: 'EDITS_NOT_AVAILABLE',
 } as const;
