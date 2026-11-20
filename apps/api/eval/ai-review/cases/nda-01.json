@@ -1,0 +1,30 @@
+{
+  "id": "nda-01",
+  "notes": "Synthetic starter case written for the harness, not a real contract.",
+  "docType": "nda",
+  "language": "uz",
+  "text": "MAXFIYLIK TO'G'RISIDA KELISHUV\n\n1. Qabul qiluvchi tomon beruvchi tomondan olingan har qanday ma'lumotni maxfiy deb hisoblaydi.\n2. Maxfiylik majburiyati muddatsiz amal qiladi.\n3. Maxfiylikni buzgan taqdirda qabul qiluvchi tomon 500 000 000 so'm jarima to'laydi.\n4. Majburiyat faqat qabul qiluvchi tomonga yuklanadi.\n5. Ommaga ma'lum bo'lgan ma'lumotlar ham maxfiy hisoblanadi.",
+  "expectedIssues": [
+    {
+      "clauseRef": "2",
+      "anyOf": ["muddatsiz", "muddat", "nomutanosib"],
+      "severity": "high",
+      "expectCitationFrom": "Tijorat siri"
+    },
+    {
+      "clauseRef": "3",
+      "anyOf": ["jarima", "penya", "nomutanosib"],
+      "severity": "high"
+    },
+    {
+      "clauseRef": "5",
+      "anyOf": ["ommaga ma'lum", "istisno", "maxfiy emas"],
+      "severity": "medium"
+    },
+    {
+      "clauseRef": "1",
+      "anyOf": ["aniq", "doira", "har qanday"],
+      "severity": "medium"
+    }
+  ]
+}

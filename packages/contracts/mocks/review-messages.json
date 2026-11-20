@@ -1,0 +1,34 @@
+[
+  {
+    "id": "01999999-0000-7000-8000-000000000201",
+    "role": "user",
+    "text": "3-bandni tuzating: ijara haqini oshirish tartibini aniq yozing.",
+    "status": "done",
+    "edits": [],
+    "createdAt": "2026-11-20T09:05:00.000Z"
+  },
+  {
+    "id": "01999999-0000-7000-8000-000000000202",
+    "role": "assistant",
+    "text": "3-bandga oshirish chastotasi, maksimal foiz va 30 kunlik ogohlantirish muddatini qo'shdim.",
+    "status": "done",
+    "edits": [
+      {
+        "id": "01999999-0000-7000-8000-000000000301",
+        "clauseRef": "3",
+        "original": "Ijaraga beruvchi ijara haqini istalgan vaqtda, ijaraga oluvchini ogohlantirmasdan oshirishi mumkin.",
+        "replacement": "Ijaraga beruvchi ijara haqini yiliga bir martadan ko'p bo'lmagan holda, 10 foizdan oshmagan miqdorda va kamida 30 kun oldin yozma ogohlantirgan holda oshirishi mumkin.",
+        "reason": "Oshirish huquqini chastota, miqdor va ogohlantirish muddati bilan cheklaydi.",
+        "citation": {
+          "articleId": "fx-civil-a556",
+          "actTitle": "O'zbekiston Respublikasining Fuqarolik kodeksi",
+          "articleNumber": "556",
+          "sourceUrl": "https://lex.uz/docs/111181",
+          "versionDate": "2026-06-01"
+        },
+        "status": "proposed"
+      }
+    ],
+    "createdAt": "2026-11-20T09:05:02.000Z"
+  }
+]

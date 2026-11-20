@@ -1,0 +1,36 @@
+{
+  "id": "employment-01",
+  "notes": "Synthetic starter case written for the harness, not a real contract.",
+  "docType": "employment",
+  "language": "uz",
+  "text": "MEHNAT SHARTNOMASI\n\nIsh beruvchi: \"C\" MChJ\nXodim: D.\n\n1. Xodim sotuv bo'yicha menejer lavozimiga qabul qilinadi.\n2. Sinov muddati 12 oy. Sinov muddatida ish beruvchi shartnomani sababini ko'rsatmasdan bekor qilishi mumkin.\n3. Ish haqi har chorakda bir marta to'lanadi.\n4. Xodim kerak bo'lganda dam olish kunlari ham ishlaydi, bunday ish uchun qo'shimcha haq to'lanmaydi.\n5. Xodim ishdan bo'shagandan keyin uch yil davomida bu sohada ishlamaslik majburiyatini oladi.\n6. Xodim ishdan bo'shasa, o'qitish uchun sarflangan mablag'ni to'liq qaytaradi.\n7. Yillik mehnat ta'tili 10 kun.",
+  "expectedIssues": [
+    {
+      "clauseRef": "2",
+      "anyOf": ["sinov muddati", "olti oy", "12 oy"],
+      "severity": "high",
+      "expectCitationFrom": "Mehnat kodeksi"
+    },
+    {
+      "clauseRef": "3",
+      "anyOf": ["har oyda", "chorak", "ish haqi"],
+      "severity": "high",
+      "expectCitationFrom": "Mehnat kodeksi"
+    },
+    {
+      "clauseRef": "4",
+      "anyOf": ["dam olish", "qo'shimcha haq", "ortiqcha ish"],
+      "severity": "high"
+    },
+    {
+      "clauseRef": "5",
+      "anyOf": ["raqobat", "uch yil", "ishlamaslik"],
+      "severity": "medium"
+    },
+    {
+      "clauseRef": "7",
+      "anyOf": ["ta'til", "10 kun", "kamida"],
+      "severity": "high"
+    }
+  ]
+}

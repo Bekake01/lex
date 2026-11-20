@@ -6,12 +6,18 @@ A sender uploads a contract and **AI checks it against Uzbek legislation** (lex.
 
 ## Apps
 
-| App | What | Port |
-|---|---|---|
-| `apps/web` | Next.js sender dashboard (upload, AI review, send) | 3000 |
-| `apps/sign` | Next.js public signing app for receivers (no login) | 3001 |
-| `apps/api` | NestJS backend + AI jobs, Drizzle ORM | 5000 |
-| Postgres | Docker (`docker-compose.yml`) | 5434 |
+| App            | What                                                | Port |
+| -------------- | --------------------------------------------------- | ---- |
+| `apps/web`     | Next.js sender dashboard (upload, AI review, send)  | 3000 |
+| `apps/sign`    | Next.js public signing app for receivers (no login) | 3001 |
+| `apps/api`     | NestJS backend + AI jobs, Drizzle ORM               | 5000 |
+| Postgres       | Docker (`docker-compose.yml`)                       | 5434 |
+| Redis          | Docker, BullMQ jobs                                 | 6379 |
+
+| Package              | What                                                          |
+| -------------------- | ------------------------------------------------------------- |
+| `packages/contracts` | Zod schemas + mock responses — the boundary with the frontend |
+| `packages/crypto`    | Canonical hashing and the certificate lines                   |
 
 Signing links look like `http://localhost:3001/sign/<token>`.
 
@@ -24,11 +30,22 @@ pnpm install
 cp apps/web/.env.example apps/web/.env.local
 cp apps/sign/.env.example apps/sign/.env.local
 cp apps/api/.env.example apps/api/.env
-pnpm db:up            # Postgres in Docker on port 5434
+pnpm services:up      # Postgres (5434) + Redis (6379) in Docker
 pnpm db:migrate       # apply Drizzle migrations
 pnpm dev              # all apps
 # or: pnpm dev:api / pnpm dev:web / pnpm dev:sign
 ```
+
+Fill `ANTHROPIC_API_KEY` in `apps/api/.env` for the AI review. Then:
+
+```bash
+pnpm seed:demo        # a sender with a finished review and a signing link
+pnpm eval:review      # review quality (citation accuracy, issue precision)
+```
+
+The AI API the frontend builds against is [`packages/contracts/src/ai.ts`](packages/contracts/src/ai.ts),
+with sample responses in [`packages/contracts/mocks/`](packages/contracts/mocks) and
+the route list in [`apps/api/README.md`](apps/api/README.md).
 
 ## Hackathon rules
 

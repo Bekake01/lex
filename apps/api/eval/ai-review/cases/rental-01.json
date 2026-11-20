@@ -1,0 +1,35 @@
+{
+  "id": "rental-01",
+  "notes": "Synthetic starter case written for the harness, not a real contract. Replace this file as anonymised real contracts arrive.",
+  "docType": "rental",
+  "language": "uz",
+  "text": "TURAR JOY IJARASI SHARTNOMASI\n\nIjaraga beruvchi: A. (jismoniy shaxs)\nIjaraga oluvchi: B. (jismoniy shaxs)\n\n1. Ijaraga beruvchi Toshkent shahridagi kvartirani ijaraga oluvchiga foydalanishga topshiradi.\n2. Ijara haqi oyiga 5 000 000 so'm, har oyning 5-sanasiga qadar to'lanadi.\n3. Ijaraga beruvchi ijara haqini istalgan vaqtda, ijaraga oluvchini ogohlantirmasdan oshirishi mumkin.\n4. Ijaraga oluvchi shartnoma tuzilganda ikki oylik ijara haqi miqdorida depozit to'laydi. Depozit qaytarilmaydi.\n5. Ijaraga beruvchi shartnomani istalgan vaqtda, sababini ko'rsatmasdan bekor qilishi mumkin va ijaraga oluvchi uch kun ichida chiqib ketishi shart.\n6. Ijaraga oluvchi shartnomani muddatidan oldin bekor qilsa, qolgan barcha oylar uchun ijara haqini to'laydi.\n7. Kvartiradagi har qanday nosozlik, uning sababidan qat'i nazar, ijaraga oluvchi hisobidan tuzatiladi.\n8. Shartnoma muddati: bir yil.",
+  "expectedIssues": [
+    {
+      "clauseRef": "3",
+      "anyOf": ["oshirish", "ogohlantir", "bir tomonlama"],
+      "severity": "high",
+      "expectCitationFrom": "Fuqarolik kodeksi"
+    },
+    {
+      "clauseRef": "4",
+      "anyOf": ["depozit", "qaytar"],
+      "severity": "high"
+    },
+    {
+      "clauseRef": "5",
+      "anyOf": ["bekor qilish", "uch kun", "sababini"],
+      "severity": "high"
+    },
+    {
+      "clauseRef": "6",
+      "anyOf": ["qolgan", "nomutanosib", "penya"],
+      "severity": "medium"
+    },
+    {
+      "clauseRef": "7",
+      "anyOf": ["nosozlik", "ta'mirlash", "sababidan"],
+      "severity": "medium"
+    }
+  ]
+}

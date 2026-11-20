@@ -1,7 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import type { App } from 'supertest/types';
+import type { Server } from 'node:http';
 import type { LawArticleHit } from '../../src/law/law.types.js';
 import type { Db } from '../../src/db/db.module.js';
 import { lawActs, lawArticles, lawSyncRuns, type NewLawArticle } from '../../src/db/schema/index.js';
@@ -13,6 +13,7 @@ process.env.NODE_ENV = 'test';
 // Never connected to: the DB provider is replaced with PGlite below.
 process.env.DATABASE_URL = 'postgres://lex:lex@localhost:5434/lex';
 process.env.JWT_SECRET ??= 'e2e-test-secret-at-least-32-characters-long';
+process.env.REDIS_URL ??= 'redis://localhost:6379';
 
 const { AppModule } = await import('../../src/app.module.js');
 const { DB } = await import('../../src/db/db.module.js');
@@ -29,7 +30,7 @@ const article = (id: string, docId: string, title: string | null, text: string):
 
 // The first request warms PGlite and Nest, which can take a few seconds.
 describe('search routes (e2e)', { timeout: 20_000 }, () => {
-  let app: INestApplication<App>;
+  let app: INestApplication<Server>;
   let db: Db;
   let closeDb: () => Promise<void>;
   const post = (path: string, body: unknown) =>

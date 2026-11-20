@@ -18,3 +18,40 @@ export async function createTestDb(
   await migrate(db, { migrationsFolder: './drizzle' });
   return { db: db as unknown as Db, close: () => client.close() };
 }
+
+/** A sender: an individual user, or a member of a fresh agency. */
+export async function seedUser(
+  db: Db,
+  options: { agency?: boolean; email?: string } = {},
+): Promise<{
+  id: string;
+  agencyId: string | null;
+  agencyRole: null | 'owner';
+}> {
+  let agencyId: string | null = null;
+  if (options.agency) {
+    const [agency] = await db
+      .insert(schema.agencies)
+      .values({ name: 'Test agency' })
+      .returning({ id: schema.agencies.id });
+    agencyId = agency.id;
+  }
+
+  const [user] = await db
+    .insert(schema.users)
+    .values({
+      email:
+        options.email ??
+        `sender-${Date.now()}-${Math.random()}@example.com`.toLowerCase(),
+      fullName: 'Test Sender',
+      agencyId,
+      agencyRole: agencyId ? 'owner' : null,
+    })
+    .returning({ id: schema.users.id });
+
+  return {
+    id: user.id,
+    agencyId,
+    agencyRole: agencyId ? 'owner' : null,
+  };
+}

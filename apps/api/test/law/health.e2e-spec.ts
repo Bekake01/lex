@@ -1,7 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import type { App } from 'supertest/types';
+import type { Server } from 'node:http';
 import type { Db } from '../../src/db/db.module.js';
 import { createTestDb } from '../helpers/test-db.js';
 
@@ -9,24 +9,25 @@ process.env.NODE_ENV = 'test';
 // Never connected to: the DB provider is replaced in every test app below.
 process.env.DATABASE_URL = 'postgres://lex:lex@localhost:5434/lex';
 process.env.JWT_SECRET ??= 'e2e-test-secret-at-least-32-characters-long';
+process.env.REDIS_URL ??= 'redis://localhost:6379';
 
 const { AppModule } = await import('../../src/app.module.js');
 const { DB } = await import('../../src/db/db.module.js');
 
-async function createApp(db: Db): Promise<INestApplication<App>> {
+async function createApp(db: Db): Promise<INestApplication<Server>> {
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
   })
     .overrideProvider(DB)
     .useValue(db)
     .compile();
-  const app = moduleRef.createNestApplication<INestApplication<App>>();
+  const app = moduleRef.createNestApplication<INestApplication<Server>>();
   await app.init();
   return app;
 }
 
 describe('GET /health (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication<Server>;
   let closeDb: () => Promise<void>;
   let db: Db;
 
@@ -57,7 +58,7 @@ describe('GET /health (e2e)', () => {
 });
 
 describe('GET /health (e2e) with the database down', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication<Server>;
 
   beforeAll(async () => {
     const unreachable = {

@@ -1,0 +1,29 @@
+{
+  "language": "uz",
+  "partyName": "Dilnoza Yusupova",
+  "overview": "Bu turar joy ijarasi shartnomasi. Siz ijaraga oluvchi sifatida kvartirada bir yil yashash huquqini olasiz va har oy ijara haqini to'lash majburiyatini olasiz.",
+  "yourObligations": [
+    {
+      "text": "Har oyning 5-sanasiga qadar 5 000 000 so'm ijara haqini to'lash",
+      "deadline": "har oyning 5-sanasi",
+      "penalty": "kechiktirilgan har kun uchun 0,1% penya",
+      "clauseRef": "2"
+    },
+    {
+      "text": "Kvartirani shartnomada ko'rsatilgan maqsadda ishlatish va uni saqlash",
+      "clauseRef": "7"
+    }
+  ],
+  "otherObligations": [
+    {
+      "text": "Kvartirani shartnoma kuchga kirgan kundan foydalanishga topshirish",
+      "deadline": "1-fevral",
+      "clauseRef": "1"
+    }
+  ],
+  "keyConditions": [
+    { "label": "Ijara haqi", "value": "oyiga 5 000 000 so'm" },
+    { "label": "Depozit", "value": "ikki oylik ijara haqi" },
+    { "label": "Muddat", "value": "1 yil" }
+  ]
+}
