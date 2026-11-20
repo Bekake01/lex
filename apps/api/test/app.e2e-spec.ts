@@ -2,7 +2,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module.js';
+
+process.env.NODE_ENV = 'test';
+// Never connected to: no route in this test touches the database.
+process.env.DATABASE_URL = 'postgres://lex:lex@localhost:5434/lex';
+
+const { AppModule } = await import('../src/app.module.js');
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;

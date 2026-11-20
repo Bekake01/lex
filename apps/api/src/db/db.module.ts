@@ -1,11 +1,14 @@
-import { Global, Inject, Module, OnApplicationShutdown } from '@nestjs/common';
-import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { Global, Inject, Logger, Module, type OnApplicationShutdown } from '@nestjs/common';
+import type { PgDatabase, PgQueryResultHKT } from 'drizzle-orm/pg-core';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import pg from 'pg';
+import { ENV, type Env } from '../config/env.js';
 import * as schema from './schema/index.js';
 
-export const DB = Symbol('DB');
-export type Db = NodePgDatabase<typeof schema>;
+/** Driver-agnostic Drizzle client (node-postgres in the app, PGlite in tests). */
+export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
+export const DB = Symbol('DB');
 const PG_POOL = Symbol('PG_POOL');
 
 @Global()
@@ -13,19 +16,30 @@ const PG_POOL = Symbol('PG_POOL');
   providers: [
     {
       provide: PG_POOL,
-      useFactory: () =>
-        new Pool({ connectionString: process.env.DATABASE_URL }),
+      inject: [ENV],
+      useFactory: (env: Env) => {
+        const pool = new pg.Pool({
+          connectionString: env.DATABASE_URL,
+          max: 10,
+          connectionTimeoutMillis: 5_000,
+        });
+        // An idle client losing its connection must not crash the process.
+        // Log only the message: the error can carry connection details.
+        pool.on('error', (err) => new Logger('DbModule').error(`idle client error: ${err.message}`));
+        return pool;
+      },
     },
     {
       provide: DB,
       inject: [PG_POOL],
-      useFactory: (pool: Pool): Db => drizzle(pool, { schema, casing: 'snake_case' }),
+      // camelCase in TypeScript, snake_case columns in Postgres.
+      useFactory: (pool: pg.Pool): Db => drizzle(pool, { schema, casing: 'snake_case' }),
     },
   ],
   exports: [DB],
 })
 export class DbModule implements OnApplicationShutdown {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(@Inject(PG_POOL) private readonly pool: pg.Pool) {}
 
   async onApplicationShutdown() {
     await this.pool.end();
