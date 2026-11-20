@@ -20,9 +20,11 @@ import { AiUsageService } from '../../usage/ai-usage.service.js';
 import { AiError, toAiError } from '../ai-errors.js';
 import { addUsage, AiService, emptyUsage } from '../ai.service.js';
 import { checkCitations } from '../citations.js';
+import { clauseOutline, resolveClause } from '../clauses.js';
 import { DocumentContentService } from '../document-content.service.js';
 import {
   articlesBlockText,
+  clausesBlockText,
   CLASSIFY_SYSTEM,
   languageInstruction,
   reviewSystem,
@@ -101,9 +103,11 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
 
       // Call 2: the review. Document last, after the cached system prompt and
       // the retrieved articles, so the cacheable prefix stays stable.
+      const outline = clausesBlockText(clauseOutline(loaded.clauses));
       const reviewContent: AiContentBlock[] = [
         { type: 'text', text: languageInstruction(review.language) },
         { type: 'text', text: articlesBlockText(hits) },
+        ...(outline ? [{ type: 'text' as const, text: outline }] : []),
         ...documentBlocks,
       ];
       const reviewed = await this.ai.structured({
@@ -129,20 +133,40 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
         .indexVersionDate()
         .catch(() => null);
 
+      // The document's numbering wins: a ref the document does not have is
+      // kept as the model wrote it, but without offsets, so the frontend can
+      // tell the two apart.
       const issueRows: NewAiIssue[] = reviewed.output.issues.map(
-        (issue, index) => ({
-          reviewId,
-          clauseRef: issue.clauseRef,
-          quote: issue.quote,
-          problem: issue.problem,
-          severity: issue.severity,
-          recommendation: issue.recommendation,
-          citation: issue.articleId
-            ? (check.snapshots.get(issue.articleId) ?? null)
-            : null,
-          orderIndex: index,
-        }),
+        (issue, index) => {
+          const clause = resolveClause(
+            loaded.clauses,
+            issue.clauseRef,
+            issue.quote,
+          );
+          return {
+            reviewId,
+            clauseRef: clause.ref,
+            clauseStart: clause.start,
+            clauseEnd: clause.end,
+            quote: issue.quote,
+            problem: issue.problem,
+            severity: issue.severity,
+            recommendation: issue.recommendation,
+            citation: issue.articleId
+              ? (check.snapshots.get(issue.articleId) ?? null)
+              : null,
+            orderIndex: index,
+          };
+        },
       );
+
+      const unresolved = issueRows.filter((r) => r.clauseStart === null).length;
+      if (unresolved > 0 && loaded.clauses.length > 0) {
+        this.logger.warn(
+          `review ${reviewId}: ${unresolved}/${issueRows.length} issues ` +
+            `name a clause the document does not have`,
+        );
+      }
 
       const totals = addUsage(
         addUsage(emptyUsage(), classify.usage),

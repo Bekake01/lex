@@ -30,7 +30,13 @@ const CONTRACT = `1. Ijara haqi oyiga 5 000 000 so'm.
 /** Canned model answers: the pipeline is under test, not the model. */
 function stubAi(
   calls: string[],
-  options: { citeArticleId?: string | null } = {},
+  options: {
+    citeArticleId?: string | null;
+    /** What the model claims the finding's clause is. */
+    clauseRef?: string;
+    /** Receives every call, to assert on what the model was sent. */
+    seen?: StructuredCall<unknown>[];
+  } = {},
 ) {
   const citeArticleId =
     options.citeArticleId === undefined
@@ -44,6 +50,7 @@ function stubAi(
     configured: true,
     structured: async <T>(call: StructuredCall<T>) => {
       calls.push(call.label);
+      options.seen?.push(call as StructuredCall<unknown>);
       const output =
         call.label === 'classify'
           ? {
@@ -64,7 +71,7 @@ function stubAi(
               summary: 'Bir tomonlama ijara haqini oshirish sharti xavfli.',
               issues: [
                 {
-                  clauseRef: '2',
+                  clauseRef: options.clauseRef ?? '2',
                   quote: 'istalgan vaqtda, ogohlantirmasdan oshirishi mumkin',
                   problem:
                     'Ijara haqini cheklovsiz oshirish sharti nomutanosib.',
@@ -207,6 +214,55 @@ describe('analyze-document job', () => {
     expect(issues).toHaveLength(1);
     expect(issues[0].citation?.articleId).toBe('fx-civil-a556');
     expect(issues[0].citation?.sourceUrl).toContain('lex.uz');
+  });
+
+  it('shows the model the document clauses and ties the finding to one', async () => {
+    const { review } = await seedReview();
+    const seen: StructuredCall<unknown>[] = [];
+    await processor(stubAi([], { seen })).process(
+      fakeJob({ reviewId: review.id }),
+    );
+
+    // The clause outline is sent with the review call, before the document.
+    const reviewCall = seen[1];
+    const texts = reviewCall.content.map((b) =>
+      b.type === 'text' ? b.text : '',
+    );
+    const outline = texts.find((t) => t.includes('<document_clauses>'));
+    expect(outline).toBeDefined();
+    expect(outline).toContain('1');
+    expect(outline).toContain('3');
+    expect(texts.indexOf(outline as string)).toBeLessThan(
+      texts.findIndex((t) => t.includes('<contract_document>')),
+    );
+
+    // "2" is a real clause, so the issue carries where to highlight it.
+    const [issue] = await db
+      .select()
+      .from(aiIssues)
+      .where(eq(aiIssues.reviewId, review.id));
+    expect(issue.clauseRef).toBe('2');
+    expect(issue.clauseStart).toBeGreaterThan(0);
+    expect(issue.clauseEnd).toBeGreaterThan(issue.clauseStart as number);
+    expect(
+      CONTRACT.slice(issue.clauseStart as number, issue.clauseEnd as number),
+    ).toContain('ogohlantirmasdan');
+  });
+
+  it('keeps a clause the document does not have, without offsets', async () => {
+    const { review } = await seedReview();
+    await processor(stubAi([], { clauseRef: '9.4' })).process(
+      fakeJob({ reviewId: review.id }),
+    );
+
+    const [issue] = await db
+      .select()
+      .from(aiIssues)
+      .where(eq(aiIssues.reviewId, review.id));
+    // The quote is in clause 2, so the quote fallback resolves it even though
+    // the number is invented.
+    expect(issue.clauseRef).toBe('2');
+    expect(issue.clauseStart).not.toBeNull();
   });
 
   it('drops a citation the model invented', async () => {

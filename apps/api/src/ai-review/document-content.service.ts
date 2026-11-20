@@ -82,10 +82,7 @@ export class DocumentContentService {
    * The content blocks that carry the document: extracted text when we have
    * it, and the PDF itself when we do not (a scan, or no extractor yet).
    */
-  asContentBlocks(
-    doc: Document,
-    content: DocumentContent,
-  ): AiContentBlock[] {
+  asContentBlocks(doc: Document, content: DocumentContent): AiContentBlock[] {
     if (content.text.trim().length > 0) {
       return [{ type: 'text', text: documentBlockText(content.text) }];
     }

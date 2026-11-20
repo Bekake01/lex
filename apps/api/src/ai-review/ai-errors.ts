@@ -40,16 +40,28 @@ export function toAiError(error: unknown): AiError {
     return new AiError('AI rate limit reached', AI_ERROR.rateLimited, true);
   }
   if (error instanceof OpenAI.APIConnectionError) {
-    return new AiError('Could not reach the AI service', AI_ERROR.connection, true);
+    return new AiError(
+      'Could not reach the AI service',
+      AI_ERROR.connection,
+      true,
+    );
   }
   if (error instanceof OpenAI.NotFoundError) {
     return new AiError('AI model not found', AI_ERROR.badRequest, false);
   }
   if (error instanceof OpenAI.AuthenticationError) {
-    return new AiError('The AI service rejected the API key', AI_ERROR.badRequest, false);
+    return new AiError(
+      'The AI service rejected the API key',
+      AI_ERROR.badRequest,
+      false,
+    );
   }
   if (error instanceof OpenAI.BadRequestError) {
-    return new AiError('The AI service rejected the request', AI_ERROR.badRequest, false);
+    return new AiError(
+      'The AI service rejected the request',
+      AI_ERROR.badRequest,
+      false,
+    );
   }
   if (error instanceof OpenAI.APIError) {
     const status = error.status ?? 0;

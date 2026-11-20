@@ -7,5 +7,31 @@
   "version": 1,
   "parentDocumentId": null,
   "isLatest": true,
+  "clauses": [
+    {
+      "ref": "1",
+      "heading": "Shartnoma predmeti",
+      "start": 0,
+      "end": 148
+    },
+    {
+      "ref": "2",
+      "heading": "Ijara haqi",
+      "start": 148,
+      "end": 402
+    },
+    {
+      "ref": "3",
+      "start": 402,
+      "end": 611
+    },
+    {
+      "ref": "4",
+      "heading": "Shartnomani bekor qilish",
+      "start": 611,
+      "end": 840
+    }
+  ],
+  "scanned": false,
   "createdAt": "2026-11-20T08:55:00.000Z"
 }

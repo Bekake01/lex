@@ -50,7 +50,7 @@ export const envSchema = z.object({
   /** Effort for the review call. Summaries run one level lower (see ai.service). */
   AI_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('high'),
   /** Bumped whenever a prompt changes; old reviews keep their version. */
-  AI_PROMPT_VERSION: z.string().default('v1'),
+  AI_PROMPT_VERSION: z.string().default('v2'),
 
   /* ----------------------------------------------------------------- law -- */
 
