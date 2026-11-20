@@ -6,7 +6,7 @@ Edit in place to keep this current.
 - Monorepo skeleton: `apps/api` (NestJS, 5000), `apps/web` (Next.js sender dashboard, 3000), `apps/sign` (Next.js public signing app, 3001), pnpm + turbo.
 - Database: Postgres (Docker, 5434) + Drizzle. Tables: `agencies`, `users`, `sessions`, `email_codes` (schema only; login / forgot password / Resend not implemented yet). Test endpoints `GET /users`, `POST /users` in `apps/api`.
 - `apps/sign`: `/sign/[token]` page exists as a placeholder (shows the token; no API call yet).
-- `apps/lex-api` (NestJS, 5001): law database service for the AI review. Done: setup + API key guard, Postgres/pgvector schema + migrations, Uzbek text utils, Hugging Face law import (54k articles). Not yet: `/search`, embeddings, document extraction.
+- `apps/lex-api` (NestJS, 5001): law database service for the AI review. Done: setup + API key guard, Postgres/pgvector schema + migrations, Uzbek text utils, Hugging Face law import (54k articles), keyword search (`POST /search`, `/articles/batch`, `/meta`). Not yet: embeddings, document extraction.
 
 ## In progress
 - `apps/lex-api` Phase 5+ (chunking, then `/search` for `apps/api`) · AI team

@@ -6,6 +6,8 @@ import { ConfigModule } from './config/config.module.js';
 import { ENV, type Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
 import { HealthController } from './health/health.controller.js';
+import { SearchController } from './search/search.controller.js';
+import { SearchService } from './search/search.service.js';
 
 @Module({
   imports: [
@@ -36,7 +38,7 @@ import { HealthController } from './health/health.controller.js';
       }),
     }),
   ],
-  controllers: [HealthController],
-  providers: [{ provide: APP_GUARD, useClass: ApiKeyGuard }],
+  controllers: [HealthController, SearchController],
+  providers: [{ provide: APP_GUARD, useClass: ApiKeyGuard }, SearchService],
 })
 export class AppModule {}
