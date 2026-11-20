@@ -22,6 +22,7 @@ Edit in place to keep this current.
 - Signing itself (consent, stamp, seal, certificate): `@lex/crypto` provides the hashing and the "Summary shown to signer: sha256 …" line, nothing renders a certificate yet.
 
 ## Decisions
+- Law search is Uzbek only for now: **Russian coverage (law Phase 15) is deferred** (2026-11-21). Cyrillic Uzbek queries are transliterated to Latin.
 - Ports: web 3000, sign 3001, api 5000, Postgres 5434, Redis 6379.
 - Users: one table; `agency_id` null = individual, else member of exactly one agency. Receivers who sign by link are not users. No email verification for the hackathon. Login = tms-style sessions (JWT access + rotating refresh). Forgot password = 6-digit code via Resend (`email_codes`).
 - ORM: Drizzle (not Prisma), Postgres 18 (`uuidv7()`), camelCase in TS / snake_case in SQL. Image `pgvector/pgvector:pg18`; one database for users, law data and AI rows.

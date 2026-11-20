@@ -238,7 +238,10 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** a test with a saved RSS fixture updates one act; running twice changes nothing; a failed fetch leaves the old version intact.
 
-### Phase 15 — Russian coverage (2 days)
+### Phase 15 — Russian coverage (2 days) — **deferred**
+
+**Not needed for now (team decision, 2026-11-21).** Contracts and law search stay Uzbek (Latin; Cyrillic queries are transliterated). Russian contracts are still read and reviewed by the AI; only the law index has no Russian text. Revisit after launch.
+
 **Build**
 - Russian text for core acts (lex.uz `/ru/` pages, or HF `uzbek-legal-corpus-v1` for the 20 codes)
 - `/search` accepts Russian queries and searches Russian rows too (`language` filter, `russian` text-search config for those rows)
