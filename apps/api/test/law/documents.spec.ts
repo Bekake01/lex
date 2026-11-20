@@ -132,7 +132,11 @@ describe('DocumentProcessingService', () => {
     expect(doc.language).toBe('uz-latn');
   });
 
-  it('says clearly that DOCX edits are not built yet (Phase 13)', async () => {
-    await expect(service.applyEdits(await makeDocx(['x']), [])).rejects.toThrow(/not built yet/);
+  it('applies DOCX edits through the shared interface (Phase 13)', async () => {
+    const out = await service.applyEdits(await makeDocx(UZ_LATN), [
+      { original: '5-sanasigacha', replacement: '10-sanasigacha' },
+    ]);
+    const doc = await service.extractText(out, DOCX);
+    expect(doc.text).toContain('har oyning 10-sanasigacha toʻlanadi');
   });
 });

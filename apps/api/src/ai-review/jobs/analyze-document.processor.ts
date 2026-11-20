@@ -17,6 +17,7 @@ import {
 } from '../../law-search/law-search.types.js';
 import { QUEUE, type AnalyzeDocumentJob } from '../../queue/queue.constants.js';
 import { AiUsageService } from '../../usage/ai-usage.service.js';
+import { DocumentExtractionError } from '../../law/documents/extract.js';
 import { AiError, toAiError } from '../ai-errors.js';
 import { addUsage, AiService, emptyUsage } from '../ai.service.js';
 import { checkCitations } from '../citations.js';
@@ -228,6 +229,8 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
   /** Safe for storage and for the client: never raw model or provider text. */
   private userMessage(aiError: AiError, original: unknown): string {
     if (original instanceof AiError) return aiError.message;
+    // Unreadable, faked or unsupported files: the extractor's message is written for users.
+    if (original instanceof DocumentExtractionError) return original.message;
     if (
       original instanceof Error &&
       original.message.startsWith('Document extraction')

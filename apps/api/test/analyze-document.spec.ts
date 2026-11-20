@@ -17,6 +17,7 @@ import {
 } from '../src/db/schema/index.js';
 import type { Env } from '../src/config/env.js';
 import { FakeDocProcessingService } from '../src/law-search/fake-doc-processing.service.js';
+import { DocumentProcessingService } from '../src/law/documents/document-processing.service.js';
 import { FakeLawSearchService } from '../src/law-search/fake-law-search.service.js';
 import type { AnalyzeDocumentJob } from '../src/queue/queue.constants.js';
 import { StorageService } from '../src/storage/storage.service.js';
@@ -281,6 +282,37 @@ describe('analyze-document job', () => {
     expect(saved.status).toBe('failed');
     expect(saved.error).toMatch(/not built yet/);
     expect(saved.error).not.toContain('Ijara haqi');
+  });
+
+  it('shows the real extractor message when a file is not what it claims to be', async () => {
+    const { document, review } = await seedReview();
+    // Text bytes labelled as a PDF: the real extractor refuses with a user-facing reason.
+    await db
+      .update(documents)
+      .set({ contentType: 'application/pdf' })
+      .where(eq(documents.id, document.id));
+    const realContent = new DocumentContentService(
+      db,
+      new DocumentProcessingService(),
+      storage,
+    );
+    const real = new AnalyzeDocumentProcessor(
+      db,
+      new FakeLawSearchService(),
+      stubAi([]),
+      realContent,
+      usage,
+    );
+
+    await real.process(fakeJob({ reviewId: review.id }));
+
+    const [saved] = await db
+      .select()
+      .from(aiReviews)
+      .where(eq(aiReviews.id, review.id));
+    expect(saved.status).toBe('failed');
+    expect(saved.error).toMatch(/not a PDF/);
+    expect(saved.error).not.toContain('Unexpected');
   });
 
   it('does nothing when the review row is gone', async () => {

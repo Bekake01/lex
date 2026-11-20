@@ -223,6 +223,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** fixtures pass (text split across runs, bold inside a sentence, tables, numbered lists, Uzbek apostrophes); the round-trip test shows unchanged paragraphs are byte-identical in the XML; **B's accept-edits route works with it**.
 
+**Status (2026-11-21):** built in `apps/api/src/law/documents/apply-edits.ts`, behind `DocumentProcessingService.applyEdits` (no separate route: one backend). Also handles an `original` that spans paragraphs. Tests: `test/law/apply-edits.spec.ts` (14) and two real-DOCX tests in B's `test/revise-and-edits.spec.ts` (accept → version 2; changed document → 422 `EDIT_NOT_APPLICABLE`). **Not yet checked by hand in Word / LibreOffice**: open one edited file in each before release.
+
 ### Phase 14 — lex.uz daily sync (2–3 days)
 **Build** `src/sync/`:
 - `@nestjs/schedule` cron (daily, at night) guarded by a Postgres advisory lock so only one instance runs it; disabled unless `SYNC_ENABLED=true`
