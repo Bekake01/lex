@@ -1,8 +1,10 @@
-# Heavy jobs on a MacBook: law search checks and embedding test
+# The MacBook: the team's run machine (setup, heavy jobs, running the app)
 
-Thanks for helping! These jobs need more disk space, RAM and CPU than the main dev laptop has. You only run tests and measurements. You don't write app code, and nothing here touches a production database.
+Thanks for helping! **The whole project runs on this Mac:** the database with all the laws, the backend and both web apps. It needs more disk space, memory and CPU than the developers' laptops have. You don't write app code here, and nothing touches a production database.
 
-**You need:** about 10 GB of free disk space, an internet connection, and 30–60 minutes (mostly waiting).
+**Order:** section 1 (setup), then **Job E** (all law data and embeddings), then **Job F** (start and try the app). Jobs A–C were one-time checks and are already done.
+
+**You need:** about 10 GB of free disk space, Docker Desktop, an internet connection, and about 3 hours the first time (mostly waiting).
 
 ---
 
@@ -183,7 +185,64 @@ Skip this. Voyage was chosen in Phase 7, and bge-m3 is only a self-hosted fallba
 
 ---
 
-## 7. Sending the results back
+## 7. Job F: run the whole app on the Mac (this Mac is the team's run machine)
+
+Do this after Job E (or at least E1–E3), so the database has the laws.
+
+**F1. Settings.** In `apps/api/.env`, besides the lines from E2, set the AI key. Ask the repo owner for an OpenAI key with a spending limit:
+
+```bash
+OPENAI_API_KEY=paste-the-key-here
+AI_MODEL=gpt-5
+```
+
+**F2. Build the shared packages once,** from the `lex` folder:
+
+```bash
+pnpm --filter @lex/contracts --filter @lex/crypto build
+```
+
+**F3. Start the three apps,** each in its own Terminal tab, from the `lex` folder:
+
+```bash
+pnpm dev:api      # backend   → http://localhost:5000
+pnpm dev:web      # dashboard → http://localhost:3000
+pnpm dev:sign     # signing   → http://localhost:3001
+```
+
+Check the backend: open http://localhost:5000/health. It should show `"db": true` and a date in `indexVersionDate`.
+
+**F4. Accounts and demo data** (in `apps/api`):
+
+```bash
+pnpm db:seed      # the team's accounts; see apps/api/src/db/seed/team.ts (password = the email before "@")
+pnpm seed:demo    # a demo sender with a finished review and a sent signature request
+```
+
+**F5. Try the whole flow** at http://localhost:3000:
+1. Sign in and upload a contract. A Word file is best, since accepted edits only work on Word.
+2. Start the review and wait for it to finish.
+3. Ask for a correction in the chat, then accept the proposed edit. This creates version 2.
+4. Send the document for signature. The signing link appears in the **`dev:api` terminal**, because emails aren't sent yet.
+5. Open the link, read the summary, and sign.
+
+Write down anything that fails, along with the step and the message shown. Some screens may still be in progress on the frontend side.
+
+**F6. After every `git pull`** (from the `lex` folder):
+
+```bash
+pnpm install
+pnpm --filter @lex/contracts --filter @lex/crypto build
+cd apps/api && pnpm db:migrate && cd ../..
+```
+
+Then read the newest lines of `memory/CHANGELOG.md`. If one says **Action:** (for example "run `pnpm ingest:core`"), do it. Restart the three `dev:*` tabs afterwards.
+
+**F7. Stopping:** press Ctrl+C in each tab, then run `docker compose stop`. This keeps all the data.
+
+---
+
+## 8. Sending the results back
 
 The easiest way is to send the `.txt` and `.json` files listed above in chat.
 
@@ -203,7 +262,7 @@ Only add the result files. **Don't** add `apps/api/data/` (it's large and git-ig
 
 ---
 
-## 8. Cleaning up afterwards
+## 9. Cleaning up afterwards
 
 Only clean up when the team says Phase 8 is done (the database holds the paid-for embeddings). Then stop and delete the database, and the folder:
 

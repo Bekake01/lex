@@ -35,6 +35,13 @@ describe('parseLexUzAct (saved lex.uz pages)', () => {
     expect(act.articles[2].text).toContain('tijorat siri — uchinchi shaxslarga');
   });
 
+  it('ignores editions that are not in force yet (future ONDATE links)', () => {
+    const future = TRADE_SECRET.replace('</body>', '<a href="/uz/docs/-1?ONDATE=01.01.2099 00">x</a></body>');
+    expect(parseLexUzAct(future, { today: '2026-11-21' }).versionDate).toBe('2026-03-17');
+    // On a day before the 2026-03-17 edition, the previous edition is current.
+    expect(parseLexUzAct(TRADE_SECRET, { today: '2026-01-01' }).versionDate).toBe('2025-05-08');
+  });
+
   it('leaves out the page toolbar and editorial notes', () => {
     const text = parseLexUzAct(TRADE_SECRET).articles.map((a) => a.text).join('\n');
     expect(text).not.toContain('Hujjatga taklif yuborish');
