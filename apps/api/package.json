@@ -28,7 +28,8 @@
     "ingest:hf": "nest build && node dist/law/ingest/hf-import.command.js",
     "ingest:chunk": "nest build && node dist/law/ingest/chunk.command.js",
     "eval:review": "tsc -p tsconfig.tools.json && node dist-tools/eval/ai-review/run.js",
-    "seed:demo": "tsc -p tsconfig.tools.json && node dist-tools/scripts/seed-demo.command.js"
+    "seed:demo": "tsc -p tsconfig.tools.json && node dist-tools/scripts/seed-demo.command.js",
+    "eval:search": "nest build && node dist/law/eval/search-eval.command.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

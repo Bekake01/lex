@@ -1,0 +1,102 @@
+{"id":"rent-01","topic":"rental","docType":"rental","query":"ijara shartnomasini ijaraga beruvchining talabi bilan muddatidan oldin bekor qilish","expected":["-180552-a551"]}
+{"id":"rent-02","topic":"rental","docType":"rental","query":"ijarachi ijara shartnomasini muddatidan oldin bekor qilishni talab qilishi mumkin boʻlgan hollar","expected":["-180552-a552"]}
+{"id":"rent-03","topic":"rental","docType":"rental","query":"ijara haqini toʻlash muddati va tartibi","expected":["-180552-a544","-112328-a12"]}
+{"id":"rent-04","topic":"rental","docType":"rental","query":"ijara muddati tugaganda mol-mulkni ijaraga beruvchiga qaytarish","expected":["-180552-a554","-112328-a17"]}
+{"id":"rent-05","topic":"rental","docType":"rental","query":"ijaraga olingan mulkni ikkilamchi ijaraga berish","expected":["-180552-a546","-112328-a8","-180552-a613"]}
+{"id":"rent-06","topic":"rental","docType":"rental","query":"ijaraga olingan mol-mulkni kapital taʼmirlash kimning zimmasida","expected":["-180552-a547","-180552-a548"]}
+{"id":"rent-07","topic":"rental","docType":"rental","query":"joriy taʼmirlash va saqlash xarajatlari ijaraga oluvchining majburiyati","expected":["-180552-a548"]}
+{"id":"rent-08","topic":"rental","docType":"rental","query":"ijara shartnomasi qanday shaklda tuzilishi kerak","expected":["-180552-a539"]}
+{"id":"rent-09","topic":"rental","docType":"rental","query":"bino ijarasi shartnomasini davlat roʻyxatidan oʻtkazish","expected":["-180552-a574","-180552-a539"]}
+{"id":"rent-10","topic":"rental","docType":"rental","query":"ijara shartnomasida muddat koʻrsatilmagan boʻlsa","expected":["-180552-a540"]}
+{"id":"rent-11","topic":"rental","docType":"rental","query":"ijaraga berilgan mol-mulkdagi kamchiliklar uchun ijaraga beruvchining javobgarligi","expected":["-180552-a542"]}
+{"id":"rent-12","topic":"rental","docType":"rental","query":"ijaraga olingan mulkni yaxshilash xarajatlarini qoplash","expected":["-180552-a555","-112328-a11"]}
+{"id":"rent-13","topic":"rental","docType":"rental","query":"ijara muddati tugagach yangi muddatga shartnoma tuzishda ijarachining imtiyozli huquqi","expected":["-180552-a553"]}
+{"id":"rent-14","topic":"rental","docType":"rental","query":"mulk egasi almashganda ijara shartnomasi oʻz kuchida qoladimi","expected":["-180552-a549","-112328-a16"]}
+{"id":"rent-15","topic":"rental","docType":"rental","query":"kvartirani ijaraga berish shartnomasini bekor qilish","expected":["-180552-a615","-180552-a616"]}
+{"id":"rent-16","topic":"rental","docType":"rental","query":"уй-жой ижараси учун тўланадиган ҳақ","expected":["-180552-a611"],"note":"Cyrillic query"}
+{"id":"rent-17","topic":"rental","docType":"rental","query":"uy-joyni ijaraga oluvchining majburiyatlari","expected":["-180552-a607"]}
+{"id":"rent-18","topic":"rental","docType":"rental","query":"transport vositasini haydovchi bilan ijaraga berish","expected":["-180552-a564","-180552-a566"]}
+{"id":"rent-19","topic":"rental","docType":"rental","query":"binoni yoki inshootni ijaraga berish shartnomasi","expected":["-180552-a573"]}
+{"id":"rent-20","topic":"rental","docType":"rental","query":"lizing to'lovlari","expected":["-180552-a590"],"note":"ASCII apostrophe"}
+{"id":"sale-01","topic":"sale","docType":"sale","query":"oldi-sotdi shartnomasi tushunchasi","expected":["-180552-a386"]}
+{"id":"sale-02","topic":"sale","docType":"sale","query":"sotuvchining tovarni topshirish majburiyatlari","expected":["-180552-a388"]}
+{"id":"sale-03","topic":"sale","docType":"sale","query":"tovarni topshirish muddati","expected":["-180552-a389"]}
+{"id":"sale-04","topic":"sale","docType":"sale","query":"tovar sifati uchun kafolat muddati","expected":["-180552-a403","-180552-a404"]}
+{"id":"sale-05","topic":"sale","docType":"sale","query":"sifatsiz tovar topshirilganda xaridorning huquqlari","expected":["-180552-a408","-180552-a434","-4704-a13"]}
+{"id":"sale-06","topic":"sale","docType":"sale","query":"tovar haqini oldindan toʻlash","expected":["-180552-a420"]}
+{"id":"sale-07","topic":"sale","docType":"sale","query":"tovar haqini boʻlib-boʻlib toʻlash sharti bilan sotish","expected":["-180552-a422"]}
+{"id":"sale-08","topic":"sale","docType":"sale","query":"nasiyaga sotilgan tovar haqini toʻlash","expected":["-180552-a421"]}
+{"id":"sale-09","topic":"sale","docType":"sale","query":"tovarning tasodifan nobud boʻlish xavfi xaridorga qachon oʻtadi","expected":["-180552-a392"]}
+{"id":"sale-10","topic":"sale","docType":"sale","query":"tovar miqdori toʻgʻrisidagi shartni buzish oqibatlari","expected":["-180552-a399"]}
+{"id":"sale-11","topic":"sale","docType":"sale","query":"but boʻlmagan tovar topshirilganda","expected":["-180552-a413"]}
+{"id":"sale-12","topic":"sale","docType":"sale","query":"tovarlarni yetkazib berish muddatini kechiktirganlik uchun neustoyka","expected":["-180552-a454","-18942-a25"]}
+{"id":"sale-13","topic":"sale","docType":"sale","query":"yetkazib berilgan tovar haqini oʻz vaqtida toʻlamaganlik uchun javobgarlik","expected":["-18942-a32","-111189-a327"]}
+{"id":"sale-14","topic":"sale","docType":"sale","query":"toʻliq toʻlovgacha mulk huquqi sotuvchida saqlanib qolishi","expected":["-180552-a424"]}
+{"id":"sale-15","topic":"sale","docType":"sale","query":"chakana oldi-sotdi shartnomasi","expected":["-180552-a425"]}
+{"id":"sale-16","topic":"sale","docType":"sale","query":"sifatli tovarni almashtirib olish huquqi","expected":["-180552-a433","-4704-a18"]}
+{"id":"sale-17","topic":"sale","docType":"sale","query":"xaridorning tovarni qabul qilish majburiyati","expected":["-180552-a417"]}
+{"id":"sale-18","topic":"sale","docType":"sale","query":"tovarni olib borib berish sharti bilan sotish","expected":["-180552-a431","-180552-a442"]}
+{"id":"serv-01","topic":"services","docType":"services","query":"haq evaziga xizmat koʻrsatish shartnomasi","expected":["-180552-a703"]}
+{"id":"serv-02","topic":"services","docType":"services","query":"koʻrsatilgan xizmatlar uchun haq toʻlash","expected":["-180552-a705"]}
+{"id":"serv-03","topic":"services","docType":"services","query":"xizmat koʻrsatish shartnomasini bir tomonlama bekor qilish","expected":["-180552-a707"]}
+{"id":"serv-04","topic":"services","docType":"services","query":"ijrochining xizmat koʻrsatish shartnomasini buzganlik uchun javobgarligi","expected":["-180552-a706"]}
+{"id":"serv-05","topic":"services","docType":"services","query":"pudrat shartnomasi tushunchasi","expected":["-180552-a631"]}
+{"id":"serv-06","topic":"services","docType":"services","query":"bajarilgan ish sifati past boʻlsa pudratchining javobgarligi","expected":["-180552-a650","-180552-a681"]}
+{"id":"serv-07","topic":"services","docType":"services","query":"ish natijasining sifatiga kafolat muddati","expected":["-180552-a648","-180552-a649"]}
+{"id":"serv-08","topic":"services","docType":"services","query":"pudrat ishiga haq toʻlash tartibi va avans","expected":["-180552-a638"]}
+{"id":"serv-09","topic":"services","docType":"services","query":"qurilish pudrati shartnomasi","expected":["-180552-a666"]}
+{"id":"serv-10","topic":"services","docType":"services","query":"maishiy pudrat boʻyicha ish sifatsiz bajarilganda buyurtmachining huquqlari","expected":["-180552-a665"]}
+{"id":"serv-11","topic":"services","docType":"services","query":"qarz shartnomasi boʻyicha foizlar","expected":["-180552-a734"]}
+{"id":"serv-12","topic":"services","docType":"services","query":"qarz oluvchining qarz summasini qaytarish majburiyati","expected":["-180552-a735"]}
+{"id":"emp-01","topic":"employment","docType":"employment","query":"mehnat shartnomasining shakli","expected":["-6257288-a106"]}
+{"id":"emp-02","topic":"employment","docType":"employment","query":"mehnat shartnomasining mazmuni va majburiy rekvizitlari","expected":["-6257288-a104","-6257288-a107"]}
+{"id":"emp-03","topic":"employment","docType":"employment","query":"dastlabki sinov muddati necha oy","expected":["-6257288-a130"]}
+{"id":"emp-04","topic":"employment","docType":"employment","query":"dastlabki sinov natijasi qoniqarsiz boʻlganda","expected":["-6257288-a132"]}
+{"id":"emp-05","topic":"employment","docType":"employment","query":"muddatli mehnat shartnomasi tuziladigan hollar","expected":["-6257288-a112","-6257288-a113"]}
+{"id":"emp-06","topic":"employment","docType":"employment","query":"xodimning tashabbusiga koʻra mehnat shartnomasini bekor qilish","expected":["-6257288-a160"]}
+{"id":"emp-07","topic":"employment","docType":"employment","query":"ish beruvchining tashabbusiga koʻra mehnat shartnomasini bekor qilish asoslari","expected":["-6257288-a161"]}
+{"id":"emp-08","topic":"employment","docType":"employment","query":"ishdan boʻshatish haqida xodimni oldindan ogohlantirish muddati","expected":["-6257288-a165"]}
+{"id":"emp-09","topic":"employment","docType":"employment","query":"ishdan boʻshatish nafaqasi miqdori","expected":["-6257288-a173"]}
+{"id":"emp-10","topic":"employment","docType":"employment","query":"mehnat shartnomasini taraflarning kelishuviga koʻra bekor qilish","expected":["-6257288-a157"]}
+{"id":"emp-11","topic":"employment","docType":"employment","query":"muddatli mehnat shartnomasini muddatidan oldin bekor qilganda neustoyka","expected":["-6257288-a159"]}
+{"id":"emp-12","topic":"employment","docType":"employment","query":"ish vaqtining normal davomiyligi haftasiga","expected":["-6257288-a182"]}
+{"id":"emp-13","topic":"employment","docType":"employment","query":"ish vaqtidan tashqari ish uchun haq toʻlash","expected":["-6257288-a262"]}
+{"id":"emp-14","topic":"employment","docType":"employment","query":"har yilgi asosiy mehnat taʼtilining davomiyligi","expected":["-6257288-a217"]}
+{"id":"emp-15","topic":"employment","docType":"employment","query":"foydalanilmagan taʼtilni pul kompensatsiyasi bilan almashtirish","expected":["-6257288-a234"]}
+{"id":"emp-16","topic":"employment","docType":"employment","query":"ish haqini toʻlash muddatlari","expected":["-6257288-a253"]}
+{"id":"emp-17","topic":"employment","docType":"employment","query":"ishdan boʻshatilganda xodim bilan hisob-kitob qilish muddati","expected":["-6257288-a172","-6257288-a254"]}
+{"id":"emp-18","topic":"employment","docType":"employment","query":"intizomiy jazo choralari","expected":["-6257288-a312"]}
+{"id":"emp-19","topic":"employment","docType":"employment","query":"dam olish va bayram kunlari ishlaganlik uchun haq toʻlash","expected":["-6257288-a263"]}
+{"id":"emp-20","topic":"employment","docType":"employment","query":"меҳнат шартномасини бекор қилиш асослари","expected":["-6257288-a155"],"note":"Cyrillic query"}
+{"id":"nda-01","topic":"nda","docType":"nda","query":"tijorat siri tushunchasi","expected":["-2460801-a3"]}
+{"id":"nda-02","topic":"nda","docType":"nda","query":"tijorat sirini tashkil etishi mumkin boʻlmagan maʼlumotlar","expected":["-2460801-a5"]}
+{"id":"nda-03","topic":"nda","docType":"nda","query":"tijorat sirini muhofaza qilish muddati","expected":["-2460801-a7"]}
+{"id":"nda-04","topic":"nda","docType":"nda","query":"xodimlar bilan tijorat sirini mehnat munosabatlarida muhofaza qilish","expected":["-2460801-a11"]}
+{"id":"nda-05","topic":"nda","docType":"nda","query":"tijorat sirini kontragentga topshirganda maxfiylikni taʼminlash","expected":["-2460801-a13","-2460801-a14"]}
+{"id":"nda-06","topic":"nda","docType":"nda","query":"tijorat sirini oshkor qilganlik uchun javobgarlik","expected":["-2460801-a19"]}
+{"id":"nda-07","topic":"nda","docType":"nda","query":"tijorat siri rejimini oʻrnatish","expected":["-2460801-a8"]}
+{"id":"nda-08","topic":"nda","docType":"nda","query":"mehnat shartnomasi tugagandan keyin tijorat siridan foydalanish","expected":["-2460801-a12","-2460801-a11"]}
+{"id":"pd-01","topic":"personal-data","docType":"other","query":"shaxsga doir maʼlumotlarga ishlov berishga subyektning roziligi","expected":["-4396419-a21"]}
+{"id":"pd-02","topic":"personal-data","docType":"other","query":"shaxsga doir maʼlumotlarni uchinchi shaxslarga berish","expected":["-4396419-a13"]}
+{"id":"pd-03","topic":"personal-data","docType":"other","query":"shaxsga doir maʼlumotlarni chet elga transchegaraviy uzatish","expected":["-4396419-a15"]}
+{"id":"pd-04","topic":"personal-data","docType":"other","query":"shaxsga doir maʼlumotlarning maxfiyligi va saqlanishi","expected":["-4396419-a28","-4396419-a10","-4396419-a271"]}
+{"id":"pd-05","topic":"personal-data","docType":"other","query":"shaxsga doir maʼlumotlarni yoʻq qilish","expected":["-4396419-a17"]}
+{"id":"pd-06","topic":"personal-data","docType":"other","query":"biometrik maʼlumotlarga ishlov berish","expected":["-4396419-a26"]}
+{"id":"cons-01","topic":"consumer","docType":"sale","query":"isteʼmolchining nuqsonli tovarni almashtirib berish talabi","expected":["-4704-a14","-4704-a13"]}
+{"id":"cons-02","topic":"consumer","docType":"sale","query":"shartnomaning isteʼmolchi huquqlarini cheklaydigan shartlari haqiqiy emas","expected":["-4704-a21"]}
+{"id":"cons-03","topic":"consumer","docType":"sale","query":"isteʼmolchiga maʼnaviy zararni toʻlash","expected":["-4704-a22"]}
+{"id":"cons-04","topic":"consumer","docType":"sale","query":"isteʼmolchining tovar haqida maʼlumot olish huquqi","expected":["-4704-a6","-4704-a5"]}
+{"id":"cons-05","topic":"consumer","docType":"services","query":"xizmat koʻrsatish shartnomasi shartlari buzilganda isteʼmolchining huquqlari","expected":["-4704-a19"]}
+{"id":"cons-06","topic":"consumer","docType":"sale","query":"internet orqali xarid qilinganda toʻlangan pulni qaytarish","expected":["-6213382-a27"]}
+{"id":"cons-07","topic":"consumer","docType":"sale","query":"elektron tijoratda ofertaga qoʻyiladigan talablar","expected":["-6213382-a16"]}
+{"id":"cons-08","topic":"consumer","docType":"other","query":"elektron hujjat va elektron xabarning yuridik kuchi","expected":["-6213382-a15"]}
+{"id":"gen-01","topic":"general","docType":"other","query":"neustoykani kamaytirish","expected":["-111189-a326"]}
+{"id":"gen-02","topic":"general","docType":"other","query":"neustoyka va zararni birga undirish","expected":["-111189-a325","-111189-a260"]}
+{"id":"gen-03","topic":"general","docType":"other","query":"fors-major yengib boʻlmaydigan kuch tufayli javobgarlikdan ozod qilish","expected":["-111189-a333"]}
+{"id":"gen-04","topic":"general","docType":"other","query":"shartnomani oʻzgartirish va bekor qilish asoslari","expected":["-111189-a382"]}
+{"id":"gen-05","topic":"general","docType":"other","query":"vaziyat jiddiy oʻzgarganda shartnomani oʻzgartirish","expected":["-111189-a383"]}
+{"id":"gen-06","topic":"general","docType":"other","query":"umumiy daʼvo muddati","expected":["-111189-a150"]}
+{"id":"gen-07","topic":"general","docType":"other","query":"oferta va aksept orqali shartnoma tuzish","expected":["-111189-a367","-111189-a370"]}
+{"id":"gen-08","topic":"general","docType":"other","query":"ishonchnomaning muddati","expected":["-111189-a139"]}
+{"id":"gen-09","topic":"general","docType":"other","query":"pul majburiyatini bajarmaganlik uchun javobgarlik","expected":["-111189-a327"]}
+{"id":"gen-10","topic":"general","docType":"other","query":"majburiyatni bajarishdan bir tomonlama bosh tortish","expected":["-111189-a237"]}

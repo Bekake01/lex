@@ -7,7 +7,7 @@ Edit in place to keep this current.
 - Infra: Postgres + pgvector (Docker, 5434) + **Redis (Docker, 6379, BullMQ)** → `pnpm services:up`. Drizzle migrations `0000_init`, `0001_pgvector`, `0002_law`, `0003_law_article_parts`, `0004_ai_tables`.
 - Database tables: `agencies`, `users`, `sessions`, `email_codes` (forgot password / Resend not implemented yet), `law_acts`, `law_articles`, `law_sync_runs`, `documents`, `ai_reviews`, `ai_issues`, `ai_review_messages`, `ai_edits`, `signature_requests`, `recipients`, `recipient_summaries`, `ai_usage`.
 - Login (`apps/api/src/auth/`, `apps/web` `/login`): login / refresh / logout + `GET /me`, global access-token guard (`@Public()` to opt out). Team accounts via `pnpm db:seed` (Bekzod, Malika, Zuxriddin, Quvomiddin; password = email part before `@`). No sign-up page, no forgot password yet. The AI routes use `CurrentUserGuard`, which loads the user from the JWT.
-- Law (in `apps/api/src/law/`, merged from lex-api): pgvector tables, Uzbek text utils, Hugging Face import (`pnpm ingest:hf`, 54k articles), keyword search (`POST /law/search`, `/law/articles/batch`, `GET /law/meta`). `GET /health` reports db + law index date. Long articles/acts split into parts (≤ ~1,600 tokens, `parent_id`). Not yet: embeddings, document extraction.
+- Law (in `apps/api/src/law/`, merged from lex-api): pgvector tables, Uzbek text utils, Hugging Face import (`pnpm ingest:hf`, 54k articles), keyword search (`POST /law/search`, `/law/articles/batch`, `GET /law/meta`; `SearchService` exported from `LawModule` for the AI review). `GET /health` reports db + law index date. Long articles/acts split into parts (≤ ~1,600 tokens, `parent_id`). Search eval: 102 queries, keyword R@10 91.3% on codes + laws (`docs/decisions/embeddings.md`). Not yet: embeddings, document extraction.
 - **AI review pipeline** (`apps/api/src/ai-review/`): upload → `analyze-document` job (extract → classify → law search → review → server-side citation check → save) → poll `GET /reviews/:id`. Correction chat → `revise-document` job → validated edits → accept → new document version + automatic re-review. Send → `summarize-for-recipients` job → `GET /sign/:token/summary` (public, uniform 404, reads stored rows, never calls Claude).
 - Law search for the review: in-process `LawModule` when the law tables have data, fixture articles otherwise (`LAW_SEARCH_MODE=auto|db|fake`). Document extraction: text + PDF stand-in (DOCX not yet).
 - Model settings: `claude-opus-5-5`, adaptive thinking, structured output with Zod, prompt caching on the system prompt, server-side refusal fallbacks; effort `high` for the review, `medium` for classify and summaries.
@@ -16,7 +16,7 @@ Edit in place to keep this current.
 - `apps/sign`: `/sign/[token]` page exists as a placeholder (shows the token; no API call yet).
 
 ## In progress
-- Law Phase 7+ (search eval, then embeddings) in `apps/api/src/law/` · AI team (zuhriddin)
+- Law Phase 7: embedding choice (needs `VOYAGE_API_KEY` + a bge-m3 server), then Phase 8 hybrid search, in `apps/api/src/law/` · AI team (zuhriddin)
 - `apps/web` review screen, `apps/sign` summary step · frontend team. They need `GET /sign/:token/summary` in the sign relay allowlist.
 - Emails: `send-signing-invite` marks the request sent and logs the links; Resend delivery is the email track's.
 - Signing itself (consent, stamp, seal, certificate): `@lex/crypto` provides the hashing and the "Summary shown to signer: sha256 …" line, nothing renders a certificate yet.
