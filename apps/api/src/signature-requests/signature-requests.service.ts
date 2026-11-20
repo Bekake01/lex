@@ -60,6 +60,7 @@ export class SignatureRequestsService {
           documentId: document.id,
           createdByUserId: user.id,
           agencyId: user.agencyId,
+          title: document.name,
           status: 'pending',
           documentHash: document.sha256,
           summaryLanguage: language,
@@ -119,7 +120,7 @@ export class SignatureRequestsService {
       signatureRequestId: created.requestId,
       recipients: created.rows.map((row) => ({
         id: row.id,
-        email: row.email,
+        email: row.email ?? '',
         signUrl: this.signUrl(row.token),
       })),
     };

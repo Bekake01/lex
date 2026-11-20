@@ -46,7 +46,10 @@ export class SigningService {
       )
       .leftJoin(
         recipientSummaries,
-        eq(recipientSummaries.recipientId, recipients.id),
+        eq(
+          recipientSummaries.signatureRequestId,
+          recipients.signatureRequestId,
+        ),
       )
       .where(eq(recipients.token, token))
       .limit(1);

@@ -41,7 +41,7 @@ reminders, expiry sweeps, public verify page, i18n, security-lint, the relay sec
 - new: `title`, `message`, `fields` (jsonb, the editor layout), `pageCount`, `pageSizes` (jsonb),
   `partyName` (which contract party the recipients are, for the AI summary),
   `openLinkEnabled` (bool, default false), `publicToken` (unique, null while off), `passwordHash` (null = no password).
-- status: `draft → sent → cancelled` (enum gets `draft`; `pending` / `completed` stop being used).
+- status: `draft → sent → cancelled` (enum gets `draft`; `pending` / `completed` stop being used); the `draft` default is set in JS (`$default`), because Postgres can't use a new enum value in the migration that adds it).
 - `documentHash` (exists): sha256 of the PDF that was sent.
 
 **`recipients`** — one row = **one person's copy**.

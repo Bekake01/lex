@@ -86,7 +86,7 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
 
       // One call per distinct party, not per recipient.
       const parties = [
-        ...new Set(people.map((p) => p.partyName?.trim() || p.fullName)),
+        ...new Set(people.map((p) => p.partyName?.trim() || p.fullName || 'the signer')),
       ];
       const bodies = new Map<string, SummaryBody>();
       let totals = emptyUsage();
@@ -126,7 +126,8 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
       }
 
       const rows: NewRecipientSummary[] = people.map((person) => {
-        const partyName = person.partyName?.trim() || person.fullName;
+        const partyName =
+          person.partyName?.trim() || person.fullName || 'the signer';
         const body = bodies.get(partyName)!;
         return {
           signatureRequestId,
@@ -155,9 +156,11 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
           await tx
             .insert(recipientSummaries)
             .values(row)
+            // One summary per send (0006). Phase 07 makes this one row.
             .onConflictDoUpdate({
-              target: recipientSummaries.recipientId,
+              target: recipientSummaries.signatureRequestId,
               set: {
+                recipientId: row.recipientId,
                 partyName: row.partyName,
                 language: row.language,
                 body: row.body,
