@@ -2,15 +2,17 @@ import type { AiContentBlock } from '../ai.service.js';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
-import { asc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { hashJson } from '../../common/hash.js';
 import { DB, type Db } from '../../db/db.module.js';
 import {
+  aiReviews,
   documents,
   recipientSummaries,
-  recipients,
   signatureRequests,
+  users,
   type NewRecipientSummary,
+  type SignatureRequest,
   type SummaryBody,
 } from '../../db/schema/index.js';
 import {
@@ -19,17 +21,20 @@ import {
 } from '../../queue/queue.constants.js';
 import { AiUsageService } from '../../usage/ai-usage.service.js';
 import { toAiError } from '../ai-errors.js';
-import { addUsage, AiService, emptyUsage } from '../ai.service.js';
+import { AiService } from '../ai.service.js';
 import { DocumentContentService } from '../document-content.service.js';
 import { languageInstruction, SUMMARY_SYSTEM } from '../prompts.js';
 import { summaryOutputSchema } from '../schemas.js';
 
+/** The party name when nobody said which party the people are. */
+const GENERIC_PARTY = 'imzolovçi';
+
 /**
- * One summary per contract party, written at send time.
+ * One summary per send, written at send time: everyone signing a send is the
+ * same party, so one model call and one row.
  *
  * This is what makes the signing page possible without AI on the request path:
- * `GET /sign/:token/summary` only reads the rows this job wrote. Recipients who
- * are the same party share one model call.
+ * `GET /sign/:token/summary` only reads the row this job wrote.
  */
 @Processor(QUEUE.summarizeForRecipients)
 export class SummarizeForRecipientsProcessor extends WorkerHost {
@@ -65,15 +70,7 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
       return;
     }
 
-    const people = await this.db
-      .select()
-      .from(recipients)
-      .where(eq(recipients.signatureRequestId, signatureRequestId))
-      .orderBy(asc(recipients.createdAt));
-    if (people.length === 0) {
-      await this.fail(signatureRequestId);
-      return;
-    }
+    const partyName = await this.partyFor(request);
 
     await this.db
       .update(signatureRequests)
@@ -84,90 +81,53 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
       const loaded = await this.content.load(document);
       const documentBlocks = this.content.asContentBlocks(document, loaded);
 
-      // One call per distinct party, not per recipient.
-      const parties = [
-        ...new Set(people.map((p) => p.partyName?.trim() || p.fullName || 'the signer')),
+      const content: AiContentBlock[] = [
+        { type: 'text', text: languageInstruction(language) },
+        {
+          type: 'text',
+          text: `You are writing for this party of the contract: "${partyName}". Everything that party must do goes in yourObligations; everything the other side must do goes in otherObligations.`,
+        },
+        ...documentBlocks,
       ];
-      const bodies = new Map<string, SummaryBody>();
-      let totals = emptyUsage();
 
-      for (const partyName of parties) {
-        const content: AiContentBlock[] = [
-          { type: 'text', text: languageInstruction(language) },
-          {
-            type: 'text',
-            text: `You are writing for this party of the contract: "${partyName}". Everything that party must do goes in yourObligations; everything the other side must do goes in otherObligations.`,
-          },
-          ...documentBlocks,
-        ];
-
-        const result = await this.ai.structured({
-          label: 'summarize',
-          system: SUMMARY_SYSTEM,
-          content,
-          schema: summaryOutputSchema,
-          // A summary is explanation, not analysis: it holds up a level down.
-          // Plain language from a document already read, so the cheap model.
-          tier: 'light',
-          effort: 'medium',
-          maxTokens: 16_000,
-        });
-
-        totals = addUsage(totals, result.usage);
-        bodies.set(partyName, {
-          overview: result.output.overview,
-          yourObligations: result.output.yourObligations.map(toObligation),
-          otherObligations: result.output.otherObligations.map(toObligation),
-          keyConditions: result.output.keyConditions.map((c) => ({
-            label: c.label,
-            value: c.value,
-          })),
-        });
-      }
-
-      const rows: NewRecipientSummary[] = people.map((person) => {
-        const partyName =
-          person.partyName?.trim() || person.fullName || 'the signer';
-        const body = bodies.get(partyName)!;
-        return {
-          signatureRequestId,
-          recipientId: person.id,
-          partyName,
-          language,
-          body,
-          summaryHash: hashJson(body),
-        };
+      const result = await this.ai.structured({
+        label: 'summarize',
+        system: SUMMARY_SYSTEM,
+        content,
+        schema: summaryOutputSchema,
+        // A summary is explanation, not analysis: it holds up a level down.
+        // Plain language from a document already read, so the cheap model.
+        tier: 'light',
+        effort: 'medium',
+        maxTokens: 16_000,
       });
 
-      // One hash over every summary in recipient order: the certificate of
-      // completion records it next to the document hash, so it is provable
-      // which text each signer was shown.
-      const summaryHash = hashJson(
-        rows.map((row) => ({
-          recipientId: row.recipientId,
-          partyName: row.partyName,
-          language: row.language,
-          summaryHash: row.summaryHash,
+      const body: SummaryBody = {
+        overview: result.output.overview,
+        yourObligations: result.output.yourObligations.map(toObligation),
+        otherObligations: result.output.otherObligations.map(toObligation),
+        keyConditions: result.output.keyConditions.map((c) => ({
+          label: c.label,
+          value: c.value,
         })),
-      );
+      };
+      // The certificate of every copy records this hash, so it is provable
+      // which text each signer was shown.
+      const summaryHash = hashJson(body);
+      const row: NewRecipientSummary = {
+        signatureRequestId,
+        recipientId: null,
+        partyName,
+        language,
+        body,
+        summaryHash,
+      };
 
       await this.db.transaction(async (tx) => {
-        for (const row of rows) {
-          await tx
-            .insert(recipientSummaries)
-            .values(row)
-            // One summary per send (0006). Phase 07 makes this one row.
-            .onConflictDoUpdate({
-              target: recipientSummaries.signatureRequestId,
-              set: {
-                recipientId: row.recipientId,
-                partyName: row.partyName,
-                language: row.language,
-                body: row.body,
-                summaryHash: row.summaryHash,
-              },
-            });
-        }
+        await tx.insert(recipientSummaries).values(row).onConflictDoUpdate({
+          target: recipientSummaries.signatureRequestId,
+          set: { partyName, language, body, summaryHash },
+        });
         await tx
           .update(signatureRequests)
           .set({ summariesStatus: 'done', summaryHash })
@@ -176,13 +136,12 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
 
       await this.usage.recordSummaries(
         { userId: request.createdByUserId, agencyId: request.agencyId },
-        totals,
-        parties.length,
+        result.usage,
+        1,
       );
 
       this.logger.log(
-        `summaries for ${signatureRequestId}: ${parties.length} parties, ` +
-          `${rows.length} recipients, hash ${summaryHash.slice(0, 12)}…`,
+        `summary for ${signatureRequestId} (${partyName}): hash ${summaryHash.slice(0, 12)}…`,
       );
     } catch (error) {
       const aiError = toAiError(error);
@@ -202,6 +161,41 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
       );
       await this.fail(signatureRequestId);
     }
+  }
+
+  /**
+   * Who the people signing are: the sender's choice; else, when the AI review
+   * found exactly two parties and one is the sender, the other one; else a
+   * generic signer.
+   */
+  private async partyFor(request: SignatureRequest): Promise<string> {
+    if (request.partyName?.trim()) return request.partyName.trim();
+
+    const [review] = await this.db
+      .select({ parties: aiReviews.parties })
+      .from(aiReviews)
+      .where(
+        and(
+          eq(aiReviews.documentId, request.documentId),
+          eq(aiReviews.status, 'done'),
+        ),
+      )
+      .orderBy(desc(aiReviews.createdAt))
+      .limit(1);
+    const [sender] = await this.db
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, request.createdByUserId))
+      .limit(1);
+
+    const parties = review?.parties ?? [];
+    const me = sender?.fullName.trim().toLowerCase();
+    const isMe = (p: { name: string }) => p.name.trim().toLowerCase() === me;
+    if (parties.length === 2 && parties.some(isMe)) {
+      const other = parties.find((p) => !isMe(p));
+      if (other) return other.name;
+    }
+    return GENERIC_PARTY;
   }
 
   /**

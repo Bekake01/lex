@@ -65,28 +65,32 @@ export class SendSigningInviteProcessor extends WorkerHost {
     const people = await this.db
       .select({
         id: recipients.id,
-        email: recipients.email,
+        channel: recipients.channel,
+        contact: recipients.contact,
         token: recipients.token,
       })
       .from(recipients)
       .where(
         and(
           eq(recipients.signatureRequestId, signatureRequestId),
+          // Open-link copies were started by the person themselves.
+          eq(recipients.source, 'invite'),
           job.data.recipientIds
             ? inArray(recipients.id, job.data.recipientIds)
             : undefined,
         ),
       );
 
+    // Real delivery (Telegram bot, SMS, Resend) is "Later": the sender shares
+    // the links from the UI. One line per person, so the log shows who is due.
     for (const person of people) {
+      this.logger.log(
+        `invite ${signatureRequestId} → ${person.channel}${person.contact ? ` ${person.contact}` : ''} (recipient ${person.id})`,
+      );
       // The link carries the token, so it is logged at debug level only.
       this.logger.debug(
-        `invite for recipient ${person.id}: ${this.signatureRequestsService.signUrl(person.token)}`,
+        `link for ${person.id}: ${this.signatureRequestsService.signUrl(person.token)}`,
       );
     }
-
-    this.logger.log(
-      `signature request ${signatureRequestId} invites for ${people.length} recipients`,
-    );
   }
 }

@@ -13,6 +13,7 @@ export const QUEUE = {
   reviseDocument: 'revise-document',
   summarizeForRecipients: 'summarize-for-recipients',
   sendSigningInvite: 'send-signing-invite',
+  completeSubmission: 'complete-submission',
 } as const;
 
 /**
@@ -47,6 +48,11 @@ export interface SendSigningInviteJob {
   recipientIds?: string[];
 }
 
+/** Stamp → seal → certificate for one signed copy. */
+export interface CompleteSubmissionJob {
+  recipientId: string;
+}
+
 /**
  * BullMQ builds its Redis keys around `:`, so it rejects a custom job id that
  * contains one ("Custom Id cannot contain :"). Ids are joined with `.`; the
@@ -62,3 +68,5 @@ export const jobIdForInvite = (signatureRequestId: string, batchId?: string) =>
   batchId
     ? `invite.${signatureRequestId}.${batchId}`
     : `invite.${signatureRequestId}`;
+export const jobIdForComplete = (recipientId: string) =>
+  `complete.${recipientId}`;

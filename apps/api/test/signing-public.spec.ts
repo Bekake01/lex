@@ -66,7 +66,7 @@ describe('public signing API', () => {
       queue,
       queue,
     );
-    signing = new SigningService(db, env, storage);
+    signing = new SigningService(db, env, storage, queue);
   });
 
   afterAll(async () => {

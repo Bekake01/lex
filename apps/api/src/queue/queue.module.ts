@@ -4,7 +4,7 @@ import { ENV, type Env } from '../config/env.js';
 import { QUEUE } from './queue.constants.js';
 
 /**
- * All AI work runs as a BullMQ job: nothing heavy on the request path. The
+ * All AI work and signing completion run as BullMQ jobs: nothing heavy on the request path. The
  * workers run in this same process for the hackathon — moving them to a
  * separate `worker.ts` later needs no change to the jobs themselves.
  */
@@ -30,6 +30,7 @@ import { QUEUE } from './queue.constants.js';
       { name: QUEUE.reviseDocument },
       { name: QUEUE.summarizeForRecipients },
       { name: QUEUE.sendSigningInvite },
+      { name: QUEUE.completeSubmission },
     ),
   ],
   exports: [BullModule],

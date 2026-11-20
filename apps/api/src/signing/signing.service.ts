@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { InjectQueue } from '@nestjs/bullmq';
 import {
   HttpException,
   HttpStatus,
@@ -23,6 +24,7 @@ import {
   type UnlockResponse,
 } from '@lex/contracts';
 import { decodeSignaturePng } from '@lex/crypto';
+import type { Queue } from 'bullmq';
 import { and, eq, ne, sql } from 'drizzle-orm';
 import { toRecipientSummaryWire } from '../ai-review/mappers.js';
 import { PasswordHasher } from '../auth/password.js';
@@ -37,8 +39,14 @@ import {
   type Recipient,
   type SignatureRequest,
 } from '../db/schema/index.js';
+import {
+  jobIdForComplete,
+  QUEUE,
+  type CompleteSubmissionJob,
+} from '../queue/queue.constants.js';
 import { StorageService } from '../storage/storage.service.js';
 import { resolveFieldValues } from './field-values.js';
+import { COMPLETE_JOB_OPTIONS } from './jobs/complete-submission.processor.js';
 import { issueTicket, verifyTicket } from './ticket.js';
 
 /**
@@ -79,6 +87,8 @@ export class SigningService {
     @Inject(DB) private readonly db: Db,
     @Inject(ENV) private readonly env: Env,
     private readonly storage: StorageService,
+    @InjectQueue(QUEUE.completeSubmission)
+    private readonly completeQueue: Queue,
   ) {}
 
   /* --------------------------------------------------------------- views -- */
@@ -240,10 +250,19 @@ export class SigningService {
       throw err;
     }
 
-    // TODO(phase 07): enqueue `complete-submission` (stamp → seal → certificate).
-    this.logger.log(
-      `recipient ${recipient.id} signed request ${request.id}; completion job not built yet`,
-    );
+    // Stamp → seal → certificate, off the request path. The signature is
+    // already recorded: if the enqueue fails, the start-up sweep picks it up.
+    const payload: CompleteSubmissionJob = { recipientId: recipient.id };
+    try {
+      await this.completeQueue.add(QUEUE.completeSubmission, payload, {
+        jobId: jobIdForComplete(recipient.id),
+        ...COMPLETE_JOB_OPTIONS,
+      });
+    } catch (err) {
+      this.logger.error(
+        `completion enqueue failed for ${recipient.id}, left for the start-up sweep: ${(err as Error).message}`,
+      );
+    }
     return { ok: true };
   }
 
