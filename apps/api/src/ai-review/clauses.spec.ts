@@ -58,6 +58,23 @@ describe('resolveClause', () => {
     expect(resolveClause(clauses, '7-MODDA').ref).toBe('7-modda');
   });
 
+  it('takes the ref when the model copied the outline line whole', () => {
+    // Exactly what gpt-5 returned on the first real run.
+    const resolved = resolveClause(
+      clauses,
+      '4.2 — Ijaraga beruvchi ijara haqini istalgan vaqtda, Ijaraga oluvchini',
+    );
+
+    expect(resolved).toEqual({ ref: '4.2', start: 58, end: 106 });
+  });
+
+  it.each(['4.2 - Ijara haqi', '4.2: Ijara haqi', '4.2 | Ijara haqi'])(
+    'takes the ref from %s',
+    (claimed) => {
+      expect(resolveClause(clauses, claimed).ref).toBe('4.2');
+    },
+  );
+
   it('falls back to the clause containing the quote', () => {
     // The model invented "9.1" but quoted an unnumbered paragraph.
     const resolved = resolveClause(clauses, '9.1', 'shartnoma bekor qilinadi');

@@ -55,6 +55,17 @@ export function resolveClause(
     if (byRef) return { ref: byRef.ref, start: byRef.start, end: byRef.end };
   }
 
+  // Observed on a real run: the model copies the whole outline line, heading
+  // and all ("2.3 — Ijaraga beruvchi ijara haqini…"). The ref is the first
+  // token, so try that before giving up on the number.
+  const head = normaliseRef(claimedRef.split(/[\u2014\u2013—–:|]|\s[-]\s/u)[0]);
+  if (head.length > 0 && head !== wanted) {
+    const byHead = clauses.find((c) => normaliseRef(c.ref) === head);
+    if (byHead) {
+      return { ref: byHead.ref, start: byHead.start, end: byHead.end };
+    }
+  }
+
   // The model invented the number but quoted the document, which happens most
   // often with unnumbered paragraphs: trust the quote over the number.
   const needle = quote?.trim();
@@ -85,3 +96,4 @@ export function clauseOutline(
       c.heading ? `${c.ref} — ${c.heading.slice(0, 120)}` : `${c.ref}`,
     );
 }
+
