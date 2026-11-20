@@ -143,7 +143,10 @@ EMBEDDING_PROVIDER=voyage
 cd apps/api
 pnpm db:migrate
 pnpm ingest:hf            # reads data/hf/articles.parquet (download step in section 1)
+pnpm ingest:core          # ~16 key laws in their current edition from lex.uz (about 6 minutes)
 ```
+
+Run `ingest:core` **before** embedding. It replaces the key laws with the official lex.uz text, and embedding afterwards means those laws are paid for only once. It makes one request to lex.uz every 20 seconds on purpose, to be polite to the government site; don't speed it up. It should end with `Done: 16 ok, 0 failed`. If an act fails, send the printed line; the others still import.
 
 **E4. Try embeddings on 2,000 rows first** (about 1 minute; checks the key and shows the speed):
 

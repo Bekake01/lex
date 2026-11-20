@@ -25,6 +25,7 @@ function printReport(r: HfImportReport): void {
   line('skipped (too-short)', r.skipped['too-short']);
   line('skipped (empty text)', r.skipped['empty-text']);
   line('skipped (missing id)', r.skipped['missing-id']);
+  line('skipped (from lex.uz)', r.skipped['from-lexuz']);
   line('renamed duplicate ids', r.renamedDuplicateIds);
   line('acts', `${r.acts.inserted} inserted, ${r.acts.updated} updated, ${r.acts.unchanged} unchanged`);
   line('articles', `${r.articles.inserted} inserted, ${r.articles.updated} updated, ${r.articles.unchanged} unchanged`);

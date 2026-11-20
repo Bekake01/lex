@@ -33,7 +33,8 @@ export const HF_COLUMNS = [
 ] as const satisfies readonly (keyof HfRow)[];
 
 /** Why a row was not imported. */
-export type SkipReason = 'too-short' | 'empty-text' | 'missing-id';
+/** Why a dataset row was not imported (`from-lexuz`: its act was imported from lex.uz, which wins). */
+export type SkipReason = 'too-short' | 'empty-text' | 'missing-id' | 'from-lexuz';
 
 export type MappedRow =
   | { ok: true; act: NewLawAct; article: NewLawArticle }

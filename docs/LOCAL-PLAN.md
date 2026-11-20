@@ -120,6 +120,15 @@ Run this again whenever someone adds a migration; it's noted in `memory/CHANGELO
 
 Download the dataset first; [`heavy-jobs-mac.md`](heavy-jobs-mac.md) section 1 has the command.
 
+Then replace the **key laws** with their current official text from lex.uz:
+```bash
+pnpm ingest:core
+```
+This covers about 16 acts: the Civil, Labour, Housing, Tax and Family codes, and the laws on consumers, trade secrets, personal data and so on.
+- It's light: about 6 minutes the first time (one polite request every 20 seconds), and free after that because pages are cached in `data/lexuz/`.
+- It also marks repealed laws, such as the 1995 Labour Code, so search stops returning them.
+- These laws act as **anchors**: a review of, say, a rental contract always considers the Civil Code's rental chapter.
+
 Then, **optionally**, add embeddings for meaning-based search (Voyage key needed):
 ```bash
 pnpm ingest:embed --limit 2000
@@ -159,7 +168,7 @@ pnpm test:e2e                # needs Postgres and Redis running
 | 6 | Keyword law search | ✅ |
 | 7 | Search quality test (102 queries) + embedding choice | ✅ **Voyage** chosen; keyword R@10 91.3% |
 | **8** | **Hybrid search (keyword + Voyage)** | 🔨 **code done; needs the Mac run (Job E) to measure** |
-| 9 | Hand-checked core laws from lex.uz, anchor laws per contract type | next |
+| 9 | Core laws from lex.uz (current edition, real status), anchor laws per contract type | ✅ code done (`pnpm ingest:core`, 16 acts); a lawyer should review the list |
 | 10 | Search tuning (known misses + B's "retrieval gaps") | after 9 |
 | 11 | Read PDF and Word contracts | ✅ |
 | 12 | Split contracts into clauses | ✅ (still to check: Word's automatic numbering) |
@@ -187,10 +196,10 @@ Still to do (details in [`dev-b-next-steps.md`](dev-b-next-steps.md)):
 
 ## 6. What happens next, in order
 
-1. **A:** push the Phase 8 code. **Friend:** `git pull`, run **Job E** in [`heavy-jobs-mac.md`](heavy-jobs-mac.md), and send back the two reports. **A:** record the numbers and close Phase 8.
+1. **A:** push Phases 8 and 9. **Friend:** `git pull`, run **Job E** in [`heavy-jobs-mac.md`](heavy-jobs-mac.md): load all laws, then the core laws, then embed, then measure. Send back the two reports. **A:** record the numbers and close Phases 8 and 9.
 2. **B:** first real OpenAI run, and start collecting eval contracts. These need nothing from A.
 3. **Frontend:** wire the review screen and the signing summary, using `packages/contracts` and the demo seed.
-4. **A:** Phase 9 (core laws from lex.uz), then Phase 10 tuning, using B's retrieval gaps.
+4. **A:** Phase 10 tuning (the 5 known misses, B's retrieval gaps, fusion weights), using the Job E reports.
 5. **Whole team:** run the full flow once on one machine: upload, review, correct, accept, send, sign.
 
 **Merge rule:** every change to the schema, routes, env vars or flow gets a line in `memory/CHANGELOG.md` and an update to `memory/STATE.md`, in the same commit, so everyone sees it on their next pull.

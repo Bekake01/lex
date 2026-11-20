@@ -4,6 +4,7 @@ import type { LawArticleHit, MetaResponse } from '../law.types.js';
 import { DB, type Db } from '../../db/db.module.js';
 import { lawActs, lawArticles, lawSyncRuns } from '../../db/schema/index.js';
 import { EmbeddingService } from '../embeddings/embedding.service.js';
+import { anchorDocIds } from '../lexuz/core-acts.js';
 import { fuseRankings, queryStems, toTsQuery } from './query.js';
 import type { SearchInput } from './schemas.js';
 
@@ -13,6 +14,11 @@ import type { SearchInput } from './schemas.js';
  * millions of characters, which no caller can use.
  */
 export const MAX_HIT_TEXT = 12_000;
+
+/** `AND a.doc_id = ANY(…)` when a ranking is restricted to some acts (anchors). One array parameter. */
+function docFilter(onlyDocs: string[] | undefined): SQL {
+  return onlyDocs?.length ? sql`AND a.doc_id = ANY(${sql.param(onlyDocs)}::text[])` : sql``;
+}
 
 /** How deep each query's ranking goes before fusion. */
 const PER_QUERY = 50;
@@ -33,17 +39,26 @@ export class SearchService {
    * (cosine distance on law_articles.embedding). All rankings are fused with
    * reciprocal rank fusion and the top `limit` returned. Without embeddings,
    * or when the provider fails, this is the Phase 6 keyword search.
-   * `docType` is accepted now and used for anchor acts from Phase 9.
+   *
+   * Anchors (Phase 9): with a `docType`, each query also gets rankings
+   * restricted to that contract type's anchor acts (src/law/lexuz/core-acts.ts),
+   * so the core law for a rental or employment contract is always considered.
    */
-  async search({ queries, inForceOnly, limit }: SearchInput): Promise<LawArticleHit[]> {
+  async search({ queries, docType, inForceOnly, limit }: SearchInput): Promise<LawArticleHit[]> {
+    const anchors = anchorDocIds(docType);
     // Queries that reduce to the same stems are searched once.
     const byTsQuery = new Map<string, string[]>();
     for (const q of queries) {
       const tsQuery = toTsQuery(q);
       if (tsQuery && !byTsQuery.has(tsQuery)) byTsQuery.set(tsQuery, queryStems(q));
     }
-    const keyword = Promise.all([...byTsQuery].map(([tsQuery, stems]) => this.rankIds(tsQuery, stems, inForceOnly)));
-    const vector = this.embeddings?.enabled ? this.vectorRankings(queries, inForceOnly) : Promise.resolve([]);
+    const keyword = Promise.all(
+      [...byTsQuery].flatMap(([tsQuery, stems]) => [
+        this.rankIds(tsQuery, stems, inForceOnly),
+        ...(anchors.length ? [this.rankIds(tsQuery, stems, inForceOnly, anchors)] : []),
+      ]),
+    );
+    const vector = this.embeddings?.enabled ? this.vectorRankings(queries, inForceOnly, anchors) : Promise.resolve([]);
 
     const rankings = [...(await keyword), ...(await vector)].filter((r) => r.length > 0);
     if (rankings.length === 0) return [];
@@ -56,22 +71,28 @@ export class SearchService {
     });
   }
 
-  /** One vector ranking per distinct query; a query the provider could not embed gets none. */
-  private async vectorRankings(queries: string[], inForceOnly: boolean): Promise<string[][]> {
+  /**
+   * One vector ranking per distinct query (a query the provider could not
+   * embed gets none), plus, with anchors, one restricted to the anchor acts.
+   */
+  private async vectorRankings(queries: string[], inForceOnly: boolean, anchors: string[] = []): Promise<string[][]> {
     const distinct = [...new Set(queries.map((q) => EmbeddingService.queryText(q)).filter(Boolean))];
     const vectors = await this.embeddings!.embedQueries(distinct);
-    return Promise.all(vectors.map((v) => (v ? this.vectorRank(v, inForceOnly) : Promise.resolve([]))));
+    const lists = vectors.flatMap((v) =>
+      v ? [this.vectorRank(v, inForceOnly), ...(anchors.length ? [this.vectorRank(v, inForceOnly, anchors)] : [])] : [],
+    );
+    return Promise.all(lists);
   }
 
   /** Nearest rows by cosine distance (HNSW index on embedding). Rows not embedded yet are skipped. */
-  private async vectorRank(vector: number[], inForceOnly: boolean): Promise<string[]> {
+  private async vectorRank(vector: number[], inForceOnly: boolean, onlyDocs?: string[]): Promise<string[]> {
     const literal = `[${vector.join(',')}]`;
     // node-postgres and PGlite both return { rows }; the driver-agnostic Db type doesn't say so.
     const result = (await this.db.execute(sql`
       SELECT a.id
       FROM law_articles a
       JOIN law_acts b ON b.doc_id = a.doc_id
-      WHERE a.embedding IS NOT NULL ${inForceOnly ? sql`AND b.status <> 'repealed'` : sql``}
+      WHERE a.embedding IS NOT NULL ${inForceOnly ? sql`AND b.status <> 'repealed'` : sql``} ${docFilter(onlyDocs)}
       ORDER BY a.embedding <=> ${literal}::vector, a.id
       LIMIT ${PER_QUERY}
     `)) as unknown as { rows: { id: string }[] };
@@ -123,7 +144,7 @@ export class SearchService {
    * cheap signals (2, 3) keep the best CANDIDATES rows, then the heading
    * (1) is checked on those only, with each heading parsed once.
    */
-  private async rankIds(tsQuery: string, stems: string[], inForceOnly: boolean): Promise<string[]> {
+  private async rankIds(tsQuery: string, stems: string[], inForceOnly: boolean, onlyDocs?: string[]): Promise<string[]> {
     const query = sql`to_tsquery('simple', ${tsQuery})`;
     const share = (vector: SQL) =>
       sql.join(
@@ -139,7 +160,7 @@ export class SearchService {
                ts_rank(a.tsv, ${query}, 32) AS density
         FROM law_articles a
         JOIN law_acts b ON b.doc_id = a.doc_id
-        WHERE a.tsv @@ ${query} ${inForceOnly ? sql`AND b.status <> 'repealed'` : sql``}
+        WHERE a.tsv @@ ${query} ${inForceOnly ? sql`AND b.status <> 'repealed'` : sql``} ${docFilter(onlyDocs)}
         ORDER BY body DESC, density DESC, a.id
         LIMIT ${CANDIDATES}
       )

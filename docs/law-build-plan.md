@@ -186,6 +186,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** all core acts present in uz (and ru where lex.uz has it) with current edition dates; parser tests on saved HTML fixtures; anchor acts appear in results for each `docType`.
 
+**Status (2026-11-21): built, uz only.** `src/law/lexuz/`: `core-acts.ts` (16 acts with anchor contract types, in code since `data/` is git-ignored), `fetcher.ts` (one request per 20 s, lex.uz's published crawl delay; retries; stops after 3 failures in a row; disk cache `data/lexuz/`), `parser.ts` (cheerio: ACT_TITLE / CLAUSE_DEFAULT / ACT_TEXT / TEXT_HEADER_DEFAULT, header number and dates, newest `ONDATE` edition, "Hujjat kuchini yoʻqotgan" → repealed), `ingest-core.ts` + `pnpm ingest:core` (replaces the act, keeps embeddings of unchanged rows, idempotent). A later `ingest:hf` skips lex.uz acts. Anchors: `SearchService.search({ docType })` adds rankings restricted to that type's anchor acts. Tests on two saved pages (`test/law/fixtures/lexuz/`). **Not done:** Russian versions (Phase 15); the list is 16 acts, not ~50, and needs a lawyer's review; `status_checked` is set from the lex.uz page itself, not a human check.
+
 ### Phase 10 — Search quality pass (1–2 days) → Sync 2 with B
 **Build**
 - Tune RRF weights, chunk sizes, anchor count from `eval:search` failures

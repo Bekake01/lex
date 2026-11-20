@@ -1,5 +1,5 @@
 import { DuckDBInstance } from '@duckdb/node-api';
-import { sql, type SQL } from 'drizzle-orm';
+import { eq, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../../db/db.module.js';
 import { lawActs, lawArticles, type NewLawAct, type NewLawArticle } from '../../db/schema/index.js';
 import { chunkArticle } from './chunk.js';
@@ -53,7 +53,7 @@ export async function importHf(
   const started = Date.now();
   const report: HfImportReport = {
     rows: 0,
-    skipped: { 'too-short': 0, 'empty-text': 0, 'missing-id': 0 },
+    skipped: { 'too-short': 0, 'empty-text': 0, 'missing-id': 0, 'from-lexuz': 0 },
     renamedDuplicateIds: 0,
     split: { articles: 0, parts: 0 },
     acts: { inserted: 0, updated: 0, unchanged: 0 },
@@ -63,6 +63,11 @@ export async function importHf(
   };
   const seenIds = new Map<string, number>();
   const actTypes = new Map<string, string>();
+  // Acts imported from lex.uz (Phase 9) are newer and authoritative: the
+  // dataset snapshot never overwrites them or their articles.
+  const fromLexUz = new Set(
+    (await db.select({ docId: lawActs.docId }).from(lawActs).where(eq(lawActs.source, 'lexuz'))).map((r) => r.docId),
+  );
 
   let acts = new Map<string, NewLawAct>();
   let articles: NewLawArticle[] = [];
@@ -116,6 +121,10 @@ export async function importHf(
         const mapped = mapRow(row, id);
         if (!mapped.ok) {
           report.skipped[mapped.reason]++;
+          continue;
+        }
+        if (fromLexUz.has(mapped.act.docId)) {
+          report.skipped['from-lexuz']++;
           continue;
         }
         acts.set(mapped.act.docId, mapped.act);
