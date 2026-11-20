@@ -39,7 +39,7 @@ SENDER (apps/web)                 API + WORKER (apps/api)                     RE
 ─────────────────                 ───────────────────────                     ────────────────────
 1 Upload PDF/DOCX ──────────────► Document v1 (R2, sha256)
 2 Check legality ───────────────► job analyze-document
-                                    extract → classify → law-search → Claude
+                                    extract → classify → law-search → LLM (OpenAI)
   ◄── risk, issues, lex.uz cites ── AiReview
 3 Chat: "fix clause 4" ─────────► job revise-document
                                     structured edits → validate → apply
@@ -71,21 +71,21 @@ SENDER (apps/web)                 API + WORKER (apps/api)                     RE
 | `packages/crypto` | — | seal, tokens, certificate | + summary hash in certificate |
 | `apps/api/src/db` | — | Drizzle ORM schema + migrations, Postgres in Docker (no RLS for the MVP) | **+ AI and law tables** |
 
-**Infra:** Postgres (+ **pgvector**), Redis (BullMQ, rate limits), R2/S3 (file bytes), Clerk, Resend, **Anthropic API**, **embedding provider**.
+**Infra:** Postgres (+ **pgvector**), Redis (BullMQ, rate limits), R2/S3 (file bytes), Clerk, Resend, **OpenAI API**, **embedding provider**.
 
 ### 4.2 AI pipeline
 
 | Step | What | Tool |
 |---|---|---|
-| Extract | PDF goes to Claude as a native document; DOCX text extracted with `mammoth` | api worker |
-| Classify | Document type, language, parties, clauses, search queries in Uzbek Latin | Claude, structured output |
+| Extract | PDF goes to the model as a file input; DOCX text extracted with `mammoth` | api worker |
+| Classify | Document type, language, parties, clauses, search queries in Uzbek Latin | OpenAI model, structured output |
 | Retrieve | Hybrid keyword (Postgres FTS) + vector (pgvector) search; anchor codes per document type; filter to laws in force | `law-search` |
-| Review | Risk level, verdict, issues; **each issue cites a retrieved article ID** | Claude `claude-opus-5-5`, effort `high`, structured output |
+| Review | Risk level, verdict, issues; **each issue cites a retrieved article ID** | OpenAI `gpt-5` (`AI_MODEL`), reasoning effort `high`, structured output |
 | Validate | Server drops citations not in the retrieved set; attaches lex.uz URL + law version date | api |
-| Revise | Chat instruction → structured edits `{clauseId, original, replacement, reason, citation}` → `original` checked against the document → new version | Claude + docx editor |
-| Summarize | At send time: summary, obligations per party, conditions, in uz/ru/en | Claude |
+| Revise | Chat instruction → structured edits `{clauseId, original, replacement, reason, citation}` → `original` checked against the document → new version | OpenAI model + docx editor |
+| Summarize | At send time: summary, obligations per party, conditions, in uz/ru/en | OpenAI model |
 
-**Model settings:** `claude-opus-5-5`, adaptive thinking, `output_config.effort: "high"`, `messages.parse()` + Zod, streaming, server-side `fallbacks: "default"`, handle `stop_reason: "refusal"`, prompt caching on the system prompt and checklists.
+**Model settings:** OpenAI Responses API, `AI_MODEL` (default `gpt-5`), `reasoning.effort: "high"`, strict JSON Schema from the Zod schemas and Zod validation of every answer, refusals and `incomplete` responses handled, `store: false`, automatic prompt caching (instructions first, `prompt_cache_key` per call type).
 
 ### 4.3 Law data sources
 

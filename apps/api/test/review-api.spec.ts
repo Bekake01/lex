@@ -28,7 +28,7 @@ function fakeQueue(): Queue & { added: { id?: string }[] } {
 }
 
 const ai = {
-  model: 'claude-opus-5-5',
+  model: 'gpt-5',
   promptVersion: 'v1',
   configured: true,
 } as unknown as AiService;
@@ -120,7 +120,7 @@ describe('POST /documents/:id/reviews', () => {
     const first = await reviews.createReview(user, documentId, 'uz');
     await db
       .update(aiReviews)
-      .set({ status: 'failed', error: 'Claude rate limit reached' })
+      .set({ status: 'failed', error: 'AI rate limit reached' })
       .where(eq(aiReviews.id, first.reviewId));
 
     const again = await reviews.createReview(user, documentId, 'uz');

@@ -1,4 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { AiContentBlock } from '../ai.service.js';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
@@ -111,7 +111,7 @@ export class ReviseDocumentProcessor extends WorkerHost {
       const documentBlocks = this.content.asContentBlocks(document, loaded);
       const hits = await this.retrieve(instruction, review.docType);
 
-      const content: Anthropic.Beta.BetaContentBlockParam[] = [
+      const content: AiContentBlock[] = [
         { type: 'text', text: languageInstruction(review.language) },
         { type: 'text', text: this.historyBlock(history, assistantMessageId) },
         { type: 'text', text: articlesBlockText(hits) },

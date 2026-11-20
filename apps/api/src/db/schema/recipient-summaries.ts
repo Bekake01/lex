@@ -31,7 +31,7 @@ export interface SummaryBody {
  * One recipient's plain-language summary, computed at send time.
  *
  * `GET /sign/:token/summary` only ever reads this table: the signing path never
- * calls Claude.
+ * calls the model.
  */
 export const recipientSummaries = pgTable(
   'recipient_summaries',

@@ -51,7 +51,7 @@ describe('staging seed', () => {
         AI_REVIEWS_LIMIT_PERSONAL: 20,
         AI_REVIEWS_LIMIT_AGENCY: 200,
       } as Env),
-      { model: 'claude-opus-5-5', promptVersion: 'seed' } as AiService,
+      { model: 'gpt-5', promptVersion: 'seed' } as AiService,
       queue,
       queue,
     );

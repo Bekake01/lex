@@ -1,4 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { AiContentBlock } from '../ai.service.js';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
@@ -29,7 +29,7 @@ import { summaryOutputSchema } from '../schemas.js';
  *
  * This is what makes the signing page possible without AI on the request path:
  * `GET /sign/:token/summary` only reads the rows this job wrote. Recipients who
- * are the same party share one Claude call.
+ * are the same party share one model call.
  */
 @Processor(QUEUE.summarizeForRecipients)
 export class SummarizeForRecipientsProcessor extends WorkerHost {
@@ -92,7 +92,7 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
       let totals = emptyUsage();
 
       for (const partyName of parties) {
-        const content: Anthropic.Beta.BetaContentBlockParam[] = [
+        const content: AiContentBlock[] = [
           { type: 'text', text: languageInstruction(language) },
           {
             type: 'text',

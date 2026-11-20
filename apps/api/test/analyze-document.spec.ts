@@ -27,7 +27,7 @@ const CONTRACT = `1. Ijara haqi oyiga 5 000 000 so'm.
 2. Ijaraga beruvchi ijara haqini istalgan vaqtda, ogohlantirmasdan oshirishi mumkin.
 3. Shartnoma muddati bir yil.`;
 
-/** Canned Claude answers: the pipeline is under test, not the model. */
+/** Canned model answers: the pipeline is under test, not the model. */
 function stubAi(
   calls: string[],
   options: { citeArticleId?: string | null } = {},
@@ -38,7 +38,7 @@ function stubAi(
       : options.citeArticleId;
 
   return {
-    model: 'claude-opus-5-5',
+    model: 'gpt-5',
     promptVersion: 'test',
     defaultEffort: 'high' as const,
     configured: true,
@@ -83,7 +83,7 @@ function stubAi(
           outputTokens: 200,
           costUsd: 0.01,
         },
-        model: 'claude-opus-5-5',
+        model: 'gpt-5',
       };
     },
   } as unknown as AiService;
@@ -162,7 +162,7 @@ describe('analyze-document job', () => {
         agencyId: user.agencyId,
         language: 'uz',
         promptVersion: 'test',
-        model: 'claude-opus-5-5',
+        model: 'gpt-5',
         idempotencyKey: `${document.id}:deadbeef:test:uz`,
       })
       .returning();

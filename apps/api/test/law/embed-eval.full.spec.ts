@@ -8,6 +8,7 @@ import { lawActs, lawArticles } from '../../src/db/schema/index.js';
 import {
   embedAll,
   nearest,
+  openaiEmbeddingProvider,
   teiProvider,
   voyageProvider,
   type EmbeddingProvider,
@@ -20,6 +21,7 @@ import { createTestDb } from '../helpers/test-db.js';
 
 /**
  * Opt-in: Phase 7 embedding comparison on a sample of ~30 acts.
+ *   HF_PARQUET=data/hf/articles.parquet OPENAI_API_KEY=… pnpm vitest run test/law/embed-eval.full.spec.ts   (text-embedding-3-large)
  *   HF_PARQUET=data/hf/articles.parquet VOYAGE_API_KEY=… pnpm vitest run test/law/embed-eval.full.spec.ts
  *   HF_PARQUET=… EMBEDDING_URL=http://localhost:8080 pnpm vitest run test/law/embed-eval.full.spec.ts   (bge-m3 via TEI)
  *
@@ -127,13 +129,14 @@ describe.runIf(FILE)('embedding comparison on a ~30-act sample', () => {
     expect(s.queries).toBe(queries.length);
   }, 30 * MINUTES);
 
-  const providers: [string, () => EmbeddingProvider][] = [
-    ['voyage', () => voyageProvider(process.env.VOYAGE_API_KEY!)],
-    ['bge-m3', () => teiProvider(process.env.EMBEDDING_URL!)],
+  // Each provider runs only when its key or server is configured.
+  const providers: [string, string | undefined, () => EmbeddingProvider][] = [
+    ['openai', process.env.OPENAI_API_KEY, () => openaiEmbeddingProvider(process.env.OPENAI_API_KEY!)],
+    ['voyage', process.env.VOYAGE_API_KEY, () => voyageProvider(process.env.VOYAGE_API_KEY!)],
+    ['bge-m3', process.env.EMBEDDING_URL, () => teiProvider(process.env.EMBEDDING_URL!)],
   ];
-  for (const [name, make] of providers) {
-    const enabled = name === 'voyage' ? !!process.env.VOYAGE_API_KEY : !!process.env.EMBEDDING_URL;
-    it.runIf(enabled)(`${name}: vector-only search on the sample`, async () => {
+  for (const [name, configured, make] of providers) {
+    it.runIf(!!configured)(`${name}: vector-only search on the sample`, async () => {
       const provider = make();
       const t = Date.now();
       const docVectors = await embedCached(provider, items, 'document');

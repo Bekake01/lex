@@ -59,7 +59,7 @@ function fakeQueue(): Queue & { added: unknown[] } {
 /** One canned summary per party, so the party split is observable. */
 function stubAi(parties: string[] = []) {
   return {
-    model: 'claude-opus-5-5',
+    model: 'gpt-5',
     promptVersion: 'test',
     configured: true,
     structured: async <T>(call: StructuredCall<T>) => {
@@ -98,7 +98,7 @@ function stubAi(parties: string[] = []) {
           outputTokens: 100,
           costUsd: 0.004,
         },
-        model: 'claude-opus-5-5',
+        model: 'gpt-5',
       };
     },
   } as unknown as AiService;
@@ -223,7 +223,7 @@ describe('summaries and the signing page', () => {
     expect(rows[0].summaryHash).toBe(hashJson(rows[0].body));
   });
 
-  it('makes one Claude call per party, not per recipient', async () => {
+  it('makes one model call per party, not per recipient', async () => {
     const { response } = await send({
       partyNames: ['Dilnoza Yusupova', 'Dilnoza Yusupova', 'Alisher Karimov'],
     });

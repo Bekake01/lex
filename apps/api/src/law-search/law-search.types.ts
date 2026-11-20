@@ -9,7 +9,7 @@
 import type { ActType, ContractType } from '@lex/contracts';
 
 export interface LawSearchQuery {
-  /** Uzbek Latin queries written by Claude in the classify call. 1–20. */
+  /** Uzbek Latin queries written by the model in the classify call. 1–20. */
   queries: string[];
   docType?: ContractType;
   /** Default true. */

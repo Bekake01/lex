@@ -7,15 +7,15 @@ for the repo rules and [`../../ROADMAP.md`](../../ROADMAP.md) for the plan.
 ## Running it
 
 ```bash
-cp .env.example .env         # then fill ANTHROPIC_API_KEY
+cp .env.example .env         # then fill OPENAI_API_KEY
 pnpm install                 # from the repo root
 pnpm services:up             # Postgres 5434 + Redis 6379, from the root
 pnpm db:migrate              # from the root
 pnpm dev:api                 # from the root
 ```
 
-Without `ANTHROPIC_API_KEY` everything boots, but a review job fails and the
-review is marked `failed` with "ANTHROPIC_API_KEY is not set".
+Without `OPENAI_API_KEY` everything boots, but a review job fails and the
+review is marked `failed` with "OPENAI_API_KEY is not set".
 
 Until `pnpm ingest:hf` has loaded the law tables, the law search uses the
 fixtures in `src/law-search/fixtures/`. `LAW_SEARCH_MODE` forces one side
@@ -64,7 +64,7 @@ Errors the frontend branches on: `402 REVIEW_LIMIT_REACHED`,
 
 | Path                                                        | What                                                              |
 | ----------------------------------------------------------- | ----------------------------------------------------------------- |
-| `src/ai-review/ai.service.ts`                               | The only place that calls Claude                                  |
+| `src/ai-review/ai.service.ts`                               | The only place that calls the AI model (OpenAI)                                  |
 | `src/ai-review/prompts.ts`                                  | Every prompt; bump `AI_PROMPT_VERSION` when you change one        |
 | `src/ai-review/schemas.ts`                                  | Zod schemas for the model's structured output                     |
 | `src/ai-review/citations.ts`                                | Drops any citation that was not retrieved                         |
@@ -78,12 +78,12 @@ Errors the frontend branches on: `402 REVIEW_LIMIT_REACHED`,
 
 ## Rules that are easy to break
 
-- Only `ai.service.ts` touches the Anthropic SDK.
+- Only `ai.service.ts` touches the OpenAI SDK.
 - Contract text is data, never instructions. A finding with no supporting
   retrieved article gets `citation: null` — never a guessed article number.
 - Nothing heavy on the request path: AI work is a job, and jobs carry ids only
   so a re-delivery is a no-op.
-- The signing path never calls Claude.
+- The signing path never calls the AI model.
 - Never modify an original document: an accepted edit writes version + 1.
 - No prompt, model output, document text, API key or storage key in a response
   or a log line.

@@ -1,5 +1,14 @@
 import { EMBEDDING_DIMENSIONS } from '../../db/schema/law.js';
-import { cosine, embedAll, nearest, RetryableError, teiProvider, voyageProvider, type EmbeddingProvider } from './embeddings.js';
+import {
+  cosine,
+  embedAll,
+  nearest,
+  openaiEmbeddingProvider,
+  RetryableError,
+  teiProvider,
+  voyageProvider,
+  type EmbeddingProvider,
+} from './embeddings.js';
 
 const vec = (x: number) => Array.from({ length: EMBEDDING_DIMENSIONS }, (_, i) => (i === 0 ? x : 0.001));
 
@@ -37,6 +46,27 @@ describe('voyageProvider', () => {
     const err = await voyageProvider('k', { fetchFn: fn }).embedBatch(['a'], 'document').catch((e: Error) => e);
     expect(String(err)).toContain('400');
     expect(String(err)).not.toContain('secret contract text');
+  });
+});
+
+describe('openaiEmbeddingProvider', () => {
+  it('asks for 1024 dimensions with the large model and keeps input order', async () => {
+    const { fn, calls } = fakeFetch((_u, body) => ({
+      status: 200,
+      json: { data: body.input.map((_: string, i: number) => ({ index: i, embedding: vec(i) })).reverse() },
+    }));
+    const out = await openaiEmbeddingProvider('sk-test', { fetchFn: fn }).embedBatch(['a', 'b', 'c'], 'document');
+    expect(out.map((v) => v[0])).toEqual([0, 1, 2]);
+    expect(calls[0].url).toBe('https://api.openai.com/v1/embeddings');
+    expect(calls[0].body).toMatchObject({ model: 'text-embedding-3-large', dimensions: 1024 });
+    expect(calls[0].headers.authorization).toBe('Bearer sk-test');
+  });
+
+  it('turns a 429 into a retryable error', async () => {
+    const { fn } = fakeFetch(() => ({ status: 429, headers: { 'retry-after': '2' } }));
+    const err = await openaiEmbeddingProvider('k', { fetchFn: fn }).embedBatch(['a'], 'query').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RetryableError);
+    expect((err as RetryableError).retryAfterMs).toBe(2000);
   });
 });
 

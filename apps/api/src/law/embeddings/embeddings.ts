@@ -1,11 +1,12 @@
 import { EMBEDDING_DIMENSIONS } from '../../db/schema/law.js';
 
 /**
- * Text embeddings for law search. One interface, two providers (decided by
- * measurement in Phase 7, see docs/decisions/embeddings.md):
+ * Text embeddings for law search. One interface, three candidate providers
+ * (decided by measurement in Phase 7, see docs/decisions/embeddings.md):
+ * - OpenAI `text-embedding-3-large` at 1024 dims (OPENAI_API_KEY)
  * - Voyage `voyage-3.5` over its HTTP API (VOYAGE_API_KEY)
  * - bge-m3 behind a text-embeddings-inference server (EMBEDDING_URL)
- * Both return 1024-d vectors, the size of law_articles.embedding.
+ * All return 1024-d vectors, the size of law_articles.embedding.
  */
 
 /** Documents and queries are embedded differently by some models (Voyage). */
@@ -79,6 +80,36 @@ export function voyageProvider(
         data.map((d) => d.embedding),
         texts.length,
         'voyage',
+      );
+    },
+  };
+}
+
+/**
+ * OpenAI `text-embedding-3-large`, shortened to 1024 dimensions (the model
+ * supports this natively via `dimensions`; quality loss is small). Uses the
+ * same OPENAI_API_KEY as the AI review. No query/document distinction.
+ */
+export function openaiEmbeddingProvider(
+  apiKey: string,
+  { model = 'text-embedding-3-large', fetchFn = fetch }: { model?: string; fetchFn?: FetchFn } = {},
+): EmbeddingProvider {
+  return {
+    name: `openai:${model}`,
+    // OpenAI caps a request at 300k tokens; Uzbek tokenizes densely, so stay small.
+    maxBatch: 64,
+    async embedBatch(texts) {
+      const json = (await postJson(
+        fetchFn,
+        'https://api.openai.com/v1/embeddings',
+        { model, input: texts, dimensions: EMBEDDING_DIMENSIONS, encoding_format: 'float' },
+        { authorization: `Bearer ${apiKey}` },
+      )) as { data?: { embedding: number[]; index: number }[] };
+      const data = [...(json.data ?? [])].sort((a, b) => a.index - b.index);
+      return checkVectors(
+        data.map((d) => d.embedding),
+        texts.length,
+        'openai',
       );
     },
   };

@@ -10,7 +10,7 @@ Edit in place to keep this current.
 - Law (in `apps/api/src/law/`, merged from lex-api): pgvector tables, Uzbek text utils, Hugging Face import (`pnpm ingest:hf`, 54k articles), keyword search (`POST /law/search`, `/law/articles/batch`, `GET /law/meta`; `SearchService` exported from `LawModule` for the AI review). `GET /health` reports db + law index date. Long articles/acts split into parts (≤ ~1,600 tokens, `parent_id`). Search eval: 102 queries, keyword R@10 91.3% on codes + laws (`docs/decisions/embeddings.md`). Not yet: embeddings, document extraction.
 - **AI review pipeline** (`apps/api/src/ai-review/`): upload → `analyze-document` job (extract → classify → law search → review → server-side citation check → save) → poll `GET /reviews/:id`. Correction chat → `revise-document` job → validated edits → accept → new document version + automatic re-review. Send → `summarize-for-recipients` job → `GET /sign/:token/summary` (public, uniform 404, reads stored rows, never calls Claude).
 - Law search for the review: in-process `LawModule` when the law tables have data, fixture articles otherwise (`LAW_SEARCH_MODE=auto|db|fake`). Document extraction: text + PDF stand-in (DOCX not yet).
-- Model settings: `claude-opus-5-5`, adaptive thinking, structured output with Zod, prompt caching on the system prompt, server-side refusal fallbacks; effort `high` for the review, `medium` for classify and summaries.
+- Model settings: OpenAI Responses API, `AI_MODEL` (default `gpt-5`), reasoning effort `high` for the review and `medium` for classify and summaries, strict JSON Schema from the Zod schemas plus Zod re-validation, refusal / incomplete handled, `store: false`, automatic prompt caching (`prompt_cache_key` per call type).
 - Review eval harness: `pnpm eval:review` (citation accuracy ≥ 95%, issue precision ≥ 80%). Three synthetic starter cases.
 - For the frontend: `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
 - `apps/sign`: `/sign/[token]` page exists as a placeholder (shows the token; no API call yet).
@@ -30,7 +30,7 @@ Edit in place to keep this current.
 - Jobs: BullMQ, workers in the API process for now; every job idempotent (ids only in the payload, `jobId` makes enqueue idempotent too).
 - Document bytes on local disk behind `StorageService` (swap in S3/R2 later).
 - Never modify an original: an accepted edit writes version + 1 with a new sha256, and only the latest version can be sent.
-- The server decides citations: an `articleId` Claude did not receive becomes `citation: null`, and the finding keeps its text.
+- The server decides citations: an `articleId` the model did not receive becomes `citation: null`, and the finding keeps its text.
 - Snapshot, don't reference: `signature_requests.document_hash` + `summary_hash`, and `recipient_summaries.summary_hash` per signer.
 - Plan limits checked at enqueue: individual per user, agency pooled (`ai_usage.scope_key`), 402 with `REVIEW_LIMIT_REACHED`.
 - `AI_PROMPT_VERSION` is part of a review's idempotency key, so old reviews keep the prompt they ran under.

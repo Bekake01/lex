@@ -14,7 +14,7 @@ export interface CitationCheck {
    * Claimed ids that did not pass, with the reason:
    * - `retrieval`: the article exists in the index but search did not return
    *   it, so this is A's to fix.
-   * - `model`: no such article — Claude made the id up.
+   * - `model`: no such article — the model made the id up.
    */
   failures: Map<string, CitationFailure>;
 }

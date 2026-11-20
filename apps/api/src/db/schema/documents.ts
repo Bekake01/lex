@@ -58,7 +58,7 @@ export const documents = pgTable(
     extractedText: text(),
     extractedLanguage: text(),
     extractedClauses: jsonb().$type<ExtractedClause[]>(),
-    /** PDF with no text layer: the review sends the file to Claude instead. */
+    /** PDF with no text layer: the review sends the file to the model instead. */
     scanned: boolean().notNull().default(false),
 
     createdAt: timestamp({ withTimezone: true }).notNull().defaultNow(),

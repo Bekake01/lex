@@ -23,7 +23,7 @@ import type { StorageService } from '../storage/storage.service.js';
  * signature request whose recipient summary is stored.
  *
  * It writes rows directly instead of running the jobs, so it needs no
- * Anthropic key and costs nothing — the point is to give the UI every state it
+^ * AI key and costs nothing — the point is to give the UI every state it
  * has to render, not to exercise the pipeline (the eval harness does that).
  */
 
@@ -127,7 +127,7 @@ export async function seedDemo(
         "Shartnoma asosan to'g'ri tuzilgan, lekin ijara haqini bir tomonlama oshirish va depozitni qaytarmaslik shartlari ijaraga oluvchi uchun jiddiy xavf tug'diradi.",
       lawVersionDate: '2026-06-01',
       promptVersion: 'seed',
-      model: 'claude-opus-5-5',
+      model: 'gpt-5',
       inputTokens: 48_000,
       outputTokens: 3_200,
       costUsd: '0.256000',

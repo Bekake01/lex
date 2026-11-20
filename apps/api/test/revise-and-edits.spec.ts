@@ -74,10 +74,10 @@ function fakeQueue(): Queue & { added: { id?: string }[] } {
   } as unknown as Queue & { added: { id?: string }[] };
 }
 
-/** Claude proposes two edits; only one of them is locatable. */
+/** The model proposes two edits; only one of them is locatable. */
 function stubAi(edits: { original: string; replacement: string }[]) {
   return {
-    model: 'claude-opus-5-5',
+    model: 'gpt-5',
     promptVersion: 'v1',
     configured: true,
     structured: async <T>(_call: StructuredCall<T>) => ({
@@ -97,7 +97,7 @@ function stubAi(edits: { original: string; replacement: string }[]) {
         outputTokens: 150,
         costUsd: 0.006,
       },
-      model: 'claude-opus-5-5',
+      model: 'gpt-5',
     }),
   } as unknown as AiService;
 }
@@ -143,7 +143,7 @@ describe('corrections', () => {
         db,
         documentsService,
         usage,
-        { model: 'claude-opus-5-5', promptVersion: 'v1' } as AiService,
+        { model: 'gpt-5', promptVersion: 'v1' } as AiService,
         analyze,
         revise,
       ),
@@ -166,7 +166,7 @@ describe('corrections', () => {
         language: 'uz',
         docType: 'rental',
         promptVersion: 'v1',
-        model: 'claude-opus-5-5',
+        model: 'gpt-5',
         riskLevel: 'high',
         verdict: 'needs_changes',
         idempotencyKey: `${document.id}:${document.sha256}:v1:uz`,

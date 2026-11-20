@@ -1,6 +1,6 @@
 # Decision: embedding model for law search (Phase 7)
 
-**Status: open.** Keyword baseline measured; the Voyage and bge-m3 runs are waiting on a `VOYAGE_API_KEY` and a bge-m3 server (see "How to finish").
+**Status: open.** Keyword baseline measured. Three candidates, all 1024-d (no schema change): **OpenAI `text-embedding-3-large`** (reuses the team's `OPENAI_API_KEY`; the AI review runs on OpenAI too), **Voyage `voyage-3.5`** and **bge-m3** (self-hosted). The runs are waiting on keys and a bge-m3 server (see "How to finish").
 
 ## What we measure
 
@@ -41,11 +41,12 @@ Speed on PGlite (in-process, single-user, much slower than Postgres): p50 1.7 s,
 
 ### Embedding comparison, ~30-act sample
 
-The 9 acts the queries expect plus the 21 largest other codes and laws (excluding amending acts), split like the real import: 9,143 rows, ~2.9 M tokens. That is ~$0.17 per full embedding with voyage-3.5 at $0.06 / M tokens; vectors are cached in `apps/api/data/embed-cache/`, so re-runs are free.
+The 9 acts the queries expect plus the 21 largest other codes and laws (excluding amending acts), split like the real import: 9,143 rows, ~2.9 M tokens. That is roughly $0.17 with voyage-3.5 ($0.06 / M tokens) and $0.40–0.70 with text-embedding-3-large ($0.13 / M; OpenAI counts more tokens for Uzbek than our estimate). Vectors are cached in `apps/api/data/embed-cache/`, so re-runs are free.
 
 | retrieval on the sample | R@5 | R@10 | hit@10 | MRR |
 |---|---|---|---|---|
 | keyword (Phase 6) | 91.3% | 93.1% | 96.1% | 0.831 |
+| OpenAI text-embedding-3-large (1024 d), vectors only | — | — | — | — |
 | voyage-3.5, vectors only | — | — | — | — |
 | bge-m3, vectors only | — | — | — | — |
 
@@ -53,11 +54,11 @@ The 9 acts the queries expect plus the 21 largest other codes and laws (excludin
 
 - Keyword search already clears the Phase 8 target (R@10 ≥ 0.75) on codes and laws. Its misses are about **ranking inside the right law**, which is where embeddings usually help.
 - Embeddings should be judged on what keyword search misses: paraphrased questions ("can the landlord end the lease early") and **MRR** (the right article first), not on R@10 alone.
-- The choice rule, once both runs exist: pick the model with the higher vector-only R@10 on the sample; if within 2 points, prefer the one with higher MRR; if still tied, prefer Voyage (no server to run and patch).
+- The choice rule, once the runs exist: pick the model with the higher vector-only R@10 on the sample; if within 2 points, prefer the higher MRR; if still tied, prefer **OpenAI** (one provider and one key for the whole app, nothing to host), then Voyage, then bge-m3 (a server to run and patch).
 
 ## How to finish
 
-1. Put `VOYAGE_API_KEY=…` in `apps/api/.env` (from dash.voyageai.com; this test costs well under $1).
+1. Put `OPENAI_API_KEY=…` and/or `VOYAGE_API_KEY=…` in `apps/api/.env`. Each run costs under $1; set a spending limit on the key you use.
 2. For bge-m3, run a text-embeddings-inference server where there is room (the model is ~2.3 GB), for example
    `docker run -p 8080:80 ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id BAAI/bge-m3`,
    and set `EMBEDDING_URL=http://localhost:8080`.

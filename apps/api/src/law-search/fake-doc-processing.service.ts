@@ -11,7 +11,7 @@ import {
  * built (law plan, `docs/law-build-plan.md`).
  *
  * - plain text / markdown: split into clauses here.
- * - PDF: reported as `scanned`, which makes the review send the PDF to Claude
+ * - PDF: reported as `scanned`, which makes the review send the PDF to the model
  *   as a native document block instead of text.
  * - DOCX: not supported yet — the job fails with a clear message.
  */

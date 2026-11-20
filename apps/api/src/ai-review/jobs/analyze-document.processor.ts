@@ -1,4 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { AiContentBlock } from '../ai.service.js';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
@@ -101,7 +101,7 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
 
       // Call 2: the review. Document last, after the cached system prompt and
       // the retrieved articles, so the cacheable prefix stays stable.
-      const reviewContent: Anthropic.Beta.BetaContentBlockParam[] = [
+      const reviewContent: AiContentBlock[] = [
         { type: 'text', text: languageInstruction(review.language) },
         { type: 'text', text: articlesBlockText(hits) },
         ...documentBlocks,
@@ -215,7 +215,7 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
     } catch (error) {
       // A law-service outage must not lose the review: it continues with no
       // articles, every finding gets `citation: null`, and the prompt tells
-      // Claude to say that no supporting norm was found.
+      // the model to say that no supporting norm was found.
       this.logger.error(
         `law search failed, continuing without articles: ${
           error instanceof Error ? error.message : 'unknown error'

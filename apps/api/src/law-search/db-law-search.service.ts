@@ -18,6 +18,8 @@ export class DbLawSearchService implements LawSearchService {
   search(q: LawSearchQuery): Promise<LawArticleHit[]> {
     return this.law.search({
       queries: q.queries.slice(0, 20),
+      // Unused by keyword search today; anchor acts per docType come in law Phase 9.
+      docType: q.docType,
       inForceOnly: q.inForceOnly ?? true,
       limit: Math.min(q.limit ?? 30, 100),
     });

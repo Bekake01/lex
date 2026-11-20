@@ -32,7 +32,6 @@
     "eval:search": "nest build && node dist/law/eval/search-eval.command.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.12.0",
     "@duckdb/node-api": "2.0.0-r.1",
     "@lex/contracts": "workspace:*",
     "@lex/crypto": "workspace:*",
@@ -45,6 +44,7 @@
     "drizzle-orm": "^0.45.4",
     "jose": "6.2.13",
     "nestjs-pino": "^5.3.2",
+    "openai": "^7.60.0",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
     "pino-http": "^11.0.0",
