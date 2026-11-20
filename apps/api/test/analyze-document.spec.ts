@@ -339,6 +339,38 @@ describe('analyze-document job', () => {
     expect(saved.error).not.toContain('Ijara haqi');
   });
 
+  it("shows the extractor's own reason, which is written for a user", async () => {
+    const { review } = await seedReview();
+    // What the real extractor throws for a damaged or encrypted PDF.
+    const broken = {
+      extractText: () => {
+        const error = new Error(
+          'The PDF file could not be read; it may be damaged or password-protected',
+        );
+        error.name = 'DocumentExtractionError';
+        return Promise.reject(error);
+      },
+      applyEdits: () => Promise.reject(new Error('not used here')),
+    };
+
+    await new AnalyzeDocumentProcessor(
+      db,
+      new FakeLawSearchService(),
+      stubAi([]),
+      new DocumentContentService(db, broken, storage),
+      usage,
+    ).process(fakeJob({ reviewId: review.id }));
+
+    const [saved] = await db
+      .select()
+      .from(aiReviews)
+      .where(eq(aiReviews.id, review.id));
+    expect(saved.status).toBe('failed');
+    expect(saved.error).toBe(
+      'The PDF file could not be read; it may be damaged or password-protected',
+    );
+  });
+
   it('does nothing when the review row is gone', async () => {
     await expect(
       processor(stubAi([])).process(

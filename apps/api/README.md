@@ -36,6 +36,9 @@ turbo, so `pnpm test --maxWorkers=2` at the root is rejected).
 `packages/contracts/src/ai.ts` is the source of truth for every shape, and
 `packages/contracts/mocks/` holds a sample response per route. Those are what
 the frontend builds against; changes to them are add-only.
+[`docs/ai-frontend-handoff.md`](../../docs/ai-frontend-handoff.md) is the same
+thing written for the frontend team: statuses to poll, upload errors, clause
+highlighting and the signing summary.
 
 | Method + path                    | Body                                             | Response                        |
 | -------------------------------- | ------------------------------------------------ | ------------------------------- |

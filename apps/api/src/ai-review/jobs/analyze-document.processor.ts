@@ -252,11 +252,17 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
   /** Safe for storage and for the client: never raw model or provider text. */
   private userMessage(aiError: AiError, original: unknown): string {
     if (original instanceof AiError) return aiError.message;
-    if (
-      original instanceof Error &&
-      original.message.startsWith('Document extraction')
-    ) {
-      return original.message;
+    if (original instanceof Error) {
+      // The extractor's own reason is written for a user and carries no
+      // document text ("The PDF file could not be read; it may be damaged or
+      // password-protected"), and it is far more useful than "unexpected AI
+      // failure". Matched by name rather than by import: the class lives in
+      // the law track's module, behind the DOC_PROCESSING interface.
+      if (original.name === 'DocumentExtractionError') return original.message;
+      // The stand-in extractor, for file types it cannot read yet.
+      if (original.message.startsWith('Document extraction')) {
+        return original.message;
+      }
     }
     return aiError.message;
   }

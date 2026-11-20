@@ -12,7 +12,7 @@ Edit in place to keep this current.
 - Law search for the review: in-process `LawModule` when the law tables have data, fixture articles otherwise (`LAW_SEARCH_MODE=auto|db|fake`). Document extraction: text + PDF stand-in (DOCX not yet).
 - Model settings: OpenAI Responses API, `AI_MODEL` (default `gpt-5`), reasoning effort `high` for the review and `medium` for classify and summaries, strict JSON Schema from the Zod schemas plus Zod re-validation, refusal / incomplete handled, `store: false`, automatic prompt caching (`prompt_cache_key` per call type).
 - Review eval harness: `pnpm eval:review` (citation accuracy ≥ 95%, issue precision ≥ 80%). Three synthetic starter cases.
-- For the frontend: `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
+- For the frontend: **`docs/ai-frontend-handoff.md`** (routes, polling, 413/415, clause highlighting, signing summary), `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
 - `apps/web` UI (demo data, no API yet; all under `(app)/`, needs login): `/contracts` inbox of contracts sent to the user, `/review` (auto AI review → risk + issues with lex.uz cites → AI change suggestions → request changes or sign in a dialog).
 - `apps/web` `/` (home): general legal Q&A chat (`?q=` prefills) (demo keyword answers in `src/lib/legalQa.ts`: assault, labor, moral damage, statement template, fallback).
 - `apps/sign` UI (demo data): `/sign/[token]` summary → obligations → typed name + drawn signature + consent → signed screen.
