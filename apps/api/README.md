@@ -17,6 +17,12 @@ pnpm dev:api                 # from the root
 Without `OPENAI_API_KEY` everything boots, but a review job fails and the
 review is marked `failed` with "OPENAI_API_KEY is not set".
 
+Two models: the **review** and **revise** calls run on `AI_MODEL` at
+`AI_EFFORT`, and **classify** and the **recipient summaries** run on
+`AI_MODEL_LIGHT` at medium effort. Classify reads the whole document, so that
+split is the biggest cost lever here; set `AI_MODEL_LIGHT` to the same value as
+`AI_MODEL` and re-run `pnpm eval:review` to see what it costs in quality.
+
 Until `pnpm ingest:hf` has loaded the law tables, the law search uses the
 fixtures in `src/law-search/fixtures/`. `LAW_SEARCH_MODE` forces one side
 (`auto` | `db` | `fake`).

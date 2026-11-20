@@ -14,13 +14,15 @@ const booleanString = z
  * A secret that may be absent. `.env.example` ships these keys empty, and an
  * empty value means "not set", not "set to the empty string".
  */
-const optionalSecret = z.preprocess(  
+const optionalSecret = z.preprocess(
   (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
   z.string().min(1).optional(),
 );
 
 export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'test', 'production'])
+    .default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(5000),
   LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
@@ -47,6 +49,14 @@ export const envSchema = z.object({
   OPENAI_API_KEY: optionalSecret,
   /** Any OpenAI reasoning model with structured outputs, e.g. gpt-5, gpt-5-mini. */
   AI_MODEL: z.string().default('gpt-5'),
+  /**
+   * The model for the simple calls — classify (triage + search queries) and
+   * the recipient summaries. The review and the revise calls always use
+   * `AI_MODEL`. Classify reads the whole document, so this is the biggest cost
+   * lever there is. Set it to the same value as `AI_MODEL` to turn the split
+   * off, which is how to tell whether it costs quality.
+   */
+  AI_MODEL_LIGHT: z.string().default('gpt-5-mini'),
   /** Effort for the review call. Summaries run one level lower (see ai.service). */
   AI_EFFORT: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).default('high'),
   /** Bumped whenever a prompt changes; old reviews keep their version. */

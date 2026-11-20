@@ -119,6 +119,7 @@ async function runCase(
       system: CLASSIFY_SYSTEM,
       content: documentBlocks,
       schema: classifyOutputSchema,
+      tier: 'light',
       effort: 'medium',
       maxTokens: 8_000,
     });
@@ -198,10 +199,10 @@ async function dbLawSearch(databaseUrl: string): Promise<LawSearchService> {
   const { default: pg } = await import('pg');
   const { drizzle } = await import('drizzle-orm/node-postgres');
   const schema = await import('../../src/db/schema/index.js');
-  const { SearchService } = await import('../../src/law/search/search.service.js');
-  const { DbLawSearchService } = await import(
-    '../../src/law-search/db-law-search.service.js'
-  );
+  const { SearchService } =
+    await import('../../src/law/search/search.service.js');
+  const { DbLawSearchService } =
+    await import('../../src/law-search/db-law-search.service.js');
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 2 });
   const db = drizzle(pool, { schema, casing: 'snake_case' }) as unknown as Db;
   return new DbLawSearchService(new SearchService(db));
@@ -231,7 +232,8 @@ async function main(): Promise<void> {
   }
 
   console.log(
-    `Running ${cases.length} case(s) · model ${env.AI_MODEL} · prompt ` +
+    `Running ${cases.length} case(s) · review on ${env.AI_MODEL}, classify on ` +
+      `${env.AI_MODEL_LIGHT} · effort ${env.AI_EFFORT} · prompt ` +
       `${env.AI_PROMPT_VERSION} · law search ${useLex ? 'law tables' : 'fixtures'}\n`,
   );
 
@@ -296,6 +298,8 @@ async function main(): Promise<void> {
       {
         ranAt: new Date().toISOString(),
         model: env.AI_MODEL,
+        lightModel: env.AI_MODEL_LIGHT,
+        effort: env.AI_EFFORT,
         promptVersion: env.AI_PROMPT_VERSION,
         lawSearch: useLex ? 'law tables' : 'fixtures',
         totals: {

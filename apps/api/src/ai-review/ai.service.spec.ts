@@ -38,6 +38,32 @@ describe('document blocks', () => {
   });
 });
 
+describe('which model a call runs on', () => {
+  const service = new AiService({
+    AI_MODEL: 'gpt-5',
+    AI_MODEL_LIGHT: 'gpt-5-mini',
+    AI_EFFORT: 'high',
+    AI_PROMPT_VERSION: 'test',
+  } as never);
+
+  it('runs the review on the full model and triage on the cheap one', () => {
+    expect(service.modelFor(undefined)).toBe('gpt-5');
+    expect(service.modelFor('default')).toBe('gpt-5');
+    expect(service.modelFor('light')).toBe('gpt-5-mini');
+  });
+
+  it('is off when both are the same model', () => {
+    const single = new AiService({
+      AI_MODEL: 'gpt-5',
+      AI_MODEL_LIGHT: 'gpt-5',
+      AI_EFFORT: 'high',
+      AI_PROMPT_VERSION: 'test',
+    } as never);
+
+    expect(single.modelFor('light')).toBe('gpt-5');
+  });
+});
+
 describe('priceUsage', () => {
   /** `input_tokens` includes the cached ones; billing them twice is the bug. */
   it('splits cached tokens out of the input count', () => {

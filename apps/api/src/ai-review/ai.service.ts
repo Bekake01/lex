@@ -36,6 +36,11 @@ export interface StructuredCall<T> {
   /** Volatile content: the document and the retrieved articles. */
   content: AiContentBlock[];
   schema: ZodType<T>;
+  /**
+   * `light` picks `AI_MODEL_LIGHT` — for the calls that are triage or plain
+   * language, not legal judgement. Default is the full model.
+   */
+  tier?: 'default' | 'light';
   effort?: Effort;
   maxTokens?: number;
 }
@@ -77,11 +82,13 @@ export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly client: OpenAI | null;
   readonly model: string;
+  readonly lightModel: string;
   readonly defaultEffort: Effort;
   readonly promptVersion: string;
 
   constructor(@Inject(ENV) env: Env) {
     this.model = env.AI_MODEL;
+    this.lightModel = env.AI_MODEL_LIGHT;
     this.defaultEffort = env.AI_EFFORT;
     this.promptVersion = env.AI_PROMPT_VERSION;
     this.client = env.OPENAI_API_KEY
@@ -96,6 +103,11 @@ export class AiService {
 
   get configured(): boolean {
     return this.client !== null;
+  }
+
+  /** Which model a call runs on. The review never runs on the light one. */
+  modelFor(tier: StructuredCall<unknown>['tier']): string {
+    return tier === 'light' ? this.lightModel : this.model;
   }
 
   /** A PDF sent to the model as a file (no text layer needed). */
@@ -125,9 +137,10 @@ export class AiService {
     }
 
     const started = Date.now();
+    const model = this.modelFor(call.tier);
     try {
       const response = await client.responses.create({
-        model: this.model,
+        model,
         instructions: call.system.join('\n\n'),
         input: [
           {
@@ -163,6 +176,7 @@ export class AiService {
       this.logger.log(
         [
           `${call.label}: ${response.status}`,
+          `${response.model}`,
           `${Date.now() - started}ms`,
           `${usage.inputTokens + usage.cacheReadTokens} in / ${usage.outputTokens} out`,
           `cache read ${usage.cacheReadTokens}`,

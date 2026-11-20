@@ -91,7 +91,9 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
         system: CLASSIFY_SYSTEM,
         content: documentBlocks,
         schema: classifyOutputSchema,
-        // Triage does not need the deep end of the effort range.
+        // Triage, not judgement: the cheap model at middling effort. It reads
+        // the whole document, so this is where the money is.
+        tier: 'light',
         effort: 'medium',
         maxTokens: 8_000,
       });
