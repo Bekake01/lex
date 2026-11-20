@@ -45,10 +45,15 @@ export interface SendSigningInviteJob {
   summaryDeadline: number;
 }
 
-export const jobIdForAnalyze = (reviewId: string) => `analyze:${reviewId}`;
+/**
+ * BullMQ builds its Redis keys around `:`, so it rejects a custom job id that
+ * contains one ("Custom Id cannot contain :"). Ids are joined with `.`; the
+ * parts are uuids, which never contain either character.
+ */
+export const jobIdForAnalyze = (reviewId: string) => `analyze.${reviewId}`;
 export const jobIdForRevise = (reviewId: string, userMessageId: string) =>
-  `revise:${reviewId}:${userMessageId}`;
+  `revise.${reviewId}.${userMessageId}`;
 export const jobIdForSummarize = (signatureRequestId: string) =>
-  `summarize:${signatureRequestId}`;
+  `summarize.${signatureRequestId}`;
 export const jobIdForInvite = (signatureRequestId: string) =>
-  `invite:${signatureRequestId}`;
+  `invite.${signatureRequestId}`;
