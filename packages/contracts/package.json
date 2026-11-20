@@ -17,10 +17,12 @@
     "./signing": {
       "types": "./dist/signing.d.ts",
       "default": "./dist/signing.js"
-    }
+    },
+    "./mocks/*": "./mocks/*"
   },
   "files": [
-    "dist"
+    "dist",
+    "mocks"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",

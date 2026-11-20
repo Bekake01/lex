@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { toNewAlphabet } from '@/lib/alphabet';
+import { UPLOAD_ACCEPT, uploadError } from '@/lib/upload';
 import { answerFor, type LegalAnswer } from '@/lib/legalQa';
-import { ArrowUpIcon, CheckIcon, FileIcon, LogoMark, ScaleIcon } from '../Icons';
+import { ArrowUpIcon, CheckIcon, FileIcon, LogoMark, ScaleIcon, UploadIcon } from '../Icons';
 import { Disclaimer } from '../Disclaimer';
 import { AnswerCard } from './AnswerCard';
 
@@ -27,6 +28,10 @@ export function AskChat() {
   const pending = useRef<Msg | null>(null);
   const started = useRef(false);
   const end = useRef<HTMLDivElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const [fileError, setFileError] = useState('');
+  const [dragging, setDragging] = useState(false);
 
   const busy = step !== null;
 
@@ -69,6 +74,33 @@ export function AskChat() {
     end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, step]);
 
+  const pickFile = () => fileInput.current?.click();
+
+  // TODO: POST /documents (multipart `file`), then open /review for that document id.
+  function openFile(file: File | undefined) {
+    if (!file) return;
+    const error = uploadError(file);
+    setFileError(error ?? '');
+    if (error) return;
+    try {
+      sessionStorage.setItem('lex-upload-name', file.name);
+    } catch {}
+    router.push('/review');
+  }
+
+  const fileField = (
+    <input
+      ref={fileInput}
+      type="file"
+      accept={UPLOAD_ACCEPT}
+      hidden
+      onChange={(e) => {
+        openFile(e.target.files?.[0]);
+        e.target.value = '';
+      }}
+    />
+  );
+
   const empty = messages.length === 0 && !busy;
   const firstQuestion = messages.find((m): m is Extract<Msg, { role: 'user' }> => m.role === 'user')?.text;
 
@@ -85,14 +117,42 @@ export function AskChat() {
   // Empty screen: greeting + input in the middle of the page, like a fresh chat.
   if (empty) {
     return (
-      <div className="flex h-full min-h-0 flex-col">
+      // data-new-chat: the sidebar's "Yangi suhbat" sees we are already on a fresh chat.
+      <div
+        data-new-chat
+        className="flex h-full min-h-0 flex-col"
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragging(false);
+          openFile(e.dataTransfer.files[0]);
+        }}
+      >
+        {fileField}
         <div className="flex flex-1 flex-col items-center justify-center px-4 pb-[8vh]">
           <div className="w-full max-w-2xl animate-fade-up">
-            <h1 className="mb-7 flex items-center justify-center gap-3 text-center text-3xl font-medium tracking-tight sm:text-4xl">
-              <LogoMark className="size-9 sm:size-10" />
-              Qanday muammo böldi?
+            <h1 className="mb-6 flex items-center justify-center gap-2.5 text-center text-[1.75rem] font-medium tracking-tight sm:text-[2rem]">
+              <LogoMark className="size-8" />
+              Qanday yordam bera olaman?
             </h1>
             {composer}
+            <button
+              type="button"
+              onClick={pickFile}
+              className={`mx-auto mt-4 flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
+                dragging ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface/50 text-muted hover:border-line-strong hover:bg-subtle hover:text-ink'
+              }`}
+            >
+              <UploadIcon className="size-4" />
+              {dragging ? 'Faylni qöyib yuboring' : 'Hujjat yuklaş'}
+            </button>
+            {fileError && <p className="mt-1 text-center text-[13px] text-danger">{fileError}</p>}
           </div>
         </div>
         <Disclaimer />
@@ -125,10 +185,10 @@ export function AskChat() {
             ) : (
               <Row key={m.id}>
                 <p className="text-[15px] leading-relaxed">
-                  Sizga kelgan şartnomalar “Şartnomalar” bölimida — oçsangiz, AI tekşiruvi avtomatik boşlanadi.
+                  Sizga kelgan şartnomalar “Hujjatlar” bölimida — oçsangiz, AI tekşiruvi avtomatik boşlanadi.
                 </p>
                 <Link href="/contracts" className="btn btn-primary btn-sm mt-3">
-                  <FileIcon className="size-4" /> Şartnomalar
+                  <FileIcon className="size-4" /> Hujjatlarni oçiş
                 </Link>
               </Row>
             ),
@@ -177,34 +237,31 @@ function Composer({
   large: boolean;
 }) {
   return (
-    <div className="halo !rounded-[1.4rem] !p-1.5">
-      <div className="flex flex-col rounded-2xl bg-surface ring-accent/30 transition focus-within:ring-2">
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              onSend();
-            }
-          }}
-          autoFocus={large}
-          rows={large ? 3 : 1}
-          placeholder="Vaziyatingizni yozing yoki savol bering…"
-          className={`block max-h-48 w-full resize-none bg-transparent px-4 text-[15px] outline-none placeholder:text-faint ${
-            large ? 'pt-4' : 'pt-3'
-          }`}
-        />
-        <div className="flex justify-end p-2 pt-0">
-          <button
-            onClick={onSend}
-            disabled={!value.trim() || disabled}
-            className="btn btn-primary btn-icon btn-sm"
-            aria-label="Yuboriş"
-          >
-            <ArrowUpIcon className="size-4" />
-          </button>
-        </div>
+    <div className="flex flex-col rounded-3xl border border-line bg-surface shadow-[0_4px_20px_var(--shadow)] transition focus-within:border-accent/50">
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            onSend();
+          }
+        }}
+        autoFocus={large}
+        rows={large ? 2 : 1}
+        placeholder="Savolingizni shu yerga yozing…"
+        className="block max-h-48 w-full resize-none bg-transparent px-5 pt-4 text-base outline-none placeholder:text-faint"
+      />
+      <div className="flex items-center justify-end px-3 pb-3">
+        <button
+          onClick={onSend}
+          disabled={!value.trim() || disabled}
+          className="grid size-9 cursor-pointer place-items-center rounded-full bg-accent text-on-color transition hover:bg-accent-hover disabled:cursor-default disabled:bg-subtle disabled:text-faint"
+          aria-label="Yuboriş"
+          title="Yuboriş"
+        >
+          <ArrowUpIcon className="size-[18px]" />
+        </button>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 /*
  * Lex theme — the ONE color palette for apps/web and apps/sign.
- * Import it right after tailwindcss, by relative path (see apps/*/src/app/globals.css):  @import 'tailwindcss'; @import '../../../../packages/theme/theme.css';
+ * Import it right after tailwindcss, by relative path (see apps/web and apps/sign src/app/globals.css):  @import 'tailwindcss'; @import '../../../../packages/theme/theme.css';
  *
  * Every color is a token with a light and a dark value, so a class like `bg-surface`
  * or `text-muted` is correct in both modes. Rules:

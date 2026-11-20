@@ -28,7 +28,7 @@ export class SignedOutError extends Error {
  * On only with NEXT_PUBLIC_DEMO_LOGIN=1 (apps/web/.env.local) and never in a
  * production build. Any email + password signs in; nothing is sent to the API.
  */
-const DEMO_LOGIN =
+export const DEMO_LOGIN =
   process.env.NEXT_PUBLIC_DEMO_LOGIN === '1' &&
   process.env.NODE_ENV !== 'production';
 const DEMO_USER_KEY = 'lex-demo-user';
