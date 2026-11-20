@@ -13,13 +13,17 @@ Edit in place to keep this current.
 - Model settings: OpenAI Responses API, `AI_MODEL` (default `gpt-5`), reasoning effort `high` for the review and `medium` for classify and summaries, strict JSON Schema from the Zod schemas plus Zod re-validation, refusal / incomplete handled, `store: false`, automatic prompt caching (`prompt_cache_key` per call type).
 - Review eval harness: `pnpm eval:review` (citation accuracy ≥ 95%, issue precision ≥ 80%). Three synthetic starter cases.
 - For the frontend: `packages/contracts/src/ai.ts` + `packages/contracts/mocks/*.json`, and `pnpm seed:demo` (login `demo@lex.local` / `demo`) for a seeded sender, finished review, proposed edit and signing link.
-- `apps/sign`: `/sign/[token]` page exists as a placeholder (shows the token; no API call yet).
+- `apps/web` UI (demo data, no API yet; all under `(app)/`, needs login): `/contracts` inbox of contracts sent to the user, `/review` (auto AI review → risk + issues with lex.uz cites → AI change suggestions → request changes or sign in a dialog).
+- `apps/web` `/` (home): general legal Q&A chat (`?q=` prefills) (demo keyword answers in `src/lib/legalQa.ts`: assault, labor, moral damage, statement template, fallback).
+- `apps/sign` UI (demo data): `/sign/[token]` summary → obligations → typed name + drawn signature + consent → signed screen.
+- Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
 - Law Phase 8: hybrid search (keyword + Voyage embeddings, rank fusion) in `apps/api/src/law/` · AI team (zuhriddin). Phase 7 done: Voyage chosen (`docs/decisions/embeddings.md`). Phase 13 (DOCX edits) also open.
 - `apps/web` review screen, `apps/sign` summary step · frontend team. They need `GET /sign/:token/summary` in the sign relay allowlist.
 - Emails: `send-signing-invite` marks the request sent and logs the links; Resend delivery is the email track's.
 - Signing itself (consent, stamp, seal, certificate): `@lex/crypto` provides the hashing and the "Summary shown to signer: sha256 …" line, nothing renders a certificate yet.
+- Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
 
 ## Decisions
 - Ports: web 3000, sign 3001, api 5000, Postgres 5434, Redis 6379.
@@ -34,5 +38,8 @@ Edit in place to keep this current.
 - Snapshot, don't reference: `signature_requests.document_hash` + `summary_hash`, and `recipient_summaries.summary_hash` per signer.
 - Plan limits checked at enqueue: individual per user, agency pooled (`ai_usage.scope_key`), 402 with `REVIEW_LIMIT_REACHED`.
 - `AI_PROMPT_VERSION` is part of a review's idempotency key, so old reviews keep the prompt they ran under.
+- UI language: Uzbek in the **new Latin alphabet** (ş ç ğ ö, ʼ). Login form / SessionGate texts (auth team files) are still English.
+- Users don't upload contracts in `apps/web`; contracts arrive from the backend. User reviews with AI, then signs or requests changes.
+- Scope: besides contract review, users can ask general legal questions ("what happens / where do I go"). Answer shape: summary · consequences+cites · steps · contacts · optional template.
 - Hackathon MVP: no RLS, no tenant isolation, plain users / agencies tables (see `CLAUDE.md`).
 - Signing link: open many times, sign once, closes after signing.
