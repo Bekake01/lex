@@ -39,8 +39,9 @@ async function postJson(fetchFn: FetchFn, url: string, body: unknown, headers: R
     body: JSON.stringify(body),
   });
   if (res.status === 429 || res.status >= 500) {
-    const retryAfter = Number(res.headers.get('retry-after'));
-    throw new RetryableError(`${url} → ${res.status}`, Number.isFinite(retryAfter) ? retryAfter * 1000 : undefined);
+    // A missing header is Number(null) = 0, which would retry instantly; fall back to backoff instead.
+    const retryAfter = Number(res.headers.get('retry-after') ?? NaN);
+    throw new RetryableError(`${url} → ${res.status}`, retryAfter > 0 ? retryAfter * 1000 : undefined);
   }
   if (!res.ok) {
     // The body may echo input text; report the status only.

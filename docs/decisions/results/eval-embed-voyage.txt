@@ -1,0 +1,19 @@
+Search eval: voyage:voyage-3.5 vector-only, ~30-act sample
+topic               n     R@5    R@10  hit@10  MRR
+ALL               102   87.3%   93.5%   96.1%  0.807
+rental             20   87.5%   92.5%   95.0%  0.880
+sale               18   81.5%   87.0%   94.4%  0.815
+services           12  100.0%  100.0%  100.0%  0.792
+employment         20   85.0%   95.0%   95.0%  0.694
+nda                 8   93.8%   93.8%  100.0%  0.823
+personal-data       6   72.2%   94.4%  100.0%  0.746
+consumer            8  100.0%  100.0%  100.0%  1.000
+general            10   80.0%   90.0%   90.0%  0.764
+
+Missed in top 10 (4):
+  rent-08  "ijara shartnomasi qanday shaklda tuzilishi kerak"  want -180552-a539  got -112328-a5,-112328-a21,-112328-a19
+  sale-03  "tovarni topshirish muddati"  want -180552-a389  got -180552-a440,-4704-a121,-2876354-a85
+  emp-20  "меҳнат шартномасини бекор қилиш асослари"  want -6257288-a155  got -142859-a101,-142859-a97,-142859-a106
+  gen-09  "pul majburiyatini bajarmaganlik uchun javobgarlik"  want -111189-a327  got -111189-a333,-5957612-a10,-5957612-a107
+
+{"rows":9143,"tokens":2875521,"embedSeconds":310}

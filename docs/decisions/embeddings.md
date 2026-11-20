@@ -1,6 +1,6 @@
 # Decision: embedding model for law search (Phase 7)
 
-**Status: open.** Keyword baseline measured. Three candidates, all 1024-d (no schema change): **OpenAI `text-embedding-3-large`** (reuses the team's `OPENAI_API_KEY`; the AI review runs on OpenAI too), **Voyage `voyage-3.5`** and **bge-m3** (self-hosted). The runs are waiting on keys and a bge-m3 server (see "How to finish").
+**Status: open, Voyage measured.** Keyword baseline and Voyage measured (MacBook run, 2026-11-21; raw reports in [`results/`](results/)). OpenAI and bge-m3 still to run. Three candidates, all 1024-d (no schema change): **OpenAI `text-embedding-3-large`** (reuses the team's `OPENAI_API_KEY`; the AI review runs on OpenAI too), **Voyage `voyage-3.5`** and **bge-m3** (self-hosted). The runs are waiting on keys and a bge-m3 server (see "How to finish").
 
 ## What we measure
 
@@ -37,7 +37,11 @@ Missed in the top 10 (5): the right law is found but a neighbouring article rank
 - `pd-02` transfer of personal data to third parties → wants art. 13; gets art. 25, 22
 - `gen-07` contract by offer and acceptance → wants Civil Code art. 367, 370; gets art. 373, 372
 
-Speed on PGlite (in-process, single-user, much slower than Postgres): p50 1.7 s, p95 4.2 s per query. To be measured on real Postgres in Phase 8 (target p95 < 300 ms for 5 queries).
+Speed on PGlite (in-process, single-user): p50 1.7 s / p95 4.2 s per query on the dev laptop, **p50 190 ms / p95 344 ms on the MacBook** (same numbers otherwise, so the eval is reproducible). Real Postgres is measured in Phase 8 (target p95 < 300 ms for 5 queries).
+
+### Full corpus import (Phase 4 + 5 check, MacBook)
+
+All 54,173 dataset rows: 11 too-short skipped, 16,161 long articles split into 150,880 parts, **188,881 rows stored, largest 1,498 tokens** (limit 1,600), all 24,267 acts, 111 s. Full-dataset import and search tests passed.
 
 ### Embedding comparison, ~30-act sample
 
@@ -47,14 +51,32 @@ The 9 acts the queries expect plus the 21 largest other codes and laws (excludin
 |---|---|---|---|---|
 | keyword (Phase 6) | 91.3% | 93.1% | 96.1% | 0.831 |
 | OpenAI text-embedding-3-large (1024 d), vectors only | — | — | — | — |
-| voyage-3.5, vectors only | — | — | — | — |
+| voyage-3.5, vectors only | 87.3% | **93.5%** | 96.1% | 0.807 |
 | bge-m3, vectors only | — | — | — | — |
+
+Voyage per topic: rental 92.5% R@10, sale 87.0%, services 100%, employment 95.0%, NDA 93.8%, personal data 94.4%, consumer 100%, general 90.0% (full table in `results/eval-embed-voyage.txt`). Embedding the sample took 310 s.
+
+Voyage and keyword search **miss different queries**:
+
+| query | keyword | voyage |
+|---|---|---|
+| `nda-01` definition of a trade secret | missed | found |
+| `pd-02` personal data to third parties | missed | found |
+| `gen-07` offer and acceptance | missed | found |
+| `emp-08` dismissal notice period | missed | found |
+| `emp-20` Cyrillic: grounds to end an employment contract | found | **missed: returned the repealed 1995 Labour Code** |
+| `rent-08` form of a lease contract | found | missed (Law on Lease instead of Civil Code) |
+| `sale-03` delivery deadline for goods | found | missed |
+| `gen-09` liability for a money obligation | found | missed |
 
 ## Reading so far
 
+- **Voyage alone is not better than keyword search** (R@10 +0.4 points, MRR −0.024), but its misses barely overlap keyword's: a hybrid (Phase 8, reciprocal rank fusion) should beat both. That, not vector-only R@10, is the case for embeddings here.
+- Vectors do not transliterate: a Cyrillic query matched the Cyrillic-era 1995 Labour Code. Phase 8 should embed the **normalized Latin** query (`normalizeQuery`), and old acts need `repealed` status (Phase 14) or demotion.
+
 - Keyword search already clears the Phase 8 target (R@10 ≥ 0.75) on codes and laws. Its misses are about **ranking inside the right law**, which is where embeddings usually help.
 - Embeddings should be judged on what keyword search misses: paraphrased questions ("can the landlord end the lease early") and **MRR** (the right article first), not on R@10 alone.
-- The choice rule, once the runs exist: pick the model with the higher vector-only R@10 on the sample; if within 2 points, prefer the higher MRR; if still tied, prefer **OpenAI** (one provider and one key for the whole app, nothing to host), then Voyage, then bge-m3 (a server to run and patch).
+- The choice rule, once OpenAI (and if possible bge-m3) has run: pick the model with the higher vector-only R@10 on the sample; if within 2 points, prefer the higher MRR; if still tied, prefer **OpenAI** (one provider and one key for the whole app, nothing to host), then Voyage, then bge-m3 (a server to run and patch).
 
 ## How to finish
 
