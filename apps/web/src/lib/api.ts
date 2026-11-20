@@ -1,4 +1,4 @@
-const API_URL = process.env.API_URL ?? 'http://localhost:3000';
+const API_URL = process.env.API_URL ?? 'http://localhost:5000';
 
 export async function apiGet(path: string): Promise<string> {
   const res = await fetch(`${API_URL}${path}`);
