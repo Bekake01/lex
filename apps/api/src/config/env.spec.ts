@@ -2,6 +2,7 @@ import { parseEnv } from './env.js';
 
 const valid = {
   DATABASE_URL: 'postgres://lex:lex@localhost:5434/lex',
+  JWT_SECRET: 's'.repeat(32),
 };
 
 describe('parseEnv', () => {
@@ -18,7 +19,7 @@ describe('parseEnv', () => {
   });
 
   it('names missing keys', () => {
-    expect(() => parseEnv({})).toThrow(/DATABASE_URL/);
+    expect(() => parseEnv({})).toThrow(/DATABASE_URL[\s\S]*JWT_SECRET/);
   });
 
   it('rejects a non-postgres DATABASE_URL', () => {
