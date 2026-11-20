@@ -138,9 +138,11 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 ### Phase 5 — Chunking (1 day)
 **Build** `src/ingest/chunk.ts`:
-- Articles over about 1,500 tokens → split on paragraph boundaries into parts (`{id}-p1`, `-p2`…) with the article header repeated at the top of each part
-- Flat acts (`{docId}-full`, no article split) → paragraph chunks of about 400–800 tokens
-- Re-run over existing rows as a command `pnpm ingest:chunk`
+- Articles over about 1,500 tokens → split into parts of ≤ 1,200 (`{id}-p1`, `-p2`…); every part keeps the article number, title and chapter, and its search text starts with the title
+- Flat acts (`{docId}-full`, no article split) → chunks of about 400–800 tokens
+- The dataset has no line breaks (paragraphs are collapsed), so cuts go at sentence ends, then `;`/`:`, then spaces
+- Parts link to the original via `law_articles.parent_id`; `chunk_index` 0 = whole row, 1… = part number
+- `pnpm ingest:hf` splits while importing and removes leftover rows when an article grows or shrinks; `pnpm ingest:chunk` splits rows already in the database
 
 **Done when:** no row in `law_articles` exceeds about 1,600 tokens; unit tests on chunk boundaries; an article's parts join back into the original text.
 

@@ -2,6 +2,7 @@ import { DuckDBInstance } from '@duckdb/node-api';
 import { sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../../db/db.module.js';
 import { lawActs, lawArticles, type NewLawAct, type NewLawArticle } from '../../db/schema/index.js';
+import { chunkArticle } from './chunk.js';
 import { HF_COLUMNS, mapRow, uniqueId, type HfRow, type SkipReason } from './hf-rows.js';
 
 export interface UpsertCounts {
@@ -15,11 +16,17 @@ export interface HfImportReport {
   skipped: Record<SkipReason, number>;
   /** Rows whose dataset id was already used and got a `-dN` suffix. */
   renamedDuplicateIds: number;
+  /** Dataset rows too long for one row, and the parts they became. */
+  split: { articles: number; parts: number };
   acts: UpsertCounts;
   actsByType: Record<string, number>;
-  articles: UpsertCounts;
+  /** Stored rows (whole articles and parts). `removed` = leftovers deleted. */
+  articles: UpsertCounts & { removed: number };
   ms: number;
 }
+
+/** Rows per INSERT: 15 columns × 2,000 stays well under Postgres's 65,535 parameters. */
+const INSERT_SLICE = 2000;
 
 export interface HfImportOptions {
   batchSize?: number;
@@ -44,9 +51,10 @@ export async function importHf(
     rows: 0,
     skipped: { 'too-short': 0, 'empty-text': 0, 'missing-id': 0 },
     renamedDuplicateIds: 0,
+    split: { articles: 0, parts: 0 },
     acts: { inserted: 0, updated: 0, unchanged: 0 },
     actsByType: {},
-    articles: { inserted: 0, updated: 0, unchanged: 0 },
+    articles: { inserted: 0, updated: 0, unchanged: 0, removed: 0 },
     ms: 0,
   };
   const seenIds = new Map<string, number>();
@@ -54,20 +62,26 @@ export async function importHf(
 
   let acts = new Map<string, NewLawAct>();
   let articles: NewLawArticle[] = [];
+  /** Dataset ids in this batch; their old rows/parts not rewritten are removed. */
+  let sourceIds: string[] = [];
 
   const flush = async () => {
-    if (articles.length === 0) return;
-    const [a, b] = await db.transaction(async (tx) => [
-      await upsertActs(tx, [...acts.values()]),
-      await upsertArticles(tx, articles),
-    ]);
-    report.acts.inserted += a.inserted;
-    report.acts.updated += a.updated;
-    report.articles.inserted += b.inserted;
-    report.articles.updated += b.updated;
-    report.articles.unchanged += b.unchanged;
+    if (sourceIds.length === 0) return;
+    await db.transaction(async (tx) => {
+      const a = await upsertActs(tx, [...acts.values()]);
+      report.acts.inserted += a.inserted;
+      report.acts.updated += a.updated;
+      for (let i = 0; i < articles.length; i += INSERT_SLICE) {
+        const b = await upsertArticles(tx, articles.slice(i, i + INSERT_SLICE));
+        report.articles.inserted += b.inserted;
+        report.articles.updated += b.updated;
+        report.articles.unchanged += b.unchanged;
+      }
+      report.articles.removed += await removeLeftovers(tx, sourceIds, articles.map((r) => r.id));
+    });
     acts = new Map();
     articles = [];
+    sourceIds = [];
   };
 
   const instance = await DuckDBInstance.create(':memory:');
@@ -96,8 +110,14 @@ export async function importHf(
         }
         acts.set(mapped.act.docId, mapped.act);
         actTypes.set(mapped.act.docId, mapped.act.actType);
-        articles.push(mapped.article);
-        if (articles.length >= batchSize) await flush();
+        const rows = chunkArticle(mapped.article);
+        if (rows.length > 1) {
+          report.split.articles++;
+          report.split.parts += rows.length;
+        }
+        articles.push(...rows);
+        sourceIds.push(mapped.article.id);
+        if (sourceIds.length >= batchSize) await flush();
       }
       onProgress?.(report.rows);
     }
@@ -157,6 +177,26 @@ async function upsertActs(tx: Tx, rows: NewLawAct[]): Promise<UpsertCounts> {
   return count(returned, rows.length);
 }
 
+/**
+ * Deletes rows that belonged to these dataset articles but were not written
+ * this time: the whole row of an article that is now split, parts of an
+ * article that is no longer split, or parts beyond a shorter new split.
+ */
+async function removeLeftovers(tx: Tx, sourceIds: string[], keptIds: string[]): Promise<number> {
+  // One array parameter per list: a batch with a few huge acts can have tens
+  // of thousands of parts, more than Postgres allows as separate parameters.
+  const sources = sql`${sql.param(sourceIds)}::text[]`;
+  const kept = sql`${sql.param(keptIds)}::text[]`;
+  const removed = await tx
+    .delete(lawArticles)
+    .where(
+      sql`(${lawArticles.id} = ANY(${sources}) OR ${lawArticles.parentId} = ANY(${sources}))
+        AND ${lawArticles.id} <> ALL(${kept})`,
+    )
+    .returning({ id: lawArticles.id });
+  return removed.length;
+}
+
 async function upsertArticles(tx: Tx, rows: NewLawArticle[]): Promise<UpsertCounts> {
   const returned = await tx
     .insert(lawArticles)
@@ -165,6 +205,8 @@ async function upsertArticles(tx: Tx, rows: NewLawArticle[]): Promise<UpsertCoun
       target: lawArticles.id,
       set: {
         docId: excluded('doc_id'),
+        parentId: excluded('parent_id'),
+        chunkIndex: excluded('chunk_index'),
         articleNumber: excluded('article_number'),
         part: excluded('part'),
         chapter: excluded('chapter'),
@@ -178,11 +220,13 @@ async function upsertArticles(tx: Tx, rows: NewLawArticle[]): Promise<UpsertCoun
         embedding: sql`CASE WHEN ${lawArticles.textNorm} = excluded.text_norm THEN ${lawArticles.embedding} ELSE NULL END`,
       },
       setWhere: sql`(
-        ${lawArticles.docId}, ${lawArticles.articleNumber}, ${lawArticles.part}, ${lawArticles.chapter},
-        ${lawArticles.title}, ${lawArticles.text}, ${lawArticles.nTokens}, ${lawArticles.qualityFlag}, ${lawArticles.language}
+        ${lawArticles.docId}, ${lawArticles.parentId}, ${lawArticles.chunkIndex}, ${lawArticles.articleNumber},
+        ${lawArticles.part}, ${lawArticles.chapter}, ${lawArticles.title}, ${lawArticles.text},
+        ${lawArticles.nTokens}, ${lawArticles.qualityFlag}, ${lawArticles.language}
       ) IS DISTINCT FROM (
-        excluded.doc_id, excluded.article_number, excluded.part, excluded.chapter,
-        excluded.title, excluded.text, excluded.n_tokens, excluded.quality_flag, excluded.language
+        excluded.doc_id, excluded.parent_id, excluded.chunk_index, excluded.article_number,
+        excluded.part, excluded.chapter, excluded.title, excluded.text,
+        excluded.n_tokens, excluded.quality_flag, excluded.language
       )`,
     })
     .returning({ inserted: sql<boolean>`(xmax = 0)` });

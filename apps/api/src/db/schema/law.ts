@@ -68,6 +68,9 @@ export const lawArticles = pgTable(
     text: text('text').notNull(),
     /** normalizeUz(text): unified apostrophes, Latin script, collapsed whitespace. */
     textNorm: text('text_norm').notNull(),
+    /** For a part of a split article: the original article's id. Null for whole rows. */
+    parentId: text('parent_id'),
+    /** 0 = the whole article; 1, 2… = part number (id ends in -p1, -p2…). */
     chunkIndex: integer('chunk_index').notNull().default(0),
     nTokens: integer('n_tokens'),
     qualityFlag: text('quality_flag'),
@@ -78,6 +81,7 @@ export const lawArticles = pgTable(
   },
   (t) => [
     index('law_articles_doc_id_idx').on(t.docId),
+    index('law_articles_parent_id_idx').on(t.parentId),
     index('law_articles_tsv_idx').using('gin', t.tsv),
     index('law_articles_embedding_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
   ],

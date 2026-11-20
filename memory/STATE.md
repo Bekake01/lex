@@ -7,10 +7,10 @@ Edit in place to keep this current.
 - Database: Postgres (Docker, 5434) + Drizzle. Tables: `agencies`, `users`, `sessions`, `email_codes` (forgot password / Resend not implemented yet).
 - Login (`apps/api/src/auth/`, `apps/web` `/login`): login / refresh / logout + `GET /me`, global access-token guard (`@Public()` to opt out). Team accounts via `pnpm db:seed` (Bekzod, Malika, Zuxriddin, Quvomiddin; password = email part before `@`). No sign-up page, no forgot password yet.
 - `apps/sign`: `/sign/[token]` page exists as a placeholder (shows the token; no API call yet).
-- Law (in `apps/api/src/law/`, merged from lex-api): `law_acts` / `law_articles` / `law_sync_runs` with pgvector, Uzbek text utils, Hugging Face import (`pnpm ingest:hf`, 54k articles), keyword search (`POST /law/search`, `/law/articles/batch`, `GET /law/meta`; `SearchService` exported from `LawModule` for the AI review). `GET /health` reports db + law index date. Not yet: chunking, embeddings, document extraction.
+- Law (in `apps/api/src/law/`, merged from lex-api): `law_acts` / `law_articles` / `law_sync_runs` with pgvector, Uzbek text utils, Hugging Face import (`pnpm ingest:hf`, 54k articles), keyword search (`POST /law/search`, `/law/articles/batch`, `GET /law/meta`; `SearchService` exported from `LawModule` for the AI review). `GET /health` reports db + law index date. Long articles/acts split into parts (≤ ~1,600 tokens, `parent_id`). Not yet: embeddings, document extraction.
 
 ## In progress
-- Law Phase 5+ (chunking, embeddings) in `apps/api/src/law/` · AI team (zuhriddin)
+- Law Phase 7+ (search eval, then embeddings) in `apps/api/src/law/` · AI team (zuhriddin)
 
 ## Decisions
 - Ports: frontend 3000, signing app 3001, backend 5000, Postgres 5434.
