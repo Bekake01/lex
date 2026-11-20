@@ -68,6 +68,13 @@ describe('openaiEmbeddingProvider', () => {
     expect(err).toBeInstanceOf(RetryableError);
     expect((err as RetryableError).retryAfterMs).toBe(2000);
   });
+
+  it('leaves retryAfterMs unset when a 429 has no retry-after header', async () => {
+    const { fn } = fakeFetch(() => ({ status: 429 }));
+    const err = await openaiEmbeddingProvider('k', { fetchFn: fn }).embedBatch(['a'], 'query').catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(RetryableError);
+    expect((err as RetryableError).retryAfterMs).toBeUndefined();
+  });
 });
 
 describe('teiProvider', () => {
