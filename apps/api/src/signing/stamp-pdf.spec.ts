@@ -48,9 +48,36 @@ describe('stampPdf', () => {
     const out = await stampPdf({
       pdfBytes: await blankPdf(),
       fields: [
-        { id: 'sig', type: 'signature', page: 1, x: 0.1, y: 0.8, w: 0.2, h: 0.05, required: true },
-        { id: 'nm', type: 'name', page: 1, x: 0.1, y: 0.5, w: 0.3, h: 0.03, required: false },
-        { id: 'cb', type: 'checkbox', page: 1, x: 0.5, y: 0.5, w: 0.03, h: 0.02, required: false },
+        {
+          id: 'sig',
+          type: 'signature',
+          page: 1,
+          x: 0.1,
+          y: 0.8,
+          w: 0.2,
+          h: 0.05,
+          required: true,
+        },
+        {
+          id: 'nm',
+          type: 'name',
+          page: 1,
+          x: 0.1,
+          y: 0.5,
+          w: 0.3,
+          h: 0.03,
+          required: false,
+        },
+        {
+          id: 'cb',
+          type: 'checkbox',
+          page: 1,
+          x: 0.5,
+          y: 0.5,
+          w: 0.03,
+          h: 0.02,
+          required: false,
+        },
       ],
       fieldValues: { nm: 'Şoira Ğulomova Oʻktamovna', cb: 'true' },
       signaturePng: PNG,
@@ -63,7 +90,16 @@ describe('stampPdf', () => {
     const out = await stampPdf({
       pdfBytes: await blankPdf(1),
       fields: [
-        { id: 'a', type: 'signature', page: 9, x: 0.1, y: 0.1, w: 0.2, h: 0.05, required: true },
+        {
+          id: 'a',
+          type: 'signature',
+          page: 9,
+          x: 0.1,
+          y: 0.1,
+          w: 0.2,
+          h: 0.05,
+          required: true,
+        },
       ],
       fieldValues: {},
       signaturePng: PNG,
@@ -79,7 +115,16 @@ describe('stampPdf', () => {
       stampPdf({
         pdfBytes: Buffer.from(await pdf.save()),
         fields: [
-          { id: 'sig', type: 'signature', page: 1, x: 0.1, y: 0.8, w: 0.2, h: 0.05, required: true },
+          {
+            id: 'sig',
+            type: 'signature',
+            page: 1,
+            x: 0.1,
+            y: 0.8,
+            w: 0.2,
+            h: 0.05,
+            required: true,
+          },
         ],
         fieldValues: {},
         signaturePng: PNG,
@@ -91,7 +136,16 @@ describe('stampPdf', () => {
     const out = await stampPdf({
       pdfBytes: await blankPdf(),
       fields: [
-        { id: 't', type: 'text', page: 1, x: 0.1, y: 0.1, w: 0.5, h: 0.03, required: false },
+        {
+          id: 't',
+          type: 'text',
+          page: 1,
+          x: 0.1,
+          y: 0.1,
+          w: 0.5,
+          h: 0.03,
+          required: false,
+        },
       ],
       fieldValues: { t: '日本語 😀 Владимир' },
       signaturePng: PNG,

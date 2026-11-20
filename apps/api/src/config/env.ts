@@ -20,6 +20,9 @@ const optionalSecret = z.preprocess(
   z.string().min(1).optional(),
 );
 
+/** Dev-only default for SIGN_TICKET_SECRET; boot fails if production uses it. */
+const DEV_SIGN_TICKET_SECRET = 'dev-only-sign-ticket-secret-change-me-please';
+
 const R2_KEYS = [
   'S3_ENDPOINT',
   'S3_BUCKET',
@@ -58,6 +61,14 @@ export const envSchema = z
      * Never delete an old key — mark it `retiring` so old seals still verify.
      */
     SEAL_KEYS: optionalSecret,
+    /**
+     * HMAC key for the signing password ticket (`x-sign-ticket`). The dev
+     * default is refused in production.
+     */
+    SIGN_TICKET_SECRET: z
+      .string()
+      .min(32, 'must be at least 32 characters')
+      .default(DEV_SIGN_TICKET_SECRET),
 
     /* ------------------------------------------------------------------ AI -- */
 
@@ -141,6 +152,16 @@ export const envSchema = z
         code: 'custom',
         path: ['SEAL_KEYS'],
         message: 'required in production',
+      });
+    }
+    if (
+      env.NODE_ENV === 'production' &&
+      env.SIGN_TICKET_SECRET === DEV_SIGN_TICKET_SECRET
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['SIGN_TICKET_SECRET'],
+        message: 'set a real secret in production',
       });
     }
     if (env.STORAGE_DRIVER !== 'r2') return;

@@ -43,7 +43,9 @@ export function toPdfBox(
 }
 
 export async function stampPdf(input: StampInput): Promise<Uint8Array> {
-  const pdf = await PDFDocument.load(input.pdfBytes, { ignoreEncryption: true });
+  const pdf = await PDFDocument.load(input.pdfBytes, {
+    ignoreEncryption: true,
+  });
   const { regular: font } = await embedFonts(pdf);
   const signature = await pdf.embedPng(input.signaturePng);
   const pages = pdf.getPages();
@@ -81,7 +83,10 @@ export async function stampPdf(input: StampInput): Promise<Uint8Array> {
     if (IMAGE_FIELDS.has(field.type)) {
       // Fit the signature inside the box preserving aspect ratio, centred —
       // stretching a signature to the box would distort the person's mark.
-      const scale = Math.min(box.width / signature.width, box.height / signature.height);
+      const scale = Math.min(
+        box.width / signature.width,
+        box.height / signature.height,
+      );
       const drawW = signature.width * scale;
       const drawH = signature.height * scale;
       page.drawImage(signature, {
@@ -105,8 +110,18 @@ export async function stampPdf(input: StampInput): Promise<Uint8Array> {
           x: box.x + box.width * fx,
           y: box.y + box.height * fy,
         });
-        page.drawLine({ start: p(0.18, 0.52), end: p(0.42, 0.24), thickness: t, color: ink });
-        page.drawLine({ start: p(0.42, 0.24), end: p(0.84, 0.8), thickness: t, color: ink });
+        page.drawLine({
+          start: p(0.18, 0.52),
+          end: p(0.42, 0.24),
+          thickness: t,
+          color: ink,
+        });
+        page.drawLine({
+          start: p(0.42, 0.24),
+          end: p(0.84, 0.8),
+          thickness: t,
+          color: ink,
+        });
       }
       continue;
     }
@@ -115,7 +130,8 @@ export async function stampPdf(input: StampInput): Promise<Uint8Array> {
     // the width — a long company name must not run across the page.
     let size = Math.min(12, Math.max(6, box.height * 0.7));
     const text = toPdfSafeText(raw);
-    while (size > 5 && font.widthOfTextAtSize(text, size) > box.width) size -= 0.5;
+    while (size > 5 && font.widthOfTextAtSize(text, size) > box.width)
+      size -= 0.5;
     page.drawText(text, {
       x: box.x + 1,
       // Sit the baseline slightly above the box bottom so glyphs aren't clipped.

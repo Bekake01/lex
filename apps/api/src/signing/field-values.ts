@@ -91,7 +91,8 @@ export function resolveFieldValues(
     // A choice field can only ever hold one of the options the SENDER offered.
     // Without this the signer could type any string into a "dropdown" and have
     // it stamped, hashed and sealed as if it were an offered answer.
-    const offered = !CHOICE_KINDS.has(field.type) || (field.options ?? []).includes(value);
+    const offered =
+      !CHOICE_KINDS.has(field.type) || (field.options ?? []).includes(value);
     if (!offered || fieldValueProblem(field.type, value) !== null) {
       invalid.push(field.id);
       continue;

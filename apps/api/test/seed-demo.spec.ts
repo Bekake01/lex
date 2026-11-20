@@ -100,9 +100,11 @@ describe('staging seed', () => {
   });
 
   it('serves the signing summary for the printed link', async () => {
-    const summary = await new SigningService(db).summaryForToken(
-      seed.signToken,
-    );
+    const summary = await new SigningService(
+      db,
+      { SIGN_TICKET_SECRET: 'x'.repeat(32) } as Env,
+      storage,
+    ).summaryForToken(seed.signToken);
     expect(summary.partyName).toBe('Dilnoza Yusupova');
     expect(summary.yourObligations.length).toBeGreaterThan(0);
     expect(summary.keyConditions.length).toBeGreaterThan(0);

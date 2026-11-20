@@ -6,7 +6,12 @@ import { resolveFieldValues } from './field-values.js';
 
 const facts = { signedAt: new Date('2026-07-27T10:30:00.000Z') };
 
-function field(id: string, type: string, required = false, options?: string[]): Field {
+function field(
+  id: string,
+  type: string,
+  required = false,
+  options?: string[],
+): Field {
   return {
     id,
     type: type as Field['type'],
@@ -22,7 +27,11 @@ function field(id: string, type: string, required = false, options?: string[]): 
 
 describe('resolveFieldValues', () => {
   it('IGNORES a signer-forged Date Signed — the signing moment is server truth', () => {
-    const { values } = resolveFieldValues([field('d', 'date')], { d: '2020-01-01' }, facts);
+    const { values } = resolveFieldValues(
+      [field('d', 'date')],
+      { d: '2020-01-01' },
+      facts,
+    );
     expect(values.d).toBe('2026-07-27');
   });
 
@@ -33,7 +42,12 @@ describe('resolveFieldValues', () => {
       field('l', 'last_name'),
       field('e', 'email'),
     ];
-    const typed = { n: 'Şoira Ğulomova Oʻktamovna', f: 'Олим', l: 'Ўғлонов', e: 'oktam@example.uz' };
+    const typed = {
+      n: 'Şoira Ğulomova Oʻktamovna',
+      f: 'Олим',
+      l: 'Ўғлонов',
+      e: 'oktam@example.uz',
+    };
     const { values, invalid } = resolveFieldValues(fields, typed, facts);
     expect(invalid).toEqual([]);
     expect(values).toEqual(typed);
@@ -51,7 +65,12 @@ describe('resolveFieldValues', () => {
       { t: '  my note ', c: 'Acme Ltd', k: 'true', dt: '2026-12-31' },
       facts,
     );
-    expect(values).toEqual({ t: 'my note', c: 'Acme Ltd', k: 'true', dt: '2026-12-31' });
+    expect(values).toEqual({
+      t: 'my note',
+      c: 'Acme Ltd',
+      k: 'true',
+      dt: '2026-12-31',
+    });
   });
 
   it('REFUSES a value that breaks its field rule — only reachable by bypassing the signing app', () => {
@@ -65,7 +84,14 @@ describe('resolveFieldValues', () => {
     ];
     const { values, invalid } = resolveFieldValues(
       fields,
-      { num: '12abc', em: 'not-an-email', ph: '12', dt: '2026-02-30', nm: 'R2D2', tx: 'salom 😀' },
+      {
+        num: '12abc',
+        em: 'not-an-email',
+        ph: '12',
+        dt: '2026-02-30',
+        nm: 'R2D2',
+        tx: 'salom 😀',
+      },
       facts,
     );
     expect(invalid).toEqual(['num', 'em', 'ph', 'dt', 'nm', 'tx']);
@@ -74,32 +100,58 @@ describe('resolveFieldValues', () => {
 
   it('refuses a choice the sender never offered', () => {
     const fields = [field('c', 'dropdown', false, ['Yes', 'No'])];
-    expect(resolveFieldValues(fields, { c: 'Maybe' }, facts).invalid).toEqual(['c']);
-    expect(resolveFieldValues(fields, { c: 'Yes' }, facts).values).toEqual({ c: 'Yes' });
+    expect(resolveFieldValues(fields, { c: 'Maybe' }, facts).invalid).toEqual([
+      'c',
+    ]);
+    expect(resolveFieldValues(fields, { c: 'Yes' }, facts).values).toEqual({
+      c: 'Yes',
+    });
   });
 
   it('DROPS keys that are not in the snapshot (no smuggled fields)', () => {
     const fields = [field('t', 'text')];
-    const { values } = resolveFieldValues(fields, { t: 'ok', ghost: 'not in template' }, facts);
+    const { values } = resolveFieldValues(
+      fields,
+      { t: 'ok', ghost: 'not in template' },
+      facts,
+    );
     expect(values).toEqual({ t: 'ok' });
     expect(values.ghost).toBeUndefined();
   });
 
   it('never stamps text into signature-kind fields', () => {
-    const fields = [field('s', 'signature'), field('i', 'initial'), field('st', 'stamp')];
-    const { values } = resolveFieldValues(fields, { s: 'X', i: 'Y', st: 'Z' }, facts);
+    const fields = [
+      field('s', 'signature'),
+      field('i', 'initial'),
+      field('st', 'stamp'),
+    ];
+    const { values } = resolveFieldValues(
+      fields,
+      { s: 'X', i: 'Y', st: 'Z' },
+      facts,
+    );
     expect(values).toEqual({});
   });
 
   it('reports required inputs left blank — a box of spaces is blank', () => {
-    const fields = [field('t', 'text', true), field('n', 'name', true), field('c', 'company', true)];
-    const { missingRequired } = resolveFieldValues(fields, { t: '   ', c: 'filled' }, facts);
+    const fields = [
+      field('t', 'text', true),
+      field('n', 'name', true),
+      field('c', 'company', true),
+    ];
+    const { missingRequired } = resolveFieldValues(
+      fields,
+      { t: '   ', c: 'filled' },
+      facts,
+    );
     expect(missingRequired).toEqual(['t', 'n']);
   });
 
   it('refuses an over-long value instead of quietly truncating it', () => {
     const fields = [field('t', 'text')];
-    expect(resolveFieldValues(fields, { t: 'x'.repeat(501) }, facts).invalid).toEqual(['t']);
+    expect(
+      resolveFieldValues(fields, { t: 'x'.repeat(501) }, facts).invalid,
+    ).toEqual(['t']);
   });
 });
 
@@ -109,7 +161,12 @@ describe('the typed-text rules against the stamping font', () => {
   // the embedded Noto Sans — otherwise it prints as an empty box. If either
   // side changes alone, this is where it shows.
   const font = fontkit.create(
-    readFileSync(new URL('../../../../packages/crypto/fonts/NotoSans-Regular.ttf', import.meta.url)),
+    readFileSync(
+      new URL(
+        '../../../../packages/crypto/fonts/NotoSans-Regular.ttf',
+        import.meta.url,
+      ),
+    ),
   );
 
   it.each(['text', 'name'] as const)(
@@ -120,7 +177,8 @@ describe('the typed-text rules against the stamping font', () => {
         const ch = String.fromCodePoint(cp);
         // Between letters, so trimming cannot hide the character under test.
         if (fieldValueProblem(type, `a${ch}a`) !== null) continue;
-        if (!font.hasGlyphForCodePoint(cp)) missing.push(`U+${cp.toString(16).toUpperCase()}`);
+        if (!font.hasGlyphForCodePoint(cp))
+          missing.push(`U+${cp.toString(16).toUpperCase()}`);
       }
       expect(missing).toEqual([]);
     },

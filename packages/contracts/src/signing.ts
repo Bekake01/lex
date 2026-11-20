@@ -528,6 +528,9 @@ export const submitSigningBodySchema = z.object({
 });
 export type SubmitSigningBody = z.infer<typeof submitSigningBodySchema>;
 
+export const submitSigningResponseSchema = z.object({ ok: z.literal(true) });
+export type SubmitSigningResponse = z.infer<typeof submitSigningResponseSchema>;
+
 /** `GET /sign/:token/status` — the sealed copy is ready to download. */
 export const signingStatusSchema = z.object({ ready: z.boolean() });
 export type SigningStatus = z.infer<typeof signingStatusSchema>;
@@ -552,6 +555,10 @@ export const SIGNING_ERROR_CODES = {
   needsRecipients: 'NEEDS_RECIPIENTS',
   /** A field points past the last page, or two fields share an id (400). */
   badFields: 'BAD_FIELDS',
+  /** `POST /sign/:token/unlock` or open-link start: wrong password (401). */
+  wrongPassword: 'WRONG_PASSWORD',
+  /** Too many wrong passwords on this link; the sender must reset it (423). */
+  locked: 'LINK_LOCKED',
 } as const;
 
 /* ----------------------------------------------------------------- paths -- */

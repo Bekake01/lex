@@ -14,17 +14,23 @@ const MAX_PAGES = 300;
  * a truly malformed or huge file throws and the caller returns a 400.
  */
 export async function readPdfGeometry(bytes: Uint8Array): Promise<PdfGeometry> {
-  const pdf = await PDFDocument.load(bytes, { ignoreEncryption: true, updateMetadata: false });
+  const pdf = await PDFDocument.load(bytes, {
+    ignoreEncryption: true,
+    updateMetadata: false,
+  });
   const pages = pdf.getPages();
   if (pages.length === 0) throw new Error('PDF has no pages');
-  if (pages.length > MAX_PAGES) throw new Error(`PDF exceeds ${MAX_PAGES} pages`);
+  if (pages.length > MAX_PAGES)
+    throw new Error(`PDF exceeds ${MAX_PAGES} pages`);
   // A /Rotate page displays differently from its underlying coordinate space,
   // so a field placed in the editor would be stamped somewhere else on the
   // signed document. Refuse the document HERE — before anyone can send it —
   // rather than silently misplacing a signature on a legal file.
   for (const page of pages) {
     if (((page.getRotation().angle % 360) + 360) % 360 !== 0) {
-      throw new Error('PDF contains rotated pages, which are not supported yet');
+      throw new Error(
+        'PDF contains rotated pages, which are not supported yet',
+      );
     }
   }
   return {
