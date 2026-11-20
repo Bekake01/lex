@@ -324,4 +324,9 @@ export const AI_ERROR_CODES = {
   editNotApplicable: 'EDIT_NOT_APPLICABLE',
   /** Only the latest version of a document can be sent (409). */
   notLatestVersion: 'NOT_LATEST_VERSION',
+  /**
+   * Applying edits to a DOCX is not built yet (501). Temporary: it disappears
+   * when the law track's `applyEdits` lands, and nothing else answers 501.
+   */
+  editsNotAvailable: 'EDITS_NOT_AVAILABLE',
 } as const;

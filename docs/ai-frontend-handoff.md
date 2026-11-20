@@ -103,6 +103,7 @@ in the browser.
 | `422 EDITS_NEED_DOCX`      | Edits can only be applied to a DOCX                              |
 | `422 EDIT_NOT_APPLICABLE`  | The document moved on, so the edit no longer matches             |
 | `409 NOT_LATEST_VERSION`   | Only the newest version of a document can be sent                |
+| `501 EDITS_NOT_AVAILABLE`  | DOCX editing is not built yet (temporary, see below)             |
 
 The codes are in `AI_ERROR_CODES` in `@lex/contracts`.
 
@@ -125,6 +126,8 @@ version + 1 with a new `sha256` and `parentDocumentId`, then starts a review of
 the new version automatically. The response is `{ documentId, version }` —
 point the screen at the new `documentId`.
 
-Applying edits to DOCX is being built by the law track; until it lands this
-route answers `422 EDIT_NOT_APPLICABLE`, which is already the right thing for
-the UI to handle.
+Applying edits to DOCX is being built by the law track. **Until it lands this
+route answers `501 EDITS_NOT_AVAILABLE`** — show the server's message ("…not
+available yet. The suggested wording is still here, and nothing was changed");
+the edit stays `proposed`, so the button can be offered again later. Nothing
+else in the API answers 501, and this code disappears when the feature lands.

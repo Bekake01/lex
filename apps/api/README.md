@@ -71,7 +71,8 @@ from `POST /auth/login`; `CurrentUserGuard` then loads the user row.
 `GET /sign/:token/summary` is `@Public()` and needs no header.
 
 Errors the frontend branches on: `402 REVIEW_LIMIT_REACHED`,
-`422 EDITS_NEED_DOCX`, `422 EDIT_NOT_APPLICABLE`, `409 NOT_LATEST_VERSION`.
+`422 EDITS_NEED_DOCX`, `422 EDIT_NOT_APPLICABLE`, `409 NOT_LATEST_VERSION`,
+and `501 EDITS_NOT_AVAILABLE` until the law track's DOCX `applyEdits` lands.
 
 **Clauses.** Once a document has been read, `DocumentWire.clauses` carries the
 document's own numbering (`4.2`, `7-modda`) with the offsets each clause takes
@@ -83,11 +84,11 @@ document does not have: show the ref, but do not try to highlight it.
 
 | Path                                                        | What                                                              |
 | ----------------------------------------------------------- | ----------------------------------------------------------------- |
-| `src/ai-review/ai.service.ts`                               | The only place that calls the AI model (OpenAI)                                  |
+| `src/ai-review/ai.service.ts`                               | The only place that calls the AI model (OpenAI)                   |
 | `src/ai-review/prompts.ts`                                  | Every prompt; bump `AI_PROMPT_VERSION` when you change one        |
 | `src/ai-review/schemas.ts`                                  | Zod schemas for the model's structured output                     |
 | `src/ai-review/citations.ts`                                | Drops any citation that was not retrieved                         |
-| `src/ai-review/clauses.ts`                                  | Resolves a model `clauseRef` to the document's own numbering       |
+| `src/ai-review/clauses.ts`                                  | Resolves a model `clauseRef` to the document's own numbering      |
 | `src/ai-review/jobs/`                                       | `analyze-document`, `revise-document`, `summarize-for-recipients` |
 | `src/ai-review/mappers.ts`                                  | Wire objects, built field by field                                |
 | `src/law-search/`                                           | Law search for the review (`LawModule` in-process) + the fixtures |
