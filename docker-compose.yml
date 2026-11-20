@@ -23,7 +23,7 @@ services:
     restart: unless-stopped
     command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - '6379:6379'
+      - '6391:6379'
     volumes:
       - lex-redis-data:/data
     healthcheck:

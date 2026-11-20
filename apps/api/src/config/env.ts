@@ -14,7 +14,7 @@ const booleanString = z
  * A secret that may be absent. `.env.example` ships these keys empty, and an
  * empty value means "not set", not "set to the empty string".
  */
-const optionalSecret = z.preprocess(
+const optionalSecret = z.preprocess(  
   (v) => (typeof v === 'string' && v.trim() === '' ? undefined : v),
   z.string().min(1).optional(),
 );
