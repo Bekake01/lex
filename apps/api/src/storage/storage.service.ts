@@ -1,18 +1,38 @@
-import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ENV, type Env } from '../config/env.js';
+import { LocalStorageDriver } from './local-storage.driver.js';
+import { R2StorageDriver } from './r2-storage.driver.js';
+import type { StorageDriver } from './storage.driver.js';
 
 /**
- * Where document bytes live. The rest of the app only ever sees opaque keys,
- * so swapping this for S3/R2 means adding a driver here and nothing else.
+ * Where file bytes live: local disk (`STORAGE_DRIVER=local`, the default) or
+ * Cloudflare R2 (`r2`). The rest of the app only ever sees opaque keys.
+ *
+ * Keys (generated, never user input):
+ *   documents/<documentId>/<file>                 uploaded documents
+ *   signatures/<requestId>/<recipientId>.png      adopted signature image
+ *   signed/<requestId>/<recipientId>.pdf          one person's sealed copy
+ *   certificates/<requestId>/<recipientId>.pdf    its certificate
  */
 @Injectable()
 export class StorageService {
-  private readonly root: string;
+  private readonly logger = new Logger(StorageService.name);
+  private readonly driver: StorageDriver;
 
   constructor(@Inject(ENV) env: Env) {
-    this.root = resolve(env.STORAGE_DIR);
+    if (env.STORAGE_DRIVER === 'r2') {
+      // env.ts guarantees all four are set when the driver is r2.
+      this.driver = new R2StorageDriver({
+        endpoint: env.S3_ENDPOINT!,
+        region: env.S3_REGION ?? 'auto',
+        bucket: env.S3_BUCKET!,
+        accessKeyId: env.S3_ACCESS_KEY_ID!,
+        secretAccessKey: env.S3_SECRET_ACCESS_KEY!,
+      });
+      this.logger.log(`storage: R2 bucket ${env.S3_BUCKET}`);
+    } else {
+      this.driver = new LocalStorageDriver(env.STORAGE_DIR);
+    }
   }
 
   /** `documents/<documentId>/<filename>` — keys are generated, never user input. */
@@ -21,31 +41,15 @@ export class StorageService {
     return `documents/${documentId}/${safe}`;
   }
 
-  async put(key: string, bytes: Uint8Array): Promise<void> {
-    const path = this.pathFor(key);
-    await mkdir(dirname(path), { recursive: true });
-    await writeFile(path, bytes);
+  put(key: string, bytes: Uint8Array, contentType?: string): Promise<void> {
+    return this.driver.put(key, bytes, contentType);
   }
 
-  async get(key: string): Promise<Uint8Array> {
-    return new Uint8Array(await readFile(this.pathFor(key)));
+  get(key: string): Promise<Uint8Array> {
+    return this.driver.get(key);
   }
 
-  async delete(key: string): Promise<void> {
-    await unlink(this.pathFor(key)).catch(() => undefined);
-  }
-
-  /**
-   * Rejects any key that would escape the storage root. Uses `relative()`
-   * rather than a '/' prefix check, which rejected every key on Windows
-   * (resolve() returns backslash paths there).
-   */
-  private pathFor(key: string): string {
-    const path = resolve(join(this.root, key));
-    const rel = relative(this.root, path);
-    if (rel.startsWith('..') || isAbsolute(rel)) {
-      throw new Error('Invalid storage key');
-    }
-    return path;
+  delete(key: string): Promise<void> {
+    return this.driver.delete(key);
   }
 }

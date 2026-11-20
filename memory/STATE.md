@@ -20,7 +20,7 @@ Edit in place to keep this current.
 - Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
-- **Signing flow (planned):** one PDF + fields → many people, one sealed copy each; open link + password optional. Plan `docs/SIGNING-PLAN.md`, work it in order from `phases/` (01 contracts → 11 end-to-end) · Bekzod. **01 done:** signing shapes in `packages/contracts/src/signing.ts` + mocks — web and sign can build signing UI on the mocks now. **02 done:** migration `0006_signing`. Next: 03 R2 storage / 04 crypto.
+- **Signing flow (planned):** one PDF + fields → many people, one sealed copy each; open link + password optional. Plan `docs/SIGNING-PLAN.md`, work it in order from `phases/` (01 contracts → 11 end-to-end) · Bekzod. **01 done:** signing shapes in `packages/contracts/src/signing.ts` + mocks — web and sign can build signing UI on the mocks now. **02 done:** migration `0006_signing`. **03 done:** R2 storage driver. Next: 04 crypto.
 - Law Phases 8–9 code done: hybrid search (keyword + Voyage) and core laws from lex.uz with anchors per contract type. Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
 - `apps/web` review screen, `apps/sign` summary step · frontend team. They need `GET /sign/:token/summary` in the sign relay allowlist.
 - Emails: `send-signing-invite` marks the request sent and logs the links; Resend delivery is the email track's.
@@ -35,7 +35,7 @@ Edit in place to keep this current.
 - One backend only (`apps/api`). lex-api was merged in on 2026-11-20; the AI review calls `SearchService` in-process, no HTTP hop. Env is validated with zod in `src/config/env.ts`.
 - `/law/*` is `@Public()` for now (AI team curl testing); put it behind login later.
 - Jobs: BullMQ, workers in the API process for now; every job idempotent (ids only in the payload, `jobId` makes enqueue idempotent too).
-- Document bytes on local disk behind `StorageService` (swap in S3/R2 later).
+- Document bytes on local disk or Cloudflare R2 (`STORAGE_DRIVER=local|r2`, default local) behind `StorageService`; R2 bucket `lexdoc` is private, bytes always go through the API.
 - Never modify an original: an accepted edit writes version + 1 with a new sha256, and only the latest version can be sent.
 - The server decides citations: an `articleId` the model did not receive becomes `citation: null`, and the finding keeps its text.
 - Snapshot, don't reference: `signature_requests.document_hash` + `summary_hash`, and `recipient_summaries.summary_hash` per signer.

@@ -34,6 +34,7 @@
     "eval:search": "nest build && node dist/law/eval/search-eval.command.js"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1173.0",
     "@duckdb/node-api": "2.0.0-r.1",
     "@lex/contracts": "workspace:*",
     "@lex/crypto": "workspace:*",
