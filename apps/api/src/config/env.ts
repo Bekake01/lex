@@ -60,8 +60,8 @@ export const envSchema = z.object({
    */
   LAW_SEARCH_MODE: z.enum(['auto', 'fake', 'db']).default('auto'),
 
-  /** Embeddings, decided in Phase 7. `openai` reuses OPENAI_API_KEY, so it is the default until then. */
-  EMBEDDING_PROVIDER: z.enum(['openai', 'voyage', 'bge-m3']).default('openai'),
+  /** Embeddings: Voyage voyage-3.5 (decided in Phase 7, docs/decisions/embeddings.md); needs VOYAGE_API_KEY. */
+  EMBEDDING_PROVIDER: z.enum(['voyage', 'bge-m3']).default('voyage'),
   VOYAGE_API_KEY: z.string().min(1).optional(),
   EMBEDDING_URL: z.url().optional(),
 

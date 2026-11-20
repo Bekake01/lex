@@ -16,7 +16,7 @@ Edit in place to keep this current.
 - `apps/sign`: `/sign/[token]` page exists as a placeholder (shows the token; no API call yet).
 
 ## In progress
-- Law Phase 7: embedding choice — Voyage done (R@10 93.5% vs keyword 93.1% on the sample, `docs/decisions/results/`); OpenAI + bge-m3 still to run, then Phase 8 hybrid search, in `apps/api/src/law/` · AI team (zuhriddin)
+- Law Phase 8: hybrid search (keyword + Voyage embeddings, rank fusion) in `apps/api/src/law/` · AI team (zuhriddin). Phase 7 done: Voyage chosen (`docs/decisions/embeddings.md`). Phase 13 (DOCX edits) also open.
 - `apps/web` review screen, `apps/sign` summary step · frontend team. They need `GET /sign/:token/summary` in the sign relay allowlist.
 - Emails: `send-signing-invite` marks the request sent and logs the links; Resend delivery is the email track's.
 - Signing itself (consent, stamp, seal, certificate): `@lex/crypto` provides the hashing and the "Summary shown to signer: sha256 …" line, nothing renders a certificate yet.

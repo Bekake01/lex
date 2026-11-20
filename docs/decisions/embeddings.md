@@ -1,6 +1,6 @@
 # Decision: embedding model for law search (Phase 7)
 
-**Status: open, Voyage measured.** Keyword baseline and Voyage measured (MacBook run, 2026-11-21; raw reports in [`results/`](results/)). OpenAI and bge-m3 still to run. Three candidates, all 1024-d (no schema change): **OpenAI `text-embedding-3-large`** (reuses the team's `OPENAI_API_KEY`; the AI review runs on OpenAI too), **Voyage `voyage-3.5`** and **bge-m3** (self-hosted). The runs are waiting on keys and a bge-m3 server (see "How to finish").
+**Status: decided — Voyage `voyage-3.5` (1024 d).** Chosen by the team on 2026-11-21: measured on the MacBook run (raw reports in [`results/`](results/)), roughly equal to keyword search on its own and complementary to it, cheap (about $0.06 per million tokens), nothing to host, and the team already has a `VOYAGE_API_KEY`. OpenAI embeddings were dropped (not used by the team); bge-m3 stays as a self-hosted fallback in the code but is not planned. Config: `EMBEDDING_PROVIDER=voyage`, `VOYAGE_API_KEY` in `apps/api/.env`.
 
 ## What we measure
 
@@ -45,12 +45,11 @@ All 54,173 dataset rows: 11 too-short skipped, 16,161 long articles split into 1
 
 ### Embedding comparison, ~30-act sample
 
-The 9 acts the queries expect plus the 21 largest other codes and laws (excluding amending acts), split like the real import: 9,143 rows, ~2.9 M tokens. That is roughly $0.17 with voyage-3.5 ($0.06 / M tokens) and $0.40–0.70 with text-embedding-3-large ($0.13 / M; OpenAI counts more tokens for Uzbek than our estimate). Vectors are cached in `apps/api/data/embed-cache/`, so re-runs are free.
+The 9 acts the queries expect plus the 21 largest other codes and laws (excluding amending acts), split like the real import: 9,143 rows, ~2.9 M tokens. That is roughly $0.17 with voyage-3.5 ($0.06 / M tokens). Vectors are cached in `apps/api/data/embed-cache/`, so re-runs are free.
 
 | retrieval on the sample | R@5 | R@10 | hit@10 | MRR |
 |---|---|---|---|---|
 | keyword (Phase 6) | 91.3% | 93.1% | 96.1% | 0.831 |
-| OpenAI text-embedding-3-large (1024 d), vectors only | — | — | — | — |
 | voyage-3.5, vectors only | 87.3% | **93.5%** | 96.1% | 0.807 |
 | bge-m3, vectors only | — | — | — | — |
 
@@ -76,13 +75,8 @@ Voyage and keyword search **miss different queries**:
 
 - Keyword search already clears the Phase 8 target (R@10 ≥ 0.75) on codes and laws. Its misses are about **ranking inside the right law**, which is where embeddings usually help.
 - Embeddings should be judged on what keyword search misses: paraphrased questions ("can the landlord end the lease early") and **MRR** (the right article first), not on R@10 alone.
-- The choice rule, once OpenAI (and if possible bge-m3) has run: pick the model with the higher vector-only R@10 on the sample; if within 2 points, prefer the higher MRR; if still tied, prefer **OpenAI** (one provider and one key for the whole app, nothing to host), then Voyage, then bge-m3 (a server to run and patch).
+- **What this means for Phase 8:** use Voyage in a hybrid with keyword search (reciprocal rank fusion), embed the normalized Latin form of each query, and re-run `eval:search` with the hybrid to confirm it beats both (target R@10 ≥ 0.75 is already met; the aim now is MRR, the right article first).
 
-## How to finish
+## Re-running the comparison
 
-1. Put `OPENAI_API_KEY=…` and/or `VOYAGE_API_KEY=…` in `apps/api/.env`. Each run costs under $1; set a spending limit on the key you use.
-2. For bge-m3, run a text-embeddings-inference server where there is room (the model is ~2.3 GB), for example
-   `docker run -p 8080:80 ghcr.io/huggingface/text-embeddings-inference:cpu-latest --model-id BAAI/bge-m3`,
-   and set `EMBEDDING_URL=http://localhost:8080`.
-3. In `apps/api`: `HF_PARQUET=data/hf/articles.parquet pnpm vitest run test/law/embed-eval.full.spec.ts`
-   (reports in `data/eval-embed-*.txt`), fill in the table, and set `EMBEDDING_PROVIDER` in `.env.example`.
+In `apps/api` with `VOYAGE_API_KEY` set: `HF_PARQUET=data/hf/articles.parquet pnpm vitest run test/law/embed-eval.full.spec.ts` (reports in `data/eval-embed-*.txt`; cached vectors make re-runs free). For bge-m3 add `EMBEDDING_URL` pointing at a text-embeddings-inference server.

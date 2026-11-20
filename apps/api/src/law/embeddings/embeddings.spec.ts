@@ -3,7 +3,6 @@ import {
   cosine,
   embedAll,
   nearest,
-  openaiEmbeddingProvider,
   RetryableError,
   teiProvider,
   voyageProvider,
@@ -49,29 +48,17 @@ describe('voyageProvider', () => {
   });
 });
 
-describe('openaiEmbeddingProvider', () => {
-  it('asks for 1024 dimensions with the large model and keeps input order', async () => {
-    const { fn, calls } = fakeFetch((_u, body) => ({
-      status: 200,
-      json: { data: body.input.map((_: string, i: number) => ({ index: i, embedding: vec(i) })).reverse() },
-    }));
-    const out = await openaiEmbeddingProvider('sk-test', { fetchFn: fn }).embedBatch(['a', 'b', 'c'], 'document');
-    expect(out.map((v) => v[0])).toEqual([0, 1, 2]);
-    expect(calls[0].url).toBe('https://api.openai.com/v1/embeddings');
-    expect(calls[0].body).toMatchObject({ model: 'text-embedding-3-large', dimensions: 1024 });
-    expect(calls[0].headers.authorization).toBe('Bearer sk-test');
-  });
-
-  it('turns a 429 into a retryable error', async () => {
+describe('rate limits', () => {
+  it('uses the retry-after header when the server sends one', async () => {
     const { fn } = fakeFetch(() => ({ status: 429, headers: { 'retry-after': '2' } }));
-    const err = await openaiEmbeddingProvider('k', { fetchFn: fn }).embedBatch(['a'], 'query').catch((e: unknown) => e);
+    const err = await voyageProvider('k', { fetchFn: fn }).embedBatch(['a'], 'query').catch((e: unknown) => e);
     expect(err).toBeInstanceOf(RetryableError);
     expect((err as RetryableError).retryAfterMs).toBe(2000);
   });
 
-  it('leaves retryAfterMs unset when a 429 has no retry-after header', async () => {
+  it('falls back to backoff when a 429 has no retry-after header (not an instant retry)', async () => {
     const { fn } = fakeFetch(() => ({ status: 429 }));
-    const err = await openaiEmbeddingProvider('k', { fetchFn: fn }).embedBatch(['a'], 'query').catch((e: unknown) => e);
+    const err = await voyageProvider('k', { fetchFn: fn }).embedBatch(['a'], 'query').catch((e: unknown) => e);
     expect(err).toBeInstanceOf(RetryableError);
     expect((err as RetryableError).retryAfterMs).toBeUndefined();
   });
