@@ -1,13 +1,18 @@
 import { existsSync } from 'node:fs';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
+import { parseEnv } from './config/env.js';
 
+// Local development reads .env; in deployment the platform sets the variables.
 if (existsSync('.env')) process.loadEnvFile('.env');
 
 async function bootstrap() {
+  // Fail fast with a readable list of bad keys before Nest starts.
+  const env = parseEnv(process.env);
+
   const app = await NestFactory.create(AppModule);
-  app.enableCors({ origin: process.env.WEB_ORIGIN ?? 'http://localhost:3000' });
+  app.enableCors({ origin: env.WEB_ORIGIN });
   app.enableShutdownHooks();
-  await app.listen(process.env.PORT ?? 5000);
+  await app.listen(env.PORT);
 }
 await bootstrap();

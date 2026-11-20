@@ -20,7 +20,7 @@
     "db:studio": "pnpm --filter api db:studio",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dev:lex": "pnpm --filter lex-api start:dev"
+    "ingest:hf": "pnpm --filter api ingest:hf"
   },
   "devDependencies": {
     "prettier": "^3.10.1",

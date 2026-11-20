@@ -19,9 +19,7 @@ The goal is a **working MVP**. Keep everything simple.
 | Frontend `apps/web` (Next.js, sender dashboard) | **3000** | http://localhost:3000 |
 | Signing app `apps/sign` (Next.js, public users, no login) | **3001** | http://localhost:3001 |
 | Backend `apps/api` (NestJS) | **5000** | http://localhost:5000 |
-| Law service `apps/lex-api` (NestJS, called only by `apps/api`) | **5001** | http://localhost:5001 |
 | Postgres (Docker, `lex-postgres`) | **5434** | `postgres://lex:lex@localhost:5434/lex` |
-| Law Postgres + pgvector (Docker, `apps/lex-api/docker-compose.yml`) | **5433** | `postgres://lex:lex@localhost:5433/lex` |
 
 - Backend: `PORT` env (default 5000); CORS allows `WEB_ORIGIN` (default `http://localhost:3000`).
 - Frontend and signing app: `API_URL` env (default `http://localhost:5000`).
@@ -30,7 +28,7 @@ The goal is a **working MVP**. Keep everything simple.
 
 ## Database
 
-- Postgres runs in Docker (`docker-compose.yml`, image `postgres:18-alpine`, host port **5434** because 5432/5433 are often taken locally).
+- Postgres runs in Docker (`docker-compose.yml`, image `pgvector/pgvector:pg18` (Postgres 18 + pgvector), host port **5434** because 5432/5433 are often taken locally).
 - ORM: **Drizzle** in `apps/api`. Schema: `apps/api/src/db/schema/` (one file per table, exported from `index.ts`); migrations: `apps/api/drizzle/`; config: `apps/api/drizzle.config.ts`.
 - Inject the db in Nest with `@Inject(DB) private readonly db: Db` (from `src/db/db.module.ts`, global module).
 - Columns are camelCase in TS and snake_case in Postgres (`casing: 'snake_case'`). Ids are `uuidv7()`.
