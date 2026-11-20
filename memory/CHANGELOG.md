@@ -2,6 +2,9 @@
 
 Newest first. Format: `YYYY-MM-DD · area · what changed · action needed (if any)`
 
+- 2026-11-20 · db · Auth schema (based on tms, no tenancy): `agencies`, `users` (agency_id null = individual, else one agency + agency_role), `sessions` (refresh rotation, like tms), `email_codes` (6-digit code via Resend for reset/set password). Replaced the test `users` table; migration regenerated as `0000_init`. Action: reset your local DB (`docker compose down -v && pnpm db:up && pnpm db:migrate`). Test endpoints now take `{ email, fullName }`.
+- 2026-11-20 · api, db · Postgres in Docker (`pnpm db:up`, port **5434**) + Drizzle ORM in `apps/api`. First table `users` (id, email, name, created_at); test endpoints `GET/POST /users`. Action: `cp apps/api/.env.example apps/api/.env`, `pnpm install`, `pnpm db:up`, `pnpm db:migrate`.
+- 2026-11-20 · docs · Added root `README.md` (LexHackathon: overview, apps & ports, getting started, rules).
 - 2026-11-20 · docs · Rule: no need to test/build/lint after every change; check before commit/demo or when asked.
 - 2026-11-20 · sign · New Next.js app `apps/sign` for public users who sign (no login), port **3001**. Page `/sign/[token]` is a placeholder for now. Run `pnpm install`, then `pnpm dev:sign`. Copy `apps/sign/.env.example` to `.env.local`.
 - 2026-11-20 · web, api · Ports: frontend `apps/web` → **3000**, backend `apps/api` → **5000**. Update your `apps/web/.env.local` to `API_URL=http://localhost:5000`.

@@ -69,7 +69,7 @@ SENDER (apps/web)                 API + WORKER (apps/api)                     RE
 | `apps/sign` | 3001 | Public signing app with no credentials | **+ summary/obligations step before consent** |
 | `packages/contracts` | — | Zod schemas (trust boundary) | **+ review, issue, edit, summary schemas** |
 | `packages/crypto` | — | seal, tokens, certificate | + summary hash in certificate |
-| `packages/db` | — | Prisma migrations (no RLS for the MVP) | **+ AI and law tables** |
+| `apps/api/src/db` | — | Drizzle ORM schema + migrations, Postgres in Docker (no RLS for the MVP) | **+ AI and law tables** |
 
 **Infra:** Postgres (+ **pgvector**), Redis (BullMQ, rate limits), R2/S3 (file bytes), Clerk, Resend, **Anthropic API**, **embedding provider**.
 

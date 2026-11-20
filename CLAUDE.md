@@ -20,10 +20,22 @@ The goal is a **working MVP**. Keep everything simple.
 | Signing app `apps/sign` (Next.js, public users, no login) | **3001** | http://localhost:3001 |
 | Backend `apps/api` (NestJS) | **5000** | http://localhost:5000 |
 
+| Postgres (Docker, `lex-postgres`) | **5434** | `postgres://lex:lex@localhost:5434/lex` |
+
 - Backend: `PORT` env (default 5000); CORS allows `WEB_ORIGIN` (default `http://localhost:3000`).
 - Frontend and signing app: `API_URL` env (default `http://localhost:5000`).
 - Signing links look like `http://localhost:3001/sign/<token>`. Run it with `pnpm dev:sign`.
 - Don't change these ports without telling the team and updating `memory/`.
+
+## Database
+
+- Postgres runs in Docker (`docker-compose.yml`, image `postgres:18-alpine`, host port **5434** because 5432/5433 are often taken locally).
+- ORM: **Drizzle** in `apps/api`. Schema: `apps/api/src/db/schema/` (one file per table, exported from `index.ts`); migrations: `apps/api/drizzle/`; config: `apps/api/drizzle.config.ts`.
+- Inject the db in Nest with `@Inject(DB) private readonly db: Db` (from `src/db/db.module.ts`, global module).
+- Columns are camelCase in TS and snake_case in Postgres (`casing: 'snake_case'`). Ids are `uuidv7()`.
+- **Users:** one `users` table. `agency_id` null = individual; set = member of that one agency (`agency_role` owner/admin/member). Receivers who sign by link are not users.
+- Change a table → edit the schema file → `pnpm db:generate` → `pnpm db:migrate` → commit the migration and log it in `memory/`.
+- Commands: `pnpm db:up` / `pnpm db:down` / `pnpm db:studio`.
 
 ## Team memory: `memory/` folder
 
