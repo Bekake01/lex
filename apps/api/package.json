@@ -24,6 +24,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "db:seed": "tsx src/db/seed/team.ts",
     "ingest:hf": "nest build && node dist/law/ingest/hf-import.command.js",
     "ingest:chunk": "nest build && node dist/law/ingest/chunk.command.js"
   },

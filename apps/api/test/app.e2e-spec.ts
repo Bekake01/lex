@@ -6,6 +6,7 @@ import { App } from 'supertest/types';
 process.env.NODE_ENV = 'test';
 // Never connected to: no route in this test touches the database.
 process.env.DATABASE_URL = 'postgres://lex:lex@localhost:5434/lex';
+process.env.JWT_SECRET ??= 'e2e-test-secret-at-least-32-characters-long';
 
 const { AppModule } = await import('../src/app.module.js');
 

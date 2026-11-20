@@ -3,7 +3,9 @@ import { max, sql } from 'drizzle-orm';
 import type { HealthResponse } from '../law/law.types.js';
 import { DB, type Db } from '../db/db.module.js';
 import { lawActs } from '../db/schema/index.js';
+import { Public } from '../auth/auth.decorators.js';
 
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(@Inject(DB) private readonly db: Db) {}

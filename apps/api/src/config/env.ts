@@ -21,6 +21,9 @@ export const envSchema = z.object({
     .string()
     .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// URL'),
 
+  /** Signs access tokens (HS256). HS256 needs at least 256 bits of key. */
+  JWT_SECRET: z.string().min(32, 'must be at least 32 characters'),
+
   /** Embeddings, decided in Phase 7. */
   EMBEDDING_PROVIDER: z.enum(['voyage', 'bge-m3']).default('voyage'),
   VOYAGE_API_KEY: z.string().min(1).optional(),
