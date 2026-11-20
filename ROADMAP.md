@@ -200,6 +200,13 @@ Durations assume 1–2 developers. Phases 0–3 are the **MVP**.
 
 ### Later — only if time allows (hackathon stretch, not required)
 - [ ] **Receiver sync for registered users:** if the receiver's email/phone matches an existing account on our platform, also show the contract in their inbox and sync its status (opened, signed, sealed copy) there. The signing link keeps working for everyone else.
+- [ ] **Sender signs first:** the sender's signature / company stamp is filled once before sending and printed on every copy (see `docs/SIGNING-PLAN.md`).
+- [ ] **Real delivery:** Telegram bot, SMS (Eskiz / Playmobile), email via Resend. For now channels are stored and shown, and share buttons open the sender's own apps.
+- [ ] **SMS code to confirm the signer** (today: typed name + link + optional password).
+- [ ] **Public verify page:** anyone drops a signed PDF and we check its hash + seal.
+- [ ] **Export all copies of a send:** CSV of field values, ZIP of signed PDFs.
+- [ ] **Open link limits:** max number of submissions, rate limit on password tries for the open link.
+- [ ] **Server-side Word → PDF** (LibreOffice / Gotenberg), so a DOCX can be sent without converting it by hand.
 
 ---
 

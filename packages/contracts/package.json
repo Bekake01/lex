@@ -13,6 +13,10 @@
     "./ai": {
       "types": "./dist/ai.d.ts",
       "default": "./dist/ai.js"
+    },
+    "./signing": {
+      "types": "./dist/signing.d.ts",
+      "default": "./dist/signing.js"
     }
   },
   "files": [

@@ -20,6 +20,7 @@ Edit in place to keep this current.
 - Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
+- **Signing flow (planned):** one PDF + fields → many people, one sealed copy each; open link + password optional. Plan `docs/SIGNING-PLAN.md`, work it in order from `phases/` (01 contracts → 11 end-to-end) · Bekzod. **01 done:** signing shapes in `packages/contracts/src/signing.ts` + mocks — web and sign can build signing UI on the mocks now. Next: 02 database.
 - Law Phases 8–9 code done: hybrid search (keyword + Voyage) and core laws from lex.uz with anchors per contract type. Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
 - `apps/web` review screen, `apps/sign` summary step · frontend team. They need `GET /sign/:token/summary` in the sign relay allowlist.
 - Emails: `send-signing-invite` marks the request sent and logs the links; Resend delivery is the email track's.
@@ -46,3 +47,4 @@ Edit in place to keep this current.
 - Scope: besides contract review, users can ask general legal questions ("what happens / where do I go"). Answer shape: summary · consequences+cites · steps · contacts · optional template.
 - Hackathon MVP: no RLS, no tenant isolation, plain users / agencies tables (see `CLAUDE.md`).
 - Signing link: open many times, sign once, closes after signing.
+- Signing model (2026-11-21): a send = one PDF + one field layout to many people; every person fills and signs **their own copy**, sealed on its own; the sender gets all copies. No routing order / cc. Open link and password are optional, off by default. Only PDF can be sent (users convert Word themselves). Channels are stored and shown, not delivered yet. Sender pre-signing → Later.

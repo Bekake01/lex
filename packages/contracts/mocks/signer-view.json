@@ -1,0 +1,84 @@
+{
+  "title": "Turar joy ijarasi şartnomasi",
+  "senderName": "Bekzod Kamolov",
+  "message": "Assalomu alaykum! Iltimos, şartnomani körib çiqib imzolang.",
+  "recipientName": "Javlon Rahimov",
+  "pageCount": 1,
+  "pageSizes": [
+    {
+      "w": 595,
+      "h": 842
+    }
+  ],
+  "fields": [
+    {
+      "id": "01999999-0000-7000-8000-000000000511",
+      "type": "name",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.7,
+      "w": 0.34,
+      "h": 0.03,
+      "required": true,
+      "label": "Ism familiya"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000512",
+      "type": "phone",
+      "page": 1,
+      "x": 0.54,
+      "y": 0.7,
+      "w": 0.3,
+      "h": 0.03,
+      "required": false,
+      "label": "Telefon"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000513",
+      "type": "date_input",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.75,
+      "w": 0.2,
+      "h": 0.03,
+      "required": true,
+      "label": "Ijara boşlanadigan sana"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000514",
+      "type": "checkbox",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.8,
+      "w": 0.025,
+      "h": 0.018,
+      "required": true,
+      "label": "Şartlar bilan tanişdim"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000515",
+      "type": "signature",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.85,
+      "w": 0.3,
+      "h": 0.06,
+      "required": true,
+      "label": "Imzo"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000516",
+      "type": "date",
+      "page": 1,
+      "x": 0.6,
+      "y": 0.87,
+      "w": 0.22,
+      "h": 0.03,
+      "required": true,
+      "label": "Imzolangan sana"
+    }
+  ],
+  "signed": false,
+  "cancelled": false,
+  "hasSummary": true
+}
