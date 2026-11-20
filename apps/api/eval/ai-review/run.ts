@@ -23,6 +23,7 @@ import { parseEnv } from '../../src/config/env.js';
 import type { Db } from '../../src/db/db.module.js';
 import { FakeLawSearchService } from '../../src/law-search/fake-law-search.service.js';
 import type { LawSearchService } from '../../src/law-search/law-search.types.js';
+import { parseCase } from './case-schema.js';
 import type { CaseResult, EvalCase } from './types.js';
 
 /**
@@ -51,12 +52,41 @@ const casesDir = existsSync(join(here, 'cases'))
   ? join(here, 'cases')
   : join(here, '../../../eval/ai-review/cases');
 
+/**
+ * Every committed case, checked before anything is spent on it. A malformed
+ * file stops the run and names itself; data that looks personal is a warning,
+ * because only a human can tell a rent amount from a passport number.
+ */
 function loadCases(filter?: string): EvalCase[] {
-  return readdirSync(casesDir)
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(join(casesDir, f), 'utf8')) as EvalCase)
-    .filter((c) => !filter || c.id === filter)
-    .sort((a, b) => a.id.localeCompare(b.id));
+  const cases: EvalCase[] = [];
+  const problems: string[] = [];
+
+  for (const file of readdirSync(casesDir).filter((f) => f.endsWith('.json'))) {
+    let raw: unknown;
+    try {
+      raw = JSON.parse(readFileSync(join(casesDir, file), 'utf8'));
+    } catch {
+      problems.push(`${file}: not valid JSON`);
+      continue;
+    }
+
+    const parsed = parseCase(file, raw);
+    if (!parsed.ok) {
+      problems.push(parsed.problem);
+      continue;
+    }
+    for (const warning of parsed.warnings) {
+      console.warn(`  ${file}: looks like it still contains ${warning}`);
+    }
+    if (!filter || parsed.value.id === filter) cases.push(parsed.value);
+  }
+
+  if (problems.length > 0) {
+    console.error(`Cases that cannot be used:\n  ${problems.join('\n  ')}`);
+    process.exit(1);
+  }
+
+  return cases.sort((a, b) => a.id.localeCompare(b.id));
 }
 
 function normaliseRef(ref: string): string {
