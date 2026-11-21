@@ -15,6 +15,7 @@ import {
   startSending,
   uploadDocument,
 } from '@/lib/signing';
+import { uploadErrorText, uploadForReview } from '@/lib/review';
 import { formatSize, SEND_ACCEPT, sendUploadError, UPLOAD_ACCEPT, UPLOAD_MAX_MB, uploadError } from '@/lib/upload';
 import { CheckIcon, ChevronRightIcon, FileIcon, PenIcon, UploadIcon } from './Icons';
 
@@ -97,12 +98,23 @@ export function Documents() {
     const ok = picked.filter((f) => !uploadError(f));
     if (ok.length === 0) return;
     setView('files');
+    // One file: straight to its AI review. Several: upload them all, stay on the list.
+    if (ok.length === 1) {
+      setBusy(true);
+      try {
+        router.push(`/review?doc=${(await uploadForReview(ok[0])).id}`);
+      } catch (err) {
+        setError(uploadErrorText(err));
+        setBusy(false);
+      }
+      return;
+    }
     if (DEMO_LOGIN) return;
     setBusy(true);
     try {
       for (const f of ok) await uploadDocument(f);
     } catch (err) {
-      setError(sendStartError(err));
+      setError(uploadErrorText(err));
     } finally {
       setBusy(false);
       void loadFiles();
@@ -359,7 +371,7 @@ function MyFiles({
         >
           {files.map((f) => (
             <li key={f.id} className="flex items-center transition hover:bg-subtle/60">
-              <Link href="/review" className="group flex min-w-0 flex-1 items-center gap-4 px-4 py-3 sm:px-5">
+              <Link href={`/review?doc=${f.id}`} className="group flex min-w-0 flex-1 items-center gap-4 px-4 py-3 sm:px-5">
                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-subtle text-muted">
                   <FileIcon className="size-[18px]" />
                 </span>

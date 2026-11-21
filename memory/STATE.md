@@ -27,7 +27,7 @@ Edit in place to keep this current.
 
 ## In progress
 - Law Phases 8, 9, 14 code done: hybrid search (keyword + Voyage), core laws from lex.uz with anchors, daily lex.uz sync (`pnpm sync:lexuz` / `SYNC_ENABLED`). Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
-- `apps/web` review screen on real data: plan `docs/review-wiring-plan.md` (9 phases). Phases 1–2 done (`GET /documents/:id/text`, `apps/web/src/lib/review.ts`); phases 3–9 (web) next · frontend team.
+- `apps/web` review screen on real data: plan `docs/review-wiring-plan.md` (9 phases). Phases 1–3 done (`GET /documents/:id/text`, `apps/web/src/lib/review.ts`, uploads open `/review?doc=<id>`); phases 4–9 (web) next · frontend team.
 - Delivery: `send-signing-invite` logs one line per person (channel + contact); real Telegram / SMS / email delivery is "Later".
 - Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
 
@@ -47,7 +47,7 @@ Edit in place to keep this current.
 - `AI_PROMPT_VERSION` is part of a review's idempotency key, so old reviews keep the prompt they ran under.
 - Colors: only the `@lex/theme` tokens, each with light + dark values; add new colors there (both modes), never hard-coded hex / Tailwind palette in components (exception: logo + avatar gradient).
 - UI language: Uzbek in the **new Latin alphabet** (ş ç ğ ö, ʼ). Login form / SessionGate texts (auth team files) are still English.
-- Users can upload a document on the home screen (`/`, small "Hujjat yuklaş" pill under the question box; PDF/DOCX/TXT, 20 MB) — for now it only opens the demo `/review`, not yet wired to `POST /documents`. "Hujjatlar" page: Imzolaş (filters Imzolaşim kerak / Javob kutilmoqda / Imzolangan, in + out) and Mening hujjatlarim (my files + upload, demo data); user reviews with AI, then signs or requests changes.
+- Users can upload a document on the home screen (`/`, small "Hujjat yuklaş" pill under the question box; PDF/DOCX/TXT, 20 MB) — uploads via `POST /documents` and opens `/review?doc=<id>` (the review screen itself is still demo until review-wiring phase 4). "Hujjatlar" page: Imzolaş (filters Imzolaşim kerak / Javob kutilmoqda / Imzolangan, in + out) and Mening hujjatlarim (my files + upload, demo data); user reviews with AI, then signs or requests changes.
 - Scope: besides contract review, users can ask general legal questions ("what happens / where do I go"). Answer shape: summary · consequences+cites · steps · contacts · optional template.
 - Hackathon MVP: no RLS, no tenant isolation, plain users / agencies tables (see `CLAUDE.md`).
 - Signing link: open many times, sign once, closes after signing.

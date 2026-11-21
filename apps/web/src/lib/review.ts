@@ -60,6 +60,15 @@ export async function uploadForReview(file: File): Promise<DocumentWire> {
   return json(await apiFetch(API_PATHS.documents, { method: 'POST', body: form }));
 }
 
+/** A failed upload, in Uzbek (the API's 413 / 415 messages are English). */
+export function uploadErrorText(err: unknown): string {
+  if (err instanceof ApiError && err.status === 413) return 'Fayl juda katta — 20 MB gaça bölişi kerak.';
+  if (err instanceof ApiError && err.status === 415) {
+    return 'Bu fayl haqiqiy PDF, DOCX yoki TXT emas. Faylni qayta saqlab yuklang.';
+  }
+  return errorText(err, 'Faylni yuklab bölmadi. Qayta urinib köring.');
+}
+
 export async function getDocument(id: string): Promise<DocumentWire> {
   if (DEMO_LOGIN) return { ...(demoDocument as DocumentWire), id };
   return json(await apiFetch(API_PATHS.document(id)));

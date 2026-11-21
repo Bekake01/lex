@@ -1,6 +1,6 @@
 # Plan: real documents on the review screen (`/review`)
 
-**Status (2026-11-21): Phases 1–2 done; phases 3–9 (web) not started.**
+**Status (2026-11-21): Phases 1–3 done; phases 4–9 (web) not started.**
 
 ## Goal
 
@@ -56,7 +56,7 @@ Each phase is small, can be merged on its own, and leaves the app working. Phase
 - **Demo mode:** with `NEXT_PUBLIC_DEMO_LOGIN=1` the client answers from `@lex/contracts/mocks/*.json`, so the screen still works without the API.
 - **Done when:** the file type-checks and nothing uses it yet.
 
-### Phase 3: upload goes to the API (web)
+### Phase 3: upload goes to the API (web) ✅
 
 - Home screen (`AskChat.tsx`): the "Hujjat yuklaş" pill and drag-and-drop call `POST /documents`, then `router.push('/review?doc=<id>')`.
 - Hujjatlar (`Documents.tsx`): "Hujjat yuklaş" does the same for one file. Rows in "Mening hujjatlarim" link to `/review?doc=<id>`.

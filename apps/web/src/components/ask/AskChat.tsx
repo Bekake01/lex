@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { toNewAlphabet } from '@/lib/alphabet';
+import { uploadErrorText, uploadForReview } from '@/lib/review';
 import { UPLOAD_ACCEPT, uploadError } from '@/lib/upload';
 import { answerFor, type LegalAnswer } from '@/lib/legalQa';
 import { ArrowUpIcon, CheckIcon, FileIcon, LogoMark, ScaleIcon, UploadIcon } from '../Icons';
@@ -31,6 +32,7 @@ export function AskChat() {
   const fileInput = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const [fileError, setFileError] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
   const busy = step !== null;
@@ -76,16 +78,21 @@ export function AskChat() {
 
   const pickFile = () => fileInput.current?.click();
 
-  // TODO: POST /documents (multipart `file`), then open /review for that document id.
-  function openFile(file: File | undefined) {
-    if (!file) return;
+  /** Uploads the contract (`POST /documents`), then opens its AI review. */
+  async function openFile(file: File | undefined) {
+    if (!file || uploading) return;
     const error = uploadError(file);
     setFileError(error ?? '');
     if (error) return;
+    setUploading(true);
     try {
-      sessionStorage.setItem('lex-upload-name', file.name);
-    } catch {}
-    router.push('/review');
+      const doc = await uploadForReview(file);
+      // `uploading` stays on while the page changes, so it can't be sent twice.
+      router.push(`/review?doc=${doc.id}`);
+    } catch (err) {
+      setFileError(uploadErrorText(err));
+      setUploading(false);
+    }
   }
 
   const fileField = (
@@ -95,7 +102,7 @@ export function AskChat() {
       accept={UPLOAD_ACCEPT}
       hidden
       onChange={(e) => {
-        openFile(e.target.files?.[0]);
+        void openFile(e.target.files?.[0]);
         e.target.value = '';
       }}
     />
@@ -131,7 +138,7 @@ export function AskChat() {
         onDrop={(e) => {
           e.preventDefault();
           setDragging(false);
-          openFile(e.dataTransfer.files[0]);
+          void openFile(e.dataTransfer.files[0]);
         }}
       >
         {fileField}
@@ -145,12 +152,13 @@ export function AskChat() {
             <button
               type="button"
               onClick={pickFile}
+              disabled={uploading}
               className={`mx-auto mt-4 flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm transition ${
                 dragging ? 'border-accent bg-accent-soft text-accent' : 'border-line bg-surface/50 text-muted hover:border-line-strong hover:bg-subtle hover:text-ink'
               }`}
             >
               <UploadIcon className="size-4" />
-              {dragging ? 'Faylni qöyib yuboring' : 'Hujjat yuklaş'}
+              {uploading ? 'Yuklanmoqda…' : dragging ? 'Faylni qöyib yuboring' : 'Hujjat yuklaş'}
             </button>
             {fileError && <p className="mt-1 text-center text-[13px] text-danger">{fileError}</p>}
           </div>
