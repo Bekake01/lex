@@ -15,7 +15,11 @@ import {
   type LawArticleHit,
   type LawSearchService,
 } from '../../law-search/law-search.types.js';
-import { QUEUE, type AnalyzeDocumentJob } from '../../queue/queue.constants.js';
+import {
+  AI_WORKER_OPTIONS,
+  QUEUE,
+  type AnalyzeDocumentJob,
+} from '../../queue/queue.constants.js';
 import { AiUsageService } from '../../usage/ai-usage.service.js';
 import { AiError, toAiError } from '../ai-errors.js';
 import { addUsage, AiService, emptyUsage } from '../ai.service.js';
@@ -38,7 +42,7 @@ import { classifyOutputSchema, reviewOutputSchema } from '../schemas.js';
  * `done` returns immediately, and the issues of a retried attempt replace the
  * previous attempt's rows inside one transaction.
  */
-@Processor(QUEUE.analyzeDocument)
+@Processor(QUEUE.analyzeDocument, AI_WORKER_OPTIONS)
 export class AnalyzeDocumentProcessor extends WorkerHost {
   private readonly logger = new Logger(AnalyzeDocumentProcessor.name);
 

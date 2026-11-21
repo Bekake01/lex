@@ -92,11 +92,15 @@ export class AiService {
     this.defaultEffort = env.AI_EFFORT;
     this.promptVersion = env.AI_PROMPT_VERSION;
     this.client = env.OPENAI_API_KEY
-      ? // Long contracts plus ~30 articles can take a while at high effort.
+      ? // Long contracts plus ~30 articles can take a while at high effort: a
+        // review of a scanned PDF measured 470s on the first real run.
         new OpenAI({
           apiKey: env.OPENAI_API_KEY,
-          timeout: 10 * 60 * 1000,
-          maxRetries: 0,
+          timeout: 15 * 60 * 1000,
+          // A dropped connection is cheaper to retry here than as a job
+          // retry, which would redo the whole pipeline. Everything else is
+          // left to BullMQ, which has the backoff and the attempt count.
+          maxRetries: 2,
         })
       : null;
   }

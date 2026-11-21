@@ -16,7 +16,11 @@ import {
   type LawArticleHit,
   type LawSearchService,
 } from '../../law-search/law-search.types.js';
-import { QUEUE, type ReviseDocumentJob } from '../../queue/queue.constants.js';
+import {
+  AI_WORKER_OPTIONS,
+  QUEUE,
+  type ReviseDocumentJob,
+} from '../../queue/queue.constants.js';
 import { AiUsageService } from '../../usage/ai-usage.service.js';
 import { toAiError } from '../ai-errors.js';
 import { AiService } from '../ai.service.js';
@@ -51,7 +55,7 @@ export function occurrences(haystack: string, needle: string): number {
  * is dropped here rather than offered to the sender, because an edit that
  * cannot be located cannot be applied safely.
  */
-@Processor(QUEUE.reviseDocument)
+@Processor(QUEUE.reviseDocument, AI_WORKER_OPTIONS)
 export class ReviseDocumentProcessor extends WorkerHost {
   private readonly logger = new Logger(ReviseDocumentProcessor.name);
 

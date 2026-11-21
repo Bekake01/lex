@@ -70,3 +70,21 @@ export const jobIdForInvite = (signatureRequestId: string, batchId?: string) =>
     : `invite.${signatureRequestId}`;
 export const jobIdForComplete = (recipientId: string) =>
   `complete.${recipientId}`;
+
+/**
+ * Worker options for every AI job, passed to `@Processor`.
+ *
+ * BullMQ renews a job's lock while it runs, so the default 30s is fine as long
+ * as the renewal timer keeps firing. It does not when a dev laptop suspends
+ * mid-job: that happened on the first real run and produced "could not renew
+ * lock", after which the finished job could not be committed. A stalled job is
+ * re-delivered, and here that means paying for the same model call twice.
+ *
+ * Two minutes is the compromise: long enough to survive a short stall, short
+ * enough that a worker which really died gets its job retried quickly.
+ */
+export const AI_WORKER_OPTIONS = {
+  lockDuration: 2 * 60 * 1000,
+  stalledInterval: 30 * 1000,
+  maxStalledCount: 2,
+} as const;

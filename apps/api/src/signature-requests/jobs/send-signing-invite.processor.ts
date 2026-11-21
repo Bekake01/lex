@@ -5,6 +5,7 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { DB, type Db } from '../../db/db.module.js';
 import { recipients, signatureRequests } from '../../db/schema/index.js';
 import {
+  AI_WORKER_OPTIONS,
   QUEUE,
   type SendSigningInviteJob,
 } from '../../queue/queue.constants.js';
@@ -24,7 +25,7 @@ const RECHECK_MS = 3_000;
  * (channels are shown, not delivered): this processor logs the links. Phase 07
  * reworks it per channel.
  */
-@Processor(QUEUE.sendSigningInvite)
+@Processor(QUEUE.sendSigningInvite, AI_WORKER_OPTIONS)
 export class SendSigningInviteProcessor extends WorkerHost {
   private readonly logger = new Logger(SendSigningInviteProcessor.name);
 

@@ -49,7 +49,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="mt-7 max-w-xl text-[3.4rem] leading-[1.07] font-medium tracking-tight text-ink">
-            Şartnomalar va yuridik savollar uçun AI yordamçi
+            Tezkor qonuniy şartnomalar va yuridik savollar uçun AI
           </h1>
           <p className="mt-6 max-w-md text-lg leading-relaxed text-ink/70">
             Şartnomangizni rasmiy qonunlar asosida tekşiring, xavflarni tuşuning va xavfsiz imzolang — yoki istalgan

@@ -128,8 +128,17 @@ export const envSchema = z
 
     // Plan limits (AI checks, signature sends) are in @lex/contracts PLANS.
 
-    /** How long the invite job waits for recipient summaries before sending without them. */
-    SUMMARY_WAIT_MS: z.coerce.number().int().min(0).default(60_000),
+    /**
+     * How long the invite job waits for recipient summaries before sending
+     * without them. Signing is never blocked: the invite goes out either way,
+     * and this only decides whether the first email already carries a summary.
+     *
+     * One summary is one model call on `AI_MODEL_LIGHT`, and the comparable
+     * classify call measured 20s, so 60s was cutting it fine. 120s until there
+     * is a real measurement; the first attempt at one was lost to a laptop
+     * suspend.
+     */
+    SUMMARY_WAIT_MS: z.coerce.number().int().min(0).default(120_000),
   })
   .superRefine((env, ctx) => {
     if (env.SEAL_KEYS) {

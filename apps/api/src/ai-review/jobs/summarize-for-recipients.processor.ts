@@ -17,6 +17,7 @@ import {
   type SummaryBody,
 } from '../../db/schema/index.js';
 import {
+  AI_WORKER_OPTIONS,
   QUEUE,
   type SummarizeForRecipientsJob,
 } from '../../queue/queue.constants.js';
@@ -44,7 +45,7 @@ const GENERIC_PARTY = 'imzolovçi';
  * This is what makes the signing page possible without AI on the request path:
  * `GET /sign/:token/summary` only reads the row this job wrote.
  */
-@Processor(QUEUE.summarizeForRecipients)
+@Processor(QUEUE.summarizeForRecipients, AI_WORKER_OPTIONS)
 export class SummarizeForRecipientsProcessor extends WorkerHost {
   private readonly logger = new Logger(SummarizeForRecipientsProcessor.name);
 

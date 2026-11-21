@@ -96,4 +96,3 @@ export function clauseOutline(
       c.heading ? `${c.ref} — ${c.heading.slice(0, 120)}` : `${c.ref}`,
     );
 }
-
