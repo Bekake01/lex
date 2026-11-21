@@ -37,8 +37,7 @@ target is missed, so it can gate a PR later.
 Each dropped citation is labelled:
 
 - **`retrieval gap`** — the article exists in the index but search did not
-  return it. Send the query and the article id to the law-data track; the
-  prompt is not at fault.
+  return it. That is a search problem; the prompt is not at fault.
 - **`invented citation`** — no such article anywhere. That is a model or prompt
   problem: tighten the instruction, or raise effort.
 
@@ -87,9 +86,9 @@ anonymised contracts arrive. The target is 30–50 cases across rental,
 employment, sale, services and NDA; **15 is enough to start tuning**, so don't
 wait for the full set.
 
-Collecting them is the slowest part of this track and it needs people, not
-code: real contracts, anonymised, with someone who knows the law marking what
-is actually wrong in each.
+Collecting them is the slowest part and it needs people, not code: real
+contracts, anonymised, with someone who knows the law marking what is
+actually wrong in each.
 
 ## When a prompt changes
 

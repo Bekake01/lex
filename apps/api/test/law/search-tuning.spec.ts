@@ -4,7 +4,7 @@ import { lawActs, lawArticles } from '../../src/db/schema/index.js';
 import { SearchService } from '../../src/law/search/search.service.js';
 import { createTestDb } from '../helpers/test-db.js';
 
-/** Phase 10: stored headings, focused candidates, definition queries. */
+/** Stored headings, focused candidates, definition queries. */
 
 const act = (docId: string, title: string, actType: 'law' | 'code' = 'law') => ({
   docId,
@@ -25,7 +25,7 @@ const article = (id: string, docId: string, title: string | null, text: string) 
   language: 'uz-latn',
 });
 
-describe('search tuning (Phase 10)', () => {
+describe('search tuning', () => {
   let db: Db;
   let close: () => Promise<void>;
   let search: SearchService;

@@ -19,7 +19,7 @@ import { countTokens } from '../../src/law/text/index.js';
 import { createTestDb } from '../helpers/test-db.js';
 
 /**
- * Opt-in: Phase 7 embedding comparison on a sample of ~30 acts.
+ * Opt-in: embedding comparison on a sample of ~30 acts.
  *   HF_PARQUET=data/hf/articles.parquet VOYAGE_API_KEY=… pnpm vitest run test/law/embed-eval.full.spec.ts
  *   HF_PARQUET=… EMBEDDING_URL=http://localhost:8080 pnpm vitest run test/law/embed-eval.full.spec.ts   (bge-m3 via TEI)
  *

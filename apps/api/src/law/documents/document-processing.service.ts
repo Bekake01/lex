@@ -4,8 +4,7 @@ import { applyDocxEdits } from './apply-edits.js';
 import { extractDocument } from './extract.js';
 
 /**
- * The real document processing behind `DOC_PROCESSING` (law plan, Phases
- * 11–13). Everything happens in memory; nothing here logs document text.
+ * The real document processing behind `DOC_PROCESSING`. Everything happens in memory; nothing here logs document text.
  */
 @Injectable()
 export class DocumentProcessingService implements DocProcessingService {
@@ -14,7 +13,7 @@ export class DocumentProcessingService implements DocProcessingService {
   }
 
   /**
-   * DOCX in, DOCX out, formatting kept (Phase 13). Throws EditNotFoundError(i)
+   * DOCX in, DOCX out, formatting kept. Throws EditNotFoundError(i)
    * when edit i's `original` is not in the document exactly once.
    */
   applyEdits(docx: Uint8Array, edits: ApplyEdit[]): Promise<Uint8Array> {

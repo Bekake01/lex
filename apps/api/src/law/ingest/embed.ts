@@ -26,10 +26,10 @@ export interface EmbedOptions {
 }
 
 /**
- * Embeds every law row that has no embedding yet (Phase 8). Resumable: rows
+ * Embeds every law row that has no embedding yet. Resumable: rows
  * are saved batch by batch, and a re-run picks up the rows still NULL, so an
  * interrupted run loses at most one batch and never pays twice.
- * Re-imports clear the embedding of rows whose text changed (Phase 4/5).
+ * Re-imports clear the embedding of rows whose text changed.
  */
 export async function embedMissing(db: Db, embeddings: EmbeddingService, options: EmbedOptions = {}): Promise<EmbedReport> {
   const { tokensPerRequest = 100_000, pageSize = 500, limit = Infinity, onProgress } = options;

@@ -157,7 +157,7 @@ export class DocumentsService {
 }
 
 /**
- * No tenant isolation for the hackathon (see CLAUDE.md): a plain owner check,
+ * A plain owner check,
  * widened to the agency so colleagues can see each other's documents.
  */
 export function assertAccess(user: CurrentUser, doc: Document): void {

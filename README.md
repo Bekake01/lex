@@ -1,6 +1,6 @@
-# LexHackathon
+# Cralex
 
-AI legal review + e-signature for Uzbek contracts, built as a hackathon MVP.
+AI legal review + e-signature for Uzbek contracts.
 
 A sender uploads a contract and **AI checks it against Uzbek legislation** (lex.uz), citing real articles. It suggests fixes on request, and then the contract is sent for signature. The receiver opens a **signing link**. They can open it as many times as they like, but they can sign only once, and the link closes after signing. Before signing, they read a plain-language **summary of the contract and of their own obligations**. Both parties then get a **sealed, verifiable signed document**.
 
@@ -57,16 +57,3 @@ pnpm eval:review      # review quality (citation accuracy, issue precision)
 The AI API the frontend builds against is [`packages/contracts/src/ai.ts`](packages/contracts/src/ai.ts),
 with sample responses in [`packages/contracts/mocks/`](packages/contracts/mocks) and
 the route list in [`apps/api/README.md`](apps/api/README.md).
-
-## Hackathon rules
-
-- **Working MVP first.** Keep it simple, with no enterprise-grade layers.
-- **No RLS or tenant isolation.** Users and agencies are plain tables.
-- **No need to test on every change.** Check before a commit or demo.
-- Nice-to-haves go to "Later — only if time allows" in the roadmap.
-
-## Team docs
-
-- [`ROADMAP.md`](ROADMAP.md): product plan, flow, architecture, phases
-- [`CLAUDE.md`](CLAUDE.md): rules for working on the repo (people and Claude)
-- [`memory/`](memory/): shared log. Read it before you start, and update it when you change something ([`CHANGELOG.md`](memory/CHANGELOG.md), [`STATE.md`](memory/STATE.md))

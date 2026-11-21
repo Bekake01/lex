@@ -403,8 +403,8 @@ export const AI_ERROR_CODES = {
   /** Only the latest version of a document can be sent (409). */
   notLatestVersion: 'NOT_LATEST_VERSION',
   /**
-   * Applying edits to a DOCX is not built yet (501). Temporary: it disappears
-   * when the law track's `applyEdits` lands, and nothing else answers 501.
+   * Applying edits to a DOCX is not available (501): only the fallback
+   * processing service (`LAW_SEARCH_MODE=fake`) answers it.
    */
   editsNotAvailable: 'EDITS_NOT_AVAILABLE',
   /** `GET /documents/:id/text` before the first review read the file (409). */

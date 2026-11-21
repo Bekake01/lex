@@ -104,12 +104,12 @@ export const envSchema = z
      */
     LAW_SEARCH_MODE: z.enum(['auto', 'fake', 'db']).default('auto'),
 
-    /** Embeddings: Voyage voyage-3.5 (decided in Phase 7, docs/decisions/embeddings.md); needs VOYAGE_API_KEY. */
+    /** Embeddings: Voyage voyage-3.5 (complements keyword search, nothing to host); needs VOYAGE_API_KEY. */
     EMBEDDING_PROVIDER: z.enum(['voyage', 'bge-m3']).default('voyage'),
     VOYAGE_API_KEY: z.string().min(1).optional(),
     EMBEDDING_URL: z.url().optional(),
 
-    /** Daily lex.uz sync (Phase 14). Off unless explicitly enabled. */
+    /** Daily lex.uz sync. Off unless explicitly enabled. */
     SYNC_ENABLED: booleanString,
 
     /* ------------------------------------------------------------- storage -- */

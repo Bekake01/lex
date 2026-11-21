@@ -79,7 +79,7 @@ export const lawArticles = pgTable(
     tsv: tsvector('tsv').generatedAlwaysAs(sql`to_tsvector('simple', text_norm)`),
     /**
      * The row's heading (article title, or the act title for flat acts) as a
-     * tsvector, for the heading signal in search (Phase 10). Filled by the
+     * tsvector, for the heading signal in search. Filled by the
      * `law_articles_heading` trigger (migration 0008) on insert, so import
      * code never sets it.
      */

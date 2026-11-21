@@ -5,8 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server';
  * Pass-through to the API for the signing pages. The browser only ever calls
  * `/api/sign/...` here; this forwards it to `API_URL` and streams the answer
  * back. No signing logic lives here — tokens, passwords and checks are all the
- * API's. Only `sign/...` paths, GET + POST. Relay secret and edge rate limit
- * are "Later" (ROADMAP).
+ * API's. Only `sign/...` paths, GET + POST.
  */
 const API_URL = (process.env.API_URL ?? 'http://localhost:5000').replace(/\/+$/, '');
 const MAX_BODY_BYTES = 4 * 1024 * 1024;

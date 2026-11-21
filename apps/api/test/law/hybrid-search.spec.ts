@@ -112,7 +112,7 @@ describe('hybrid search (keyword + embeddings)', () => {
       expect(await run(new SearchService(db), query)).not.toContain('-1-a3');
       // Top 2, not necessarily 1st: on a 4-row database the vector side lists
       // every row, so a weak keyword match on "qilish" can edge ahead. Fusion
-      // weights are tuned on the real corpus in Phase 10.
+      // weights are tuned on the real corpus.
       expect((await run(new SearchService(db, embeddings), query)).slice(0, 2)).toContain('-1-a3');
     });
 

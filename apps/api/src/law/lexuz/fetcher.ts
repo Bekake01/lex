@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
- * A polite client for lex.uz (law plan, Phase 9). lex.uz has no API and is
+ * A polite client for lex.uz. lex.uz has no API and is
  * the national legal database, so:
  * - one request at a time, at least `delayMs` apart (default 20 s, the
  *   crawl delay lex.uz published in its robots.txt);

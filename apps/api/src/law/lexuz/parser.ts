@@ -3,7 +3,7 @@ import type { ActType } from '../law.types.js';
 import { normalizeUz } from '../text/index.js';
 
 /**
- * Reads a lex.uz document page (law plan, Phase 9). The page marks every
+ * Reads a lex.uz document page. The page marks every
  * element of the act with a class:
  * - ACT_FORM ("Oʻzbekiston Respublikasining Qonuni"), ACT_TITLE
  * - TEXT_HEADER_DEFAULT: parts ("UMUMIY QISM"), chapters ("I BOB. …", "1-bob. …"), sections ("1-§. …")

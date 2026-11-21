@@ -17,7 +17,7 @@ export const QUEUE = {
 } as const;
 
 /**
- * Reserved name for the law index sync. Phase 14 was built as a nightly
+ * Reserved name for the law index sync. The sync runs as a nightly
  * `@nestjs/schedule` cron instead (`src/law/sync/`, SYNC_ENABLED, advisory
  * lock), so no BullMQ queue uses this name.
  */

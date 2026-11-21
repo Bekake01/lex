@@ -45,7 +45,7 @@ const article1 = async (db: Db) =>
   (await db.select({ text: lawArticles.text }).from(lawArticles).where(eq(lawArticles.id, '-2460801-a1')))[0].text;
 const lastRun = async (db: Db) => (await db.select().from(lawSyncRuns).orderBy(desc(lawSyncRuns.id)).limit(1))[0];
 
-describe('runLexUzSync (Phase 14)', () => {
+describe('runLexUzSync', () => {
   let db: Db;
   let close: () => Promise<void>;
   let provider: CountingEmbeddings;

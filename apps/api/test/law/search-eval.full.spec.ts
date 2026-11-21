@@ -8,7 +8,7 @@ import { SearchService } from '../../src/law/search/search.service.js';
 import { createTestDb } from '../helpers/test-db.js';
 
 /**
- * Opt-in: the keyword-search baseline of the Phase 7 eval, without Postgres.
+ * Opt-in: the keyword-search baseline of the search eval, without Postgres.
  *   HF_PARQUET=data/hf/articles.parquet EVAL_DB_DIR=data/eval-db pnpm vitest run test/law/search-eval.full.spec.ts
  *
  * Imports only codes, laws and the Constitution (about 12% of the corpus, all

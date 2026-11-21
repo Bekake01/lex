@@ -37,7 +37,7 @@ import type { CaseResult, EvalCase } from './types.js';
  *   issue precision   ≥ 80%   — share of reported issues a lawyer marked
  *
  * Every dropped citation is labelled `retrieval` (the article exists but
- * search missed it — the law track's to fix) or `model` (no such article).
+ * search missed it, a retrieval problem) or `model` (no such article).
  *
  *   pnpm --filter api eval:review              all cases
  *   pnpm --filter api eval:review rental-01    one case
@@ -288,7 +288,7 @@ async function main(): Promise<void> {
         .join(' · '),
     );
     for (const id of result.retrievalFailures) {
-      console.log(`    retrieval gap: ${id} (send to the law track)`);
+      console.log(`    retrieval gap: ${id}`);
     }
     for (const id of result.modelFailures) {
       console.log(`    invented citation: ${id}`);

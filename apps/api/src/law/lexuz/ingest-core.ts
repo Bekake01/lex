@@ -45,7 +45,7 @@ export function rowsFor(docId: string, parsed: ParsedAct): NewLawArticle[] {
 }
 
 /**
- * Imports the core acts from lex.uz (Phase 9): each act's current edition
+ * Imports the core acts from lex.uz: each act's current edition
  * replaces whatever the database had for it (the Hugging Face snapshot),
  * with `source = 'lexuz'`, `core = true` and the status lex.uz shows
  * (`status_checked = true`: it comes from the official page itself).

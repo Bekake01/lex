@@ -3,7 +3,7 @@ import { EMBEDDING_DIMENSIONS } from '../../db/schema/law.js';
 /**
  * Text embeddings for law search. One interface, two providers:
  * - Voyage `voyage-3.5` over its HTTP API (VOYAGE_API_KEY): the one we use
- *   (Phase 7 decision, docs/decisions/embeddings.md)
+ *   (complements keyword search, cheap, nothing to host)
  * - bge-m3 behind a text-embeddings-inference server (EMBEDDING_URL): a
  *   self-hosted fallback
  * Both return 1024-d vectors, the size of law_articles.embedding.

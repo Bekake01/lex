@@ -8,3 +8,9 @@ coverage
 
 .env*
 !.env.example
+
+# local dev notes and agent files
+/dev/
+/CLAUDE.md
+.claude/
+AGENTS.md

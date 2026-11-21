@@ -263,7 +263,7 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
       // document text ("The PDF file could not be read; it may be damaged or
       // password-protected"), and it is far more useful than "unexpected AI
       // failure". Matched by name rather than by import: the class lives in
-      // the law track's module, behind the DOC_PROCESSING interface.
+      // the law module, behind the DOC_PROCESSING interface.
       if (original.name === 'DocumentExtractionError') return original.message;
       // The stand-in extractor, for file types it cannot read yet.
       if (original.message.startsWith('Document extraction')) {

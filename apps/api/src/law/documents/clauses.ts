@@ -1,7 +1,7 @@
 import type { Clause } from '../law.types.js';
 
 /**
- * Splits a contract into clauses (law plan, Phase 12).
+ * Splits a contract into clauses.
  *
  * A clause starts at a line that opens with a clause number:
  * - decimal: `1.`, `1.1.`, `2.3`, `4.2)`, `1)` (bare `1)` only when the

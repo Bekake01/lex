@@ -6,13 +6,13 @@ import { embedAll, teiProvider, voyageProvider, type EmbeddingProvider } from '.
 /** Injection token for a provider override (tests, or a different deployment). */
 export const EMBEDDING_PROVIDER = Symbol('EMBEDDING_PROVIDER');
 
-/** The configured provider: Voyage by default (Phase 7), bge-m3 as a fallback; null when not configured. */
+/** The configured provider: Voyage by default, bge-m3 as a fallback; null when not configured. */
 export function createEmbeddingProvider(env: Env): EmbeddingProvider | null {
   if (env.EMBEDDING_PROVIDER === 'bge-m3') return env.EMBEDDING_URL ? teiProvider(env.EMBEDDING_URL) : null;
   return env.VOYAGE_API_KEY ? voyageProvider(env.VOYAGE_API_KEY) : null;
 }
 
-/** What gets embedded for a law row: act title, article heading, body (as measured in Phase 7). */
+/** What gets embedded for a law row: act title, article heading, body (as measured in the search eval). */
 export function embeddingText(actTitle: string | null, title: string | null, text: string): string {
   return [actTitle, title, text].filter(Boolean).join('\n');
 }

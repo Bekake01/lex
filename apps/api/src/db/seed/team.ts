@@ -1,7 +1,7 @@
 /**
  * Creates the team's login accounts: `pnpm db:seed`.
  *
- * Hackathon only: each password is the email's part before "@"
+ * Demo only: each password is the email's part before "@"
  * (bekzodyangi1@gmail.com → bekzodyangi1). Never run it on a deployed
  * database. No email is sent.
  *

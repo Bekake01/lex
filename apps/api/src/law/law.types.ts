@@ -1,7 +1,6 @@
 /**
  * Law search and document types, shared by the law module, the AI review and
- * the HTTP routes under /law. Originally the lex-api contract (see
- * docs/law-build-plan.md §3); keep changes add-only.
+ * the HTTP routes under /law. Keep changes add-only.
  */
 
 export type DocType = 'rental' | 'employment' | 'sale' | 'services' | 'nda' | 'other';
@@ -40,7 +39,7 @@ export interface HealthResponse {
 
 /** POST /law/search */
 export interface SearchRequest {
-  /** Uzbek Latin (or Russian, from Phase 15) queries. 1–20 items. */
+  /** Uzbek Latin queries. 1–20 items. */
   queries: string[];
   docType?: DocType;
   /** Default true. */

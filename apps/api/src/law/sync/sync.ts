@@ -20,9 +20,9 @@ export interface SyncReport {
 }
 
 /**
- * The daily lex.uz sync (law plan, Phase 14). Re-checks every core act on
- * lex.uz and replaces those whose edition, status or text changed (Phase 9
- * import: one transaction per act, so a failed or broken page leaves the old
+ * The daily lex.uz sync. Re-checks every core act on
+ * lex.uz and replaces those whose edition, status or text changed (same
+ * import as ingest-core: one transaction per act, so a failed or broken page leaves the old
  * version intact; unchanged rows keep their embeddings). Then embeds the
  * changed rows when embeddings are configured.
  *

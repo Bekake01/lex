@@ -36,7 +36,7 @@ import { DOC_PROCESSING, LAW_SEARCH } from './law-search.types.js';
         return useDb ? db : fake;
       },
     },
-    // Real PDF/DOCX/text extraction (law plan Phase 11). applyEdits is Phase 13.
+    // Real PDF/DOCX/text extraction and DOCX edits.
     { provide: DOC_PROCESSING, useExisting: DocumentProcessingService },
   ],
   exports: [LAW_SEARCH, DOC_PROCESSING],

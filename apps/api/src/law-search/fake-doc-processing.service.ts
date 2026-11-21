@@ -7,8 +7,8 @@ import {
 } from './law-search.types.js';
 
 /**
- * Stands in for `extractText` / `applyEdits` until document extraction is
- * built (law plan, `docs/law-build-plan.md`).
+ * Fallback `extractText` / `applyEdits` for when the law module's document
+ * processing is not wired in.
  *
  * - plain text / markdown: split into clauses here.
  * - PDF: reported as `scanned`, which makes the review send the PDF to the model

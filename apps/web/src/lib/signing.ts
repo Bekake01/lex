@@ -17,7 +17,7 @@ import demoDraft from '@lex/contracts/mocks/signing-draft.json';
 import demoList from '@lex/contracts/mocks/signing-request-list.json';
 import { apiFetch, DEMO_LOGIN } from '@/lib/auth';
 
-// Browser only, like lib/auth.ts. The sender's signing calls (phase 05 API).
+// Browser only, like lib/auth.ts. The sender's signing calls.
 // With NEXT_PUBLIC_DEMO_LOGIN=1 nothing goes to the API: the draft is the
 // contracts mock and the PDF is public/demo.pdf, so the editor works offline.
 

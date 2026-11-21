@@ -33,7 +33,7 @@ import { pdfAttachment } from '../common/pdf-file.js';
 import { ZodBody } from '../common/zod-body.decorator.js';
 import { SignatureRequestsService } from './signature-requests.service.js';
 
-/** The sender's signing routes (docs/SIGNING-PLAN.md §4). */
+/** The sender's signing routes. */
 @Controller('signature-requests')
 @UseGuards(CurrentUserGuard)
 export class SignatureRequestsController {

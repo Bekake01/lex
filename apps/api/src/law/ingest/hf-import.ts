@@ -63,7 +63,7 @@ export async function importHf(
   };
   const seenIds = new Map<string, number>();
   const actTypes = new Map<string, string>();
-  // Acts imported from lex.uz (Phase 9) are newer and authoritative: the
+  // Acts imported from lex.uz are newer and authoritative: the
   // dataset snapshot never overwrites them or their articles.
   const fromLexUz = new Set(
     (await db.select({ docId: lawActs.docId }).from(lawActs).where(eq(lawActs.source, 'lexuz'))).map((r) => r.docId),

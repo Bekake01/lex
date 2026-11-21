@@ -74,7 +74,7 @@ describe('checkCitations', () => {
     const broken: LawSearchService = {
       search: async () => [],
       getArticles: async () => {
-        throw new Error('lex-api down');
+        throw new Error('law search down');
       },
       indexVersionDate: async () => null,
     };

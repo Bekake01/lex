@@ -37,7 +37,7 @@ export interface CaseResult {
   expectedIssues: number;
   citationsClaimed: number;
   citationsKept: number;
-  /** Dropped citations by reason, so retrieval gaps go to the law track. */
+  /** Dropped citations by reason, so retrieval gaps show up separately. */
   retrievalFailures: string[];
   modelFailures: string[];
   inputTokens: number;

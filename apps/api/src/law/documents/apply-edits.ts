@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import { EditNotFoundError, type ApplyEdit } from '../../law-search/law-search.types.js';
 
 /**
- * Applies text edits to a DOCX while keeping its formatting (law plan, Phase 13).
+ * Applies text edits to a DOCX while keeping its formatting.
  *
  * Works on `word/document.xml` as text, paragraph by paragraph:
  * - A paragraph's text is its runs' `<w:t>` text, with `<w:tab/>` as "\t" and

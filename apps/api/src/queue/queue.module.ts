@@ -5,7 +5,7 @@ import { QUEUE } from './queue.constants.js';
 
 /**
  * All AI work and signing completion run as BullMQ jobs: nothing heavy on the request path. The
- * workers run in this same process for the hackathon — moving them to a
+ * workers run in this same process — moving them to a
  * separate `worker.ts` later needs no change to the jobs themselves.
  */
 @Global()

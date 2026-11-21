@@ -1,7 +1,7 @@
 import type { DocType } from '../law.types.js';
 
 /**
- * The hand-picked core acts (law plan, Phase 9): imported straight from
+ * The hand-picked core acts: imported straight from
  * lex.uz in their current edition, marked `core`, and used as **anchors**:
  * a search for a contract of type X always considers the anchor acts of X.
  *
@@ -26,7 +26,7 @@ export const CORE_ACTS: CoreAct[] = [
   { docId: '-6213382', name: 'Elektron tijorat toʻgʻrisida', anchors: ['sale'] },
   { docId: '-18942', name: 'Xoʻjalik yurituvchi subyektlar faoliyatining shartnomaviy-huquqiy bazasi toʻgʻrisida', anchors: ['sale', 'services', 'other'] },
   { docId: '-2460801', name: 'Tijorat siri toʻgʻrisida', anchors: ['nda'] },
-  { docId: '-4396419', name: 'Shaxsga doir maʼlumotlar toʻgʻrisida', anchors: ['rental', 'sale', 'services', 'nda', 'employment', 'other'] }, // Phase 10: almost every contract handles personal data
+  { docId: '-4396419', name: 'Shaxsga doir maʼlumotlar toʻgʻrisida', anchors: ['rental', 'sale', 'services', 'nda', 'employment', 'other'] }, // almost every contract handles personal data
   { docId: '-6445145', name: 'Konstitutsiya (2023)', anchors: [] },
   { docId: '-4674902', name: 'Soliq kodeksi', anchors: [] },
   { docId: '-104720', name: 'Oila kodeksi', anchors: [] },

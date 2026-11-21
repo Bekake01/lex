@@ -2,13 +2,12 @@
  * The signing boundary: sender dashboard (`apps/web`), signing app
  * (`apps/sign`) and the API all build against this file.
  *
- * Model (docs/SIGNING-PLAN.md): a send = one PDF + one field layout to many
+ * Model: a send = one PDF + one field layout to many
  * people. Every person fills every field on **their own copy**, which is sealed
  * on its own. Same rule as `ai.ts`: once shared, changes are **add-only**.
  *
- * Field types, value rules and the field shape are ported from tech award's
- * contracts, minus `recipientKey` (everyone fills every field) and with the
- * WinAnsi limit lifted (stamping embeds a Unicode font, phase 04).
+ * Everyone fills every field, and values are not limited to WinAnsi
+ * (stamping embeds a Unicode font).
  */
 import { z } from 'zod';
 
@@ -563,7 +562,7 @@ export const SIGNING_ERROR_CODES = {
 
 /* ----------------------------------------------------------------- paths -- */
 
-/** Signing routes (docs/SIGNING-PLAN.md §4), next to `API_PATHS` in `ai.ts`. */
+/** Signing routes, next to `API_PATHS` in `ai.ts`. */
 export const SIGNING_ROUTES = {
   // sender (logged in)
   requests: '/signature-requests',

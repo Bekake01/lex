@@ -114,7 +114,7 @@ export class EditsService {
           ),
         );
 
-      // The real `applyEdits` (law Phase 13) landed, so this now only fires
+      // The real `applyEdits` landed, so this now only fires
       // for the stand-in processing service (`LAW_SEARCH_MODE=fake`), which
       // cannot edit a DOCX. Answering 501 with a code beats a 500 the
       // frontend cannot explain.

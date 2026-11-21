@@ -93,7 +93,7 @@ export function requiredWords(n: number): number {
 /**
  * A tsquery matching rows that contain most of the stems (see requiredWords):
  * an OR of ANDs, e.g. for a, b, c: `(a & b) | (a & c) | (b & c)`. Unlike the
- * plain OR of toTsQuery, the GIN index keeps this match set small (Phase 10).
+ * plain OR of toTsQuery, the GIN index keeps this match set small.
  * Null for no stems.
  */
 export function mostWordsTsQuery(stems: string[]): string | null {
@@ -110,7 +110,7 @@ const DEFINITION_WORDS = ['tushuncha', 'nima', 'deganda', 'degani', 'taʼrif', '
 /**
  * For a "what does X mean" query, the stems of X (the words that are not
  * definition words); null for any other query. Such queries are answered by
- * the law's "Asosiy tushunchalar" (definitions) article (Phase 10).
+ * the law's "Asosiy tushunchalar" (definitions) article.
  */
 export function definitionTopic(query: string): string[] | null {
   const words = normalizeQuery(query).match(/[\p{L}\p{N}ʻʼ]+/gu) ?? [];

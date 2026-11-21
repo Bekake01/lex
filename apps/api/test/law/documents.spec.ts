@@ -132,7 +132,7 @@ describe('DocumentProcessingService', () => {
     expect(doc.language).toBe('uz-latn');
   });
 
-  it('applies DOCX edits through the shared interface (Phase 13)', async () => {
+  it('applies DOCX edits through the shared interface', async () => {
     const out = await service.applyEdits(await makeDocx(UZ_LATN), [
       { original: '5-sanasigacha', replacement: '10-sanasigacha' },
     ]);

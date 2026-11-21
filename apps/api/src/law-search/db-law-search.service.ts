@@ -8,8 +8,7 @@ import type {
 
 /**
  * The real law search: the in-process `LawModule` over `law_acts` /
- * `law_articles` (loaded with `pnpm ingest:hf`). Replaces the old HTTP client
- * for `apps/lex-api`, which was merged into this app.
+ * `law_articles` (loaded with `pnpm ingest:hf`).
  */
 @Injectable()
 export class DbLawSearchService implements LawSearchService {
@@ -18,7 +17,7 @@ export class DbLawSearchService implements LawSearchService {
   search(q: LawSearchQuery): Promise<LawArticleHit[]> {
     return this.law.search({
       queries: q.queries.slice(0, 20),
-      // Unused by keyword search today; anchor acts per docType come in law Phase 9.
+      // Picks the anchor acts for this contract type.
       docType: q.docType,
       inForceOnly: q.inForceOnly ?? true,
       limit: Math.min(q.limit ?? 30, 100),

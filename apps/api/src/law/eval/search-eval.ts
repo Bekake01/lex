@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { docTypeSchema } from '../search/schemas.js';
 
 /**
- * Search quality evaluation (Phase 7). The query set lives in
+ * Search quality evaluation. The query set lives in
  * eval/search/queries.jsonl: one query per line with the article ids a good
  * search must return. Scored at article level: parts of a split article
  * (`{id}-p2`) count as their article.

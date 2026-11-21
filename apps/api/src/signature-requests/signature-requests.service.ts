@@ -57,7 +57,7 @@ import { StorageService } from '../storage/storage.service.js';
 
 /**
  * The sender side of signing: one PDF + one field layout → many people, each
- * with their own copy (docs/SIGNING-PLAN.md). Lifecycle `draft → sent →
+ * with their own copy. Lifecycle `draft → sent →
  * cancelled`. Owner check = `createdByUserId === user.id` (no tenant layer).
  */
 @Injectable()

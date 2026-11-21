@@ -428,7 +428,7 @@ describe('corrections', () => {
 
     it('says so plainly while DOCX editing is not built, and keeps the edit', async () => {
       const { review, edit, service } = await seedProposedEdit();
-      // What the law track's DocumentProcessingService throws until Phase 13.
+      // What a DocumentProcessingService without DOCX editing throws.
       const notBuilt = {
         extractText: (bytes: Uint8Array) =>
           new TextDocProcessing().extractText(bytes),
@@ -504,7 +504,7 @@ describe('corrections', () => {
       expect(await documentsService.isLatest(document)).toBe(true);
     });
 
-    describe('with a real DOCX and the law track DocumentProcessingService', () => {
+    describe('with a real DOCX and the real DocumentProcessingService', () => {
       const processing = new DocumentProcessingService();
 
       async function seedDocxEdit() {

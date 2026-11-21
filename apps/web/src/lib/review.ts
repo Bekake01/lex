@@ -19,8 +19,8 @@ import demoVersions from '@lex/contracts/mocks/versions.json';
 import { apiFetch, DEMO_LOGIN } from '@/lib/auth';
 import { ApiError } from '@/lib/signing';
 
-// Browser only, like lib/auth.ts. The AI review routes for `/review`
-// (plan: docs/review-wiring-plan.md). Every call throws ApiError with the
+// Browser only, like lib/auth.ts. The AI review routes for `/review`.
+// Every call throws ApiError with the
 // server's `code` and user-facing `message` on failure.
 //
 // With NEXT_PUBLIC_DEMO_LOGIN=1 nothing goes to the API: answers come from

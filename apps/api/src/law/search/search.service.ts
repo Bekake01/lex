@@ -10,7 +10,7 @@ import type { SearchInput } from './schemas.js';
 
 /**
  * Safety net for hit text. Long articles are split into parts of about
- * 1,600 tokens by chunking (Phase 5); until a row is split it could be
+ * 1,600 tokens by chunking; until a row is split it could be
  * millions of characters, which no caller can use.
  */
 export const MAX_HIT_TEXT = 12_000;
@@ -75,13 +75,13 @@ export class SearchService {
   ) {}
 
   /**
-   * Hybrid search (Phase 8). Each query gets a keyword ranking (stems,
+   * Hybrid search. Each query gets a keyword ranking (stems,
    * headings, ts_rank) and, when embeddings are configured, a vector ranking
    * (cosine distance on law_articles.embedding). All rankings are fused with
    * reciprocal rank fusion and the top `limit` returned. Without embeddings,
    * or when the provider fails, this is the keyword search alone.
    *
-   * Anchors (Phase 9): with a `docType`, each query also gets rankings
+   * Anchors: with a `docType`, each query also gets rankings
    * restricted to that contract type's anchor acts (src/law/lexuz/core-acts.ts),
    * so the core law for a rental or employment contract is always considered.
    */
@@ -130,7 +130,7 @@ export class SearchService {
   /**
    * Nearest rows by cosine distance, from the HNSW index. The index is only
    * used when the inner query orders by the distance alone, with no join or
-   * filter (Phase 10), so it over-fetches and drops repealed acts after.
+   * filter, so it over-fetches and drops repealed acts after.
    * `ef_search` must be at least the LIMIT, or HNSW returns fewer rows.
    */
   private async vectorRank(vector: number[], inForceOnly: boolean): Promise<string[]> {
@@ -220,7 +220,7 @@ export class SearchService {
    *    article that mentions X
    * Plain ts_rank alone favours long documents that repeat every common word.
    *
-   * Only a few candidates are scored (Phase 10), taken from index-backed
+   * Only a few candidates are scored, taken from index-backed
    * sets instead of every row that matches any one word: rows whose heading
    * matches, and rows whose body has most of the words. When those give too
    * few rows, the broad any-word ranking fills the rest.
@@ -290,7 +290,7 @@ export class SearchService {
   }
 
   /**
-   * The Phase 6–9 ranking: scores every row that matches any query word.
+   * The original broad ranking: scores every row that matches any query word.
    * Slow on common words, so only a fallback when the focused sets are small.
    */
   private async rankBroad(q: KeywordQuery, inForceOnly: boolean, onlyDocs?: string[]): Promise<string[]> {
