@@ -238,6 +238,8 @@ Each phase lists **Build**, **Files**, and **Done when** (the check that must pa
 
 **Done when:** a test with a saved RSS fixture updates one act; running twice changes nothing; a failed fetch leaves the old version intact.
 
+**Status (2026-11-21): built, without RSS.** With 16 core acts, the sync simply re-checks every core act page each night (16 polite requests, ~6 min) through the Phase 9 import, which replaces only acts whose edition, status or text changed (one transaction per act; unchanged rows keep their embeddings) and also catches acts that become repealed, which an amendments feed would not announce. `src/law/sync/`: `runLexUzSync` (one `law_sync_runs` row per run; `ok` when at least one act was checked, failed acts listed in `error`; embeds changed rows when Voyage is configured), `LexUzSyncScheduler` (`@nestjs/schedule` cron 03:00 Asia/Tashkent, only with `SYNC_ENABLED=true`, Postgres advisory lock on a dedicated connection), `pnpm sync:lexuz` (run once now). `/law/meta` shows `lastSyncAt` (last `ok` run) and `indexVersionDate`. Tests: `test/law/sync.spec.ts` (amended page → one act updated and re-embedded; second run no-op; HTTP 500 and an unparsable page leave the old version; lock; off switch).
+
 ### Phase 15 — Russian coverage (2 days) — **deferred**
 
 **Not needed for now (team decision, 2026-11-21).** Contracts and law search stay Uzbek (Latin; Cyrillic queries are transliterated). Russian contracts are still read and reviewed by the AI; only the law index has no Russian text. Revisit after launch.

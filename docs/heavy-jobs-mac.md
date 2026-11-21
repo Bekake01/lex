@@ -238,7 +238,15 @@ cd apps/api && pnpm db:migrate && cd ../..
 
 Then read the newest lines of `memory/CHANGELOG.md`. If one says **Action:** (for example "run `pnpm ingest:core`"), do it. Restart the three `dev:*` tabs afterwards.
 
-**F7. Stopping:** press Ctrl+C in each tab, then run `docker compose stop`. This keeps all the data.
+**F7. Keeping the laws current.** lex.uz publishes amendments. To pick them up for the 16 core laws, either run this once in a while (in `apps/api`; about 6 minutes):
+
+```bash
+pnpm sync:lexuz
+```
+
+Or, if the Mac and the API stay on overnight, set `SYNC_ENABLED=true` in `apps/api/.env`, and the API will do it every night at 03:00. Either way, it updates only the laws that changed, embeds their new text, and prints what happened.
+
+**F8. Stopping:** press Ctrl+C in each tab, then run `docker compose stop`. This keeps all the data.
 
 ---
 

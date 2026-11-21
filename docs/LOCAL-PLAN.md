@@ -178,7 +178,7 @@ pnpm test:e2e                # needs Postgres and Redis running
 | 11 | Read PDF and Word contracts | ✅ |
 | 12 | Split contracts into clauses | ✅ (still to check: Word's automatic numbering) |
 | 13 | Apply AI edits to Word files, keeping formatting | ✅ (still to check: open a result in Word and LibreOffice) |
-| 14 | Daily lex.uz sync (marks repealed laws, such as the 1995 Labour Code) | later |
+| 14 | Daily lex.uz sync: re-checks the core laws for new editions and repealed status | ✅ code done (`pnpm sync:lexuz`, or nightly at 03:00 with `SYNC_ENABLED=true`) |
 | 15 | Russian coverage | ⏸ **not needed for now** (team decision) |
 | 16 | Production readiness | later, with the production plan |
 

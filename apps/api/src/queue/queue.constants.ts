@@ -17,9 +17,9 @@ export const QUEUE = {
 } as const;
 
 /**
- * The law index sync (`law-index-sync`, law plan Phase 14), switched by
- * `SYNC_ENABLED`. Nothing is registered until it is built, so there is no
- * queue standing empty.
+ * Reserved name for the law index sync. Phase 14 was built as a nightly
+ * `@nestjs/schedule` cron instead (`src/law/sync/`, SYNC_ENABLED, advisory
+ * lock), so no BullMQ queue uses this name.
  */
 export const LAW_INDEX_SYNC_JOB = 'law-index-sync';
 

@@ -25,7 +25,7 @@ Edit in place to keep this current.
 - Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
-- Law Phases 8–9 code done: hybrid search (keyword + Voyage) and core laws from lex.uz with anchors per contract type. Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
+- Law Phases 8, 9, 14 code done: hybrid search (keyword + Voyage), core laws from lex.uz with anchors, daily lex.uz sync (`pnpm sync:lexuz` / `SYNC_ENABLED`). Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
 - `apps/web` review screen · frontend team.
 - Delivery: `send-signing-invite` logs one line per person (channel + contact); real Telegram / SMS / email delivery is "Later".
 - Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
