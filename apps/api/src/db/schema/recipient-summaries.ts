@@ -19,12 +19,36 @@ export interface SummaryObligation {
   clauseRef: string;
 }
 
-/** The stored summary body. Matches `RecipientSummaryWire` minus the ids. */
+/** A plain-language point and the clause it comes from ("" = not in the document). */
+export interface SummaryPoint {
+  text: string;
+  clauseRef: string;
+}
+
+/**
+ * The stored summary body. Matches `RecipientSummaryWire` minus the ids.
+ * `youGet` … `howToEnd` were added on 2026-11-21; older rows lack them.
+ * jsonb, so no migration.
+ */
 export interface SummaryBody {
   overview: string;
   yourObligations: SummaryObligation[];
   otherObligations: SummaryObligation[];
   keyConditions: { label: string; value: string }[];
+  youGet?: SummaryPoint[];
+  youGive?: SummaryPoint[];
+  deadlines?: {
+    when: string;
+    what: string;
+    who: 'you' | 'other' | 'both';
+    clauseRef: string;
+  }[];
+  watchOut?: {
+    text: string;
+    severity: 'low' | 'medium' | 'high';
+    clauseRef: string;
+  }[];
+  howToEnd?: SummaryPoint[];
 }
 
 /**

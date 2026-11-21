@@ -89,7 +89,7 @@ export const envSchema = z
       .enum(['low', 'medium', 'high', 'xhigh', 'max'])
       .default('high'),
     /** Bumped whenever a prompt changes; old reviews keep their version. */
-    AI_PROMPT_VERSION: z.string().default('v3'),
+    AI_PROMPT_VERSION: z.string().default('v4'),
 
     /* ----------------------------------------------------------------- law -- */
 

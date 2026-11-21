@@ -132,6 +132,24 @@ skip the step without asking.
 `apps/sign` uses it through its own pass-through (`/api/sign/...`) in the
 "Xulosa" step (`src/components/sign/SigningFlow.tsx`).
 
+**New sections (2026-11-21, all optional — summaries written before then don't
+have them, so render each only when present):**
+
+| Field | What to show | Shape |
+|---|---|---|
+| `youGet` | "Siz nima olasiz" | `{text, clauseRef}[]` |
+| `youGive` | "Siz nima berasiz" (money, deposit, rights given up) | `{text, clauseRef}[]` |
+| `deadlines` | one time-ordered list of dates; `who` = `you` / `other` / `both` | `{when, what, who, clauseRef}[]` |
+| `watchOut` | "Diqqat qiling": terms that can hurt the signer, most serious first; colour by `severity` like review findings. **An empty array means nothing stood out** — say so, don't hide the section silently | `{text, severity, clauseRef}[]` |
+| `howToEnd` | how either side can end it early, notice, cost | `{text, clauseRef}[]` |
+
+`clauseRef` is `""` for a point about something the contract leaves out (e.g.
+"no early-termination rule"): show no clause chip then. `watchOut` uses the
+document's newest finished AI review as hints, rewritten for the signer, so it
+is richer when the sender ran a review first. Example:
+`packages/contracts/mocks/recipient-summary.json`. `flaggedIssues` is still
+never sent (it is lawyer-level text; `watchOut` replaces it for signers).
+
 ## Accepting an edit
 
 `POST /reviews/:id/edits/accept` never modifies the original: it writes

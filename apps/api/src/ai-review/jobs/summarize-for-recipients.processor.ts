@@ -6,6 +6,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { hashJson } from '../../common/hash.js';
 import { DB, type Db } from '../../db/db.module.js';
 import {
+  aiIssues,
   aiReviews,
   documents,
   recipientSummaries,
@@ -23,8 +24,15 @@ import { AiUsageService } from '../../usage/ai-usage.service.js';
 import { toAiError } from '../ai-errors.js';
 import { AiService } from '../ai.service.js';
 import { DocumentContentService } from '../document-content.service.js';
-import { languageInstruction, SUMMARY_SYSTEM } from '../prompts.js';
+import {
+  languageInstruction,
+  reviewFindingsBlockText,
+  SUMMARY_SYSTEM,
+} from '../prompts.js';
 import { summaryOutputSchema } from '../schemas.js';
+
+/** At most this many review findings go into the summary call. */
+const MAX_FINDINGS = 30;
 
 /** The party name when nobody said which party the people are. */
 const GENERIC_PARTY = 'imzolovçi';
@@ -80,6 +88,9 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
     try {
       const loaded = await this.content.load(document);
       const documentBlocks = this.content.asContentBlocks(document, loaded);
+      const findings = reviewFindingsBlockText(
+        await this.reviewFindings(document.id),
+      );
 
       const content: AiContentBlock[] = [
         { type: 'text', text: languageInstruction(language) },
@@ -88,6 +99,7 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
           text: `You are writing for this party of the contract: "${partyName}". Everything that party must do goes in yourObligations; everything the other side must do goes in otherObligations.`,
         },
         ...documentBlocks,
+        ...(findings ? [{ type: 'text' as const, text: findings }] : []),
       ];
 
       const result = await this.ai.structured({
@@ -110,6 +122,20 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
           label: c.label,
           value: c.value,
         })),
+        youGet: result.output.youGet.map(toPoint),
+        youGive: result.output.youGive.map(toPoint),
+        deadlines: result.output.deadlines.map((d) => ({
+          when: d.when,
+          what: d.what,
+          who: d.who,
+          clauseRef: d.clauseRef,
+        })),
+        watchOut: result.output.watchOut.map((w) => ({
+          text: w.text,
+          severity: w.severity,
+          clauseRef: w.clauseRef,
+        })),
+        howToEnd: result.output.howToEnd.map(toPoint),
       };
       // The certificate of every copy records this hash, so it is provable
       // which text each signer was shown.
@@ -199,6 +225,37 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
   }
 
   /**
+   * The findings of the document's newest finished review, most severe first.
+   * Hints for "watchOut"; none when the document was never reviewed.
+   */
+  private async reviewFindings(documentId: string) {
+    const [review] = await this.db
+      .select({ id: aiReviews.id })
+      .from(aiReviews)
+      .where(
+        and(eq(aiReviews.documentId, documentId), eq(aiReviews.status, 'done')),
+      )
+      .orderBy(desc(aiReviews.createdAt))
+      .limit(1);
+    if (!review) return [];
+
+    const rows = await this.db
+      .select({
+        severity: aiIssues.severity,
+        clauseRef: aiIssues.clauseRef,
+        problem: aiIssues.problem,
+        quote: aiIssues.quote,
+      })
+      .from(aiIssues)
+      .where(eq(aiIssues.reviewId, review.id))
+      .orderBy(aiIssues.orderIndex);
+    const rank = { high: 0, medium: 1, low: 2 } as const;
+    return rows
+      .sort((a, b) => rank[a.severity] - rank[b.severity])
+      .slice(0, MAX_FINDINGS);
+  }
+
+  /**
    * A failed summary does not block signing: the invite goes out and the
    * signing page shows the contract without the plain-language summary.
    */
@@ -208,6 +265,10 @@ export class SummarizeForRecipientsProcessor extends WorkerHost {
       .set({ summariesStatus: 'failed' })
       .where(eq(signatureRequests.id, signatureRequestId));
   }
+}
+
+function toPoint(p: { text: string; clauseRef: string }) {
+  return { text: p.text, clauseRef: p.clauseRef };
 }
 
 function toObligation(o: {

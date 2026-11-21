@@ -232,6 +232,42 @@ export async function seedDemo(
       { label: 'Depozit', value: 'ikki oylik ijara haqi' },
       { label: 'Muddat', value: '1 yil' },
     ],
+    youGet: [
+      {
+        text: 'Yunusobod tumanidagi ikki xonali kvartirada yashash huquqi',
+        clauseRef: '1',
+      },
+    ],
+    youGive: [
+      { text: "Har oy 5 000 000 so'm ijara haqi", clauseRef: '2' },
+      { text: 'Ikki oylik ijara haqi miqdorida depozit', clauseRef: '4' },
+    ],
+    deadlines: [
+      {
+        when: 'har oyning 5-sanasi',
+        what: "Ijara haqini to'lash",
+        who: 'you',
+        clauseRef: '2',
+      },
+    ],
+    watchOut: [
+      {
+        text: 'Depozitingiz hech qachon qaytarilmaydi.',
+        severity: 'high',
+        clauseRef: '4',
+      },
+      {
+        text: 'Ijaraga beruvchi ijara haqini istalgan vaqtda, sizni ogohlantirmasdan oshirishi mumkin.',
+        severity: 'high',
+        clauseRef: '3',
+      },
+    ],
+    howToEnd: [
+      {
+        text: 'Shartnomada muddatidan oldin bekor qilish tartibi yozilmagan.',
+        clauseRef: '',
+      },
+    ],
   };
 
   const token = `demo-${sha256(`${document.id}:signer`).slice(0, 40)}`;
