@@ -77,12 +77,20 @@ export const lawArticles = pgTable(
     language: text('language').notNull(),
     // `simple` config: Postgres has no Uzbek stemmer, so no stemming at all.
     tsv: tsvector('tsv').generatedAlwaysAs(sql`to_tsvector('simple', text_norm)`),
+    /**
+     * The row's heading (article title, or the act title for flat acts) as a
+     * tsvector, for the heading signal in search (Phase 10). Filled by the
+     * `law_articles_heading` trigger (migration 0008) on insert, so import
+     * code never sets it.
+     */
+    headingTsv: tsvector('heading_tsv'),
     embedding: vector('embedding', { dimensions: EMBEDDING_DIMENSIONS }),
   },
   (t) => [
     index('law_articles_doc_id_idx').on(t.docId),
     index('law_articles_parent_id_idx').on(t.parentId),
     index('law_articles_tsv_idx').using('gin', t.tsv),
+    index('law_articles_heading_tsv_idx').using('gin', t.headingTsv),
     index('law_articles_embedding_idx').using('hnsw', t.embedding.op('vector_cosine_ops')),
   ],
 );

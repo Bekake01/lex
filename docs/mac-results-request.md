@@ -1,5 +1,9 @@
 # MacBook run: what we need back
 
+> **Next run (Job F, Phase 10):** three commands and two reports, see
+> [`phase-10-and-next.md` §2.5](phase-10-and-next.md#25-status-2026-11-21-code-done-waiting-for-mac-numbers).
+> The rest of this page is the Job E request (done).
+
 Thanks for running this! This page lists **only what to send us** after
 Job E. How to run each step is in [`heavy-jobs-mac.md`](heavy-jobs-mac.md),
 section 5 (steps E1–E6).

@@ -1,4 +1,4 @@
-import { fuseRankings, normalizeQuery, queryStems, stem, toTsQuery } from './query.js';
+import { definitionTopic, fuseRankings, mostWordsTsQuery, normalizeQuery, queryStems, requiredWords, stem, toTsQuery } from './query.js';
 
 describe('stem', () => {
   it.each([
@@ -56,5 +56,31 @@ describe('fuseRankings', () => {
     const order = [...scores].sort((x, y) => y[1] - x[1]).map(([id]) => id);
     expect(order[0]).toBe('b');
     expect(order).toHaveLength(3);
+  });
+});
+
+describe('mostWordsTsQuery', () => {
+  it('needs all of 1–2 words, all but one of 3–5, all but two of 6+', () => {
+    expect([1, 2, 3, 5, 6, 8].map(requiredWords)).toEqual([1, 2, 2, 4, 4, 6]);
+    expect(mostWordsTsQuery(['a', 'b'])).toBe("('a':* & 'b':*)");
+    expect(mostWordsTsQuery(['a', 'b', 'c'])).toBe("('a':* & 'b':*) | ('a':* & 'c':*) | ('b':* & 'c':*)");
+    expect(mostWordsTsQuery([])).toBeNull();
+  });
+
+  it('caps the number of combinations for long queries', () => {
+    const stems = Array.from({ length: 12 }, (_, i) => `w${i}`);
+    expect(mostWordsTsQuery(stems)!.split(' | ').length).toBeLessThanOrEqual(40);
+  });
+});
+
+describe('definitionTopic', () => {
+  it('returns the topic of a "what does X mean" query', () => {
+    expect(definitionTopic('tijorat siri tushunchasi')).toEqual(['tijorat', 'siri']);
+    expect(definitionTopic('ijara nima')).toEqual(['ijara']);
+  });
+
+  it('is null for other queries or a definition word alone', () => {
+    expect(definitionTopic('ijara shartnomasini bekor qilish')).toBeNull();
+    expect(definitionTopic('tushuncha')).toBeNull();
   });
 });
