@@ -64,8 +64,9 @@ contains no document text.
 
 ## A failed review says why
 
-`ReviewWire` carries a readable reason when `status` is `failed`, so show it
-instead of a generic "something went wrong":
+`ReviewWire.error` carries a readable reason when `status` is `failed`, so
+show it instead of a generic "something went wrong" (the web app shows these
+in Uzbek, `components/review/ReviewScreen.tsx`):
 
 - "The PDF file could not be read; it may be damaged or password-protected"
 - "The file is a PDF, not a DOCX"
@@ -132,6 +133,24 @@ skip the step without asking.
 `apps/sign` uses it through its own pass-through (`/api/sign/...`) in the
 "Xulosa" step (`src/components/sign/SigningFlow.tsx`).
 
+**New sections (2026-11-21, all optional — summaries written before then don't
+have them, so render each only when present):**
+
+| Field | What to show | Shape |
+|---|---|---|
+| `youGet` | "Siz nima olasiz" | `{text, clauseRef}[]` |
+| `youGive` | "Siz nima berasiz" (money, deposit, rights given up) | `{text, clauseRef}[]` |
+| `deadlines` | one time-ordered list of dates; `who` = `you` / `other` / `both` | `{when, what, who, clauseRef}[]` |
+| `watchOut` | "Diqqat qiling": terms that can hurt the signer, most serious first; colour by `severity` like review findings. **An empty array means nothing stood out** — say so, don't hide the section silently | `{text, severity, clauseRef}[]` |
+| `howToEnd` | how either side can end it early, notice, cost | `{text, clauseRef}[]` |
+
+`clauseRef` is `""` for a point about something the contract leaves out (e.g.
+"no early-termination rule"): show no clause chip then. `watchOut` uses the
+document's newest finished AI review as hints, rewritten for the signer, so it
+is richer when the sender ran a review first. Example:
+`packages/contracts/mocks/recipient-summary.json`. `flaggedIssues` is still
+never sent (it is lawyer-level text; `watchOut` replaces it for signers).
+
 ## Accepting an edit
 
 `POST /reviews/:id/edits/accept` never modifies the original: it writes
@@ -143,6 +162,31 @@ Applying edits works on **DOCX** (formatting kept). A PDF or text document
 answers `422 EDITS_NEED_DOCX`: show the suggested wording so the user can copy
 it. `POST /reviews/:id/edits/reject` takes the same `{ editIds }` body.
 
+<<<<<<< HEAD
+Two things the API leaves to the screen: it does **not** refuse an accept on
+an older version (the web app only offers accept on the newest one), and if
+the plan has no AI checks left, the new version is still created but its
+review isn't started — opening it then asks to start one, which answers 402.
+
+## The review screen in `apps/web` (all wired, 2026-11-21)
+
+`/review?doc=<documentId>` (`components/review/`), built in
+`docs/review-wiring-plan.md`:
+
+- `ReviewScreen.tsx`: reuse the newest review or start one, poll, waiting /
+  failed / 402 states; header with the **v1 · v2** switcher and
+  **Imzoga yuboriş** (`ReviewSend.tsx`: a PDF opens the send flow for this
+  document; Word / text shows "Imzolaş uçun PDF kerak"; hidden on old versions).
+- `ReviewFindings.tsx`: risk, verdict, findings with lex.uz citations.
+- `ReviewDocument.tsx`: the text from `GET /documents/:id/text`, findings
+  highlighted both ways; scanned PDF → the pages.
+- `ReviewChat.tsx` + `ReviewEdits.tsx`: the correction chat, accept / reject,
+  then on to the new version.
+
+The old demo screen (`ReviewWorkspace`, `DocumentPane`, `ReviewCard`,
+`SignDialog`) is gone; signing a contract someone sent you happens in
+`apps/sign`.
+=======
 Verified against a real DOCX on 2026-11-21: accepting an edit produced v2 with
 a new sha256 and `parentDocumentId`, v1 untouched, a re-review started on its
 own, and accepting the same edit twice returned the same version rather than a
@@ -151,3 +195,4 @@ third one.
 `501 EDITS_NOT_AVAILABLE` only happens on a backend running the stand-in
 document processing (`LAW_SEARCH_MODE=fake`), which cannot edit a DOCX. Show
 the server's message if you see it; the edit stays `proposed`.
+>>>>>>> c2cd39ba37f89a8aa53a0a1563a7d14153ac716c

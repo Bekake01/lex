@@ -69,6 +69,7 @@ export function toReviewWire(review: AiReview, issues: AiIssue[]): ReviewWire {
     lawVersionDate: review.lawVersionDate ?? undefined,
     language: review.language,
     createdAt: review.createdAt.toISOString(),
+    ...(review.status === 'failed' && review.error ? { error: review.error } : {}),
   };
 }
 
@@ -160,6 +161,7 @@ export function toRecipientSummaryWire(
   summary: RecipientSummary,
   flaggedIssues?: IssueWire[],
 ): RecipientSummaryWire {
+  const { body } = summary;
   return {
     language: summary.language,
     partyName: summary.partyName,
@@ -181,5 +183,32 @@ export function toRecipientSummaryWire(
       value: c.value,
     })),
     ...(flaggedIssues && flaggedIssues.length > 0 ? { flaggedIssues } : {}),
+    // Absent on summaries written before these sections existed.
+    ...(body.youGet ? { youGet: body.youGet.map(point) } : {}),
+    ...(body.youGive ? { youGive: body.youGive.map(point) } : {}),
+    ...(body.deadlines
+      ? {
+          deadlines: body.deadlines.map((d) => ({
+            when: d.when,
+            what: d.what,
+            who: d.who,
+            clauseRef: d.clauseRef,
+          })),
+        }
+      : {}),
+    ...(body.watchOut
+      ? {
+          watchOut: body.watchOut.map((w) => ({
+            text: w.text,
+            severity: w.severity,
+            clauseRef: w.clauseRef,
+          })),
+        }
+      : {}),
+    ...(body.howToEnd ? { howToEnd: body.howToEnd.map(point) } : {}),
   };
+}
+
+function point(p: { text: string; clauseRef: string }) {
+  return { text: p.text, clauseRef: p.clauseRef };
 }

@@ -1,6 +1,6 @@
 # Plan: real documents on the review screen (`/review`)
 
-**Status (2026-11-21): Phases 1–3 done; phases 4–9 (web) not started.**
+**Status (2026-11-21): Phases 1–9 built. Left: the end-to-end run on the Mac (Phase 9 list).**
 
 ## Goal
 
@@ -63,7 +63,7 @@ Each phase is small, can be merged on its own, and leaves the app working. Phase
 - Errors: show the server's message for 413 and 415, as the send flow already does.
 - **Done when:** uploading a real PDF or Word file lands on `/review?doc=…`. The screen there is still the demo.
 
-### Phase 4: start the review and wait (web)
+### Phase 4: start the review and wait (web) ✅
 
 - `/review` reads `?doc=`. Without it, the page shows a short "upload a document" screen.
 - It uses the newest review of that document if one exists (no second charge after a reload). Otherwise it starts one.
@@ -73,30 +73,30 @@ Each phase is small, can be merged on its own, and leaves the app working. Phase
 - After the review starts, call `billingChanged()` so the sidebar meter updates.
 - **Done when:** a real upload shows a real waiting state and then the raw review data. The finished-review layout can still be rough at this point.
 
-### Phase 5: show the findings (web)
+### Phase 5: show the findings (web) ✅
 
 - `ReviewCard` uses `ReviewWire`:
   - `riskLevel`, `verdict` and `summary` at the top;
   - each issue shows its severity, `problem`, `quote`, `recommendation`, and its citation with `actTitle`, `articleNumber`, a lex.uz link (`sourceUrl`) and `versionDate`.
 - `citation: null` shows "Qonun manbasi topilmadi". Never make one up.
 - Sort by severity. Show the "N ta jiddiy" count, as the demo does.
-- Remove the demo-only types from the review components (`lib/demo.ts` keeps what Hujjatlar still uses).
+- Built as a new `components/review/ReviewFindings.tsx`. The demo `ReviewCard.tsx` / `ReviewWorkspace.tsx` stay (unrouted) until Phase 9 removes them, so later phases can reuse their pieces.
 - **Done when:** a real review renders fully, and the demo mock renders the same way.
 
-### Phase 6: contract text and highlighting (web)
+### Phase 6: contract text and highlighting (web) ✅
 
 - `DocumentPane` loads `GET /documents/:id/text` and renders the text by clause. Clicking an issue scrolls to `issue.clauseRange` and highlights it; clicking a highlighted clause selects its issue.
 - **No `clauseRange`:** show `clauseRef` as text and don't highlight.
 - **Scanned PDF:** show the PDF itself (`GET /documents/:id/file`, the PDF viewer the send flow already uses) with a note that highlighting needs a text layer.
 - **Done when:** issues and clauses link both ways on a Word file and on a text PDF.
 
-### Phase 7: correction chat (web)
+### Phase 7: correction chat (web) ✅
 
 - `GET /reviews/:id/messages` loads the history. Sending a message calls `POST /reviews/:id/messages`, then polls the messages until the assistant message stops being `pending`.
 - The quick buttons ("Eng katta xavf nima?", "Hammasiga taklif tayyorla") send real messages.
 - **Done when:** a question gets a real answer, and a reload keeps the history.
 
-### Phase 8: accept and reject edits (web)
+### Phase 8: accept and reject edits (web) ✅
 
 - Edits arrive in `message.edits[]`. Each one shows as original → replacement, with its reason and citation, and buttons for **Qabul qiliş** and **Rad etiş**. There's also **Hammasini qabul qiliş**.
 - Accept calls `POST /reviews/:id/edits/accept {editIds}`, which returns `{documentId, version}`. The page then says "Yangi versiya (v2) yaratildi" and moves to `/review?doc=<newId>`, where the automatic re-review is already running (Phase 4's waiting state).
@@ -107,7 +107,7 @@ Each phase is small, can be merged on its own, and leaves the app working. Phase
 - A version switcher (`GET /documents/:id/versions`): "v1 · v2", read-only for old versions.
 - **Done when:** on a Word contract, accepting an edit creates v2, the page shows its new review, and v2 downloads with the changed text.
 
-### Phase 9: from review to signing, plus cleanup (web)
+### Phase 9: from review to signing, plus cleanup (web) ✅ (code; Mac run pending)
 
 - **"Imzoga yuboriş"** on a finished review:
   - a PDF opens the existing send flow for that document;

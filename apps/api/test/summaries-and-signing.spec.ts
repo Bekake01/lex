@@ -14,6 +14,7 @@ import type { CurrentUser } from '../src/common/current-user.js';
 import type { Env } from '../src/config/env.js';
 import type { Db } from '../src/db/db.module.js';
 import {
+  aiIssues,
   aiReviews,
   recipientSummaries,
   recipients,
@@ -45,7 +46,7 @@ function env(): Env {
 const noQueue = { add: async () => ({}) } as unknown as Queue;
 
 /** A canned summary that names the party it was written for. */
-function stubAi(parties: string[] = []) {
+function stubAi(parties: string[] = [], prompts: string[] = []) {
   return {
     model: 'gpt-5',
     promptVersion: 'test',
@@ -58,6 +59,9 @@ function stubAi(parties: string[] = []) {
       );
       const partyName = partyBlock?.text.match(/"([^"]+)"/)?.[1] ?? 'unknown';
       parties.push(partyName);
+      for (const block of call.content) {
+        if (block.type === 'text') prompts.push(block.text);
+      }
       return {
         output: {
           overview: `Bu ijara shartnomasi. Siz ${partyName} sifatida imzolaysiz.`,
@@ -78,6 +82,29 @@ function stubAi(parties: string[] = []) {
             },
           ],
           keyConditions: [{ label: 'Ijara haqi', value: "5 000 000 so'm" }],
+          youGet: [{ text: 'Kvartirada yashash huquqi', clauseRef: '2' }],
+          youGive: [{ text: "Oyiga 5 000 000 so'm", clauseRef: '1' }],
+          deadlines: [
+            {
+              when: 'har oyning 5-sanasi',
+              what: "Ijara haqini to'lash",
+              who: 'you',
+              clauseRef: '1',
+            },
+          ],
+          watchOut: [
+            {
+              text: 'Depozit qaytarilmaydi.',
+              severity: 'high',
+              clauseRef: '4',
+            },
+          ],
+          howToEnd: [
+            {
+              text: 'Muddatidan oldin bekor qilish tartibi yozilmagan.',
+              clauseRef: '',
+            },
+          ],
         } as T,
         usage: {
           ...emptyUsage(),
@@ -171,10 +198,10 @@ describe('summary job (one per send) and invite job', () => {
     return request;
   }
 
-  function summarizer(parties: string[] = []) {
+  function summarizer(parties: string[] = [], prompts: string[] = []) {
     return new SummarizeForRecipientsProcessor(
       db,
-      stubAi(parties),
+      stubAi(parties, prompts),
       content,
       usage,
     );
@@ -229,6 +256,76 @@ describe('summary job (one per send) and invite job', () => {
         .from(recipientSummaries)
         .where(eq(recipientSummaries.signatureRequestId, request.id));
       expect(rows).toHaveLength(1);
+    });
+
+    it('stores what you get / give, deadlines, warnings and how to end it', async () => {
+      const request = await sentRequest({ partyName: 'Ijaraga oluvchi' });
+      await summarizer().process(summarize(request.id));
+      const [row] = await db
+        .select()
+        .from(recipientSummaries)
+        .where(eq(recipientSummaries.signatureRequestId, request.id));
+      expect(row.body.youGet).toEqual([
+        { text: 'Kvartirada yashash huquqi', clauseRef: '2' },
+      ]);
+      expect(row.body.youGive).toHaveLength(1);
+      expect(row.body.deadlines?.[0]).toMatchObject({ who: 'you' });
+      expect(row.body.watchOut?.[0]).toMatchObject({ severity: 'high' });
+      expect(row.body.howToEnd?.[0].clauseRef).toBe('');
+      // The new sections are part of what the hash (and so the certificate) covers.
+      expect(row.summaryHash).toBe(hashJson(row.body));
+    });
+
+    it("gives the model the newest finished review's findings, most severe first", async () => {
+      const [review] = await db
+        .insert(aiReviews)
+        .values({
+          documentId,
+          requestedByUserId: user.id,
+          status: 'done',
+          idempotencyKey: `review-findings-${documentId}`,
+          promptVersion: 'test',
+          model: 'gpt-5',
+        })
+        .returning();
+      await db.insert(aiIssues).values([
+        {
+          reviewId: review.id,
+          clauseRef: '3',
+          quote: 'istalgan vaqtda oshirishi mumkin',
+          problem: 'Rent can be raised at any time',
+          severity: 'medium',
+          recommendation: 'Limit it',
+          orderIndex: 0,
+        },
+        {
+          reviewId: review.id,
+          clauseRef: '4',
+          quote: 'Depozit qaytarilmaydi',
+          problem: 'Deposit is never returned',
+          severity: 'high',
+          recommendation: 'Return it',
+          orderIndex: 1,
+        },
+      ]);
+
+      const prompts: string[] = [];
+      const request = await sentRequest({ partyName: 'Ijaraga oluvchi' });
+      await summarizer([], prompts).process(summarize(request.id));
+
+      const findings = prompts.find((t) => t.includes('<review_findings>'));
+      expect(findings).toBeDefined();
+      expect(findings!.indexOf('[high] clause 4')).toBeLessThan(
+        findings!.indexOf('[medium] clause 3'),
+      );
+      await db.delete(aiReviews).where(eq(aiReviews.documentId, documentId));
+    });
+
+    it('sends no findings block when the document was never reviewed', async () => {
+      const prompts: string[] = [];
+      const request = await sentRequest({ partyName: 'Mijoz' });
+      await summarizer([], prompts).process(summarize(request.id));
+      expect(prompts.some((t) => t.includes('<review_findings>'))).toBe(false);
     });
 
     it("falls back to the AI review's other party, then a generic signer", async () => {

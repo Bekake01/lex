@@ -114,6 +114,13 @@ const obligationSchema = z.object({
   clauseRef: z.string().describe('Clause this obligation comes from'),
 });
 
+const summaryPointSchema = z.object({
+  text: z.string().describe('One point in plain language'),
+  clauseRef: z
+    .string()
+    .describe('Clause it comes from, or "" when the document says nothing'),
+});
+
 /** One recipient's summary, generated at send time. */
 export const summaryOutputSchema = z.object({
   overview: z
@@ -129,5 +136,38 @@ export const summaryOutputSchema = z.object({
       }),
     )
     .max(15),
+  youGet: z
+    .array(summaryPointSchema)
+    .max(10)
+    .describe('What the named party receives'),
+  youGive: z
+    .array(summaryPointSchema)
+    .max(10)
+    .describe('What the named party pays, hands over or gives up'),
+  deadlines: z
+    .array(
+      z.object({
+        when: z.string().describe('The date, period or recurring time'),
+        what: z.string().describe('What must happen by then'),
+        who: z.enum(['you', 'other', 'both']),
+        clauseRef: z.string(),
+      }),
+    )
+    .max(20)
+    .describe('Every date and time limit, in time order'),
+  watchOut: z
+    .array(
+      z.object({
+        text: z.string().describe('What can happen to the named party'),
+        severity: z.enum(['low', 'medium', 'high']),
+        clauseRef: z.string(),
+      }),
+    )
+    .max(10)
+    .describe('Terms that can hurt the named party, most serious first'),
+  howToEnd: z
+    .array(summaryPointSchema)
+    .max(6)
+    .describe('How either side can end the contract early, notice and cost'),
 });
 export type SummaryOutput = z.infer<typeof summaryOutputSchema>;
