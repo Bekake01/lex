@@ -1,11 +1,11 @@
 import { LogoMark } from './Icons';
 
-/** Logo: brand mark + "lex". */
+/** Logo: brand mark + "Cralex". */
 export function Wordmark({ small = false }: { small?: boolean }) {
   return (
-    <span className="flex items-center gap-2.5">
-      <LogoMark className={small ? 'size-8' : 'size-9'} />
-      <span className={`font-display font-semibold tracking-tight text-ink ${small ? 'text-xl' : 'text-2xl'}`}>lex</span>
+    <span className="flex items-center gap-2">
+      <LogoMark className={small ? 'h-9 w-14' : 'h-10 w-16'} />
+      <span className={`font-display font-semibold tracking-tight text-ink ${small ? 'text-xl' : 'text-2xl'}`}>Cralex</span>
     </span>
   );
 }

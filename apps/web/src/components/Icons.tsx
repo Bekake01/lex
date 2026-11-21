@@ -39,17 +39,16 @@ export const UploadIcon = (p: P) => <Svg {...p}><path d="M12 16V4M7 9l5-5 5 5M4 
 export const PenIcon = (p: P) => <Svg {...p}><path d="M4 20h4L19 9a2.8 2.8 0 00-4-4L4 16z" /><path d="M13.5 6.5l4 4" /></Svg>;
 
 /**
- * Brand mark: an elegant serif § on a glossy blue → violet tile, with a small coral "seal" dot.
- * Size it with className (e.g. size-7, size-9); the § scales with the font size.
+ * Brand mark: the scales-and-book logo (`public/logo-mark.png`), transparent, no
+ * tile. Size it with className; the logo keeps its shape inside the box.
  */
 export function LogoMark({ className = 'size-8' }: P) {
   return (
     <span
-      className={`${className} relative grid shrink-0 place-items-center overflow-hidden rounded-[30%] bg-[linear-gradient(140deg,#2f83f9_0%,#0767ee_45%,#6c47ff_100%)] shadow-[0_6px_16px_rgb(7_103_238/0.30),inset_0_1px_0_rgb(255_255_255/0.35)]`}
+      className={`${className} grid shrink-0 place-items-center`}
     >
-      <span className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
-      <span className="relative -mt-[0.06em] font-doc text-[1.35em] leading-none text-white italic">§</span>
-      <span className="absolute right-[14%] bottom-[14%] size-[16%] rounded-full bg-coral ring-1 ring-white/60" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- tiny static logo, no optimisation needed */}
+      <img src="/logo-mark.png" alt="" draggable={false} className="size-full object-contain" />
     </span>
   );
 }

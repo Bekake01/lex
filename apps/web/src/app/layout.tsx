@@ -24,7 +24,7 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: 'Lex — AI yuridik yordamçi',
+  title: 'Cralex — AI yuridik yordamçi',
   description: 'Şartnomalarni AI bilan tekşiring va imzolang, yuridik savollarga javob oling',
 };
 

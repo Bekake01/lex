@@ -23,6 +23,13 @@ export function sendUploadError(file: File): string | null {
   return null;
 }
 
+/** "Mening hujjatlarim" upload: PDF only, so every file there can also be sent for signature. */
+export function pdfUploadError(file: File): string | null {
+  if (!/\.pdf$/i.test(file.name)) return 'Faqat PDF fayl yuklang — Word faylni avval PDF ga aylantiring.';
+  if (file.size > UPLOAD_MAX_MB * 1024 * 1024) return `Fayl juda katta — ${UPLOAD_MAX_MB} MB gaça bölişi kerak.`;
+  return null;
+}
+
 export function formatSize(bytes: number) {
   if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;

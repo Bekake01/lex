@@ -5,16 +5,19 @@ import { useState } from 'react';
 import { ApiError, updateAccess } from '@/lib/signing';
 
 /**
- * "Havola sozlamalari": the optional open link and the optional password, both
- * off by default. Saved straight away (`PATCH …/access`) — this works on a
- * draft and on a send that is already out.
+ * The optional open link and the optional password, both off by default. Saved
+ * straight away (`PATCH …/access`) — this works on a draft and on a send that
+ * is already out. `openLink={false}` shows only the password (the send flow
+ * picks the open link with its own "Hamma uçun bitta havola" choice).
  */
 export function AccessSettings({
   request,
   onChange,
+  openLink = true,
 }: {
   request: SigningRequestDetailWire;
   onChange: (next: SigningRequestDetailWire) => void;
+  openLink?: boolean;
 }) {
   const [editingPassword, setEditingPassword] = useState(false);
   const [password, setPassword] = useState('');
@@ -39,18 +42,20 @@ export function AccessSettings({
 
   return (
     <div className="divide-y divide-line rounded-2xl border border-line bg-surface">
-      <Toggle
-        label="Oçiq havola"
-        note="Bitta umumiy havola: kim oçsa, ismini yozib öz nusxasini imzolaydi."
-        on={request.openLinkEnabled}
-        disabled={busy}
-        onToggle={() => void save({ openLinkEnabled: !request.openLinkEnabled })}
-      />
+      {openLink && (
+        <Toggle
+          label="Oçiq havola"
+          note="Bitta umumiy havola: kim oçsa, ismini yozib öz nusxasini imzolaydi."
+          on={request.openLinkEnabled}
+          disabled={busy}
+          onToggle={() => void save({ openLinkEnabled: !request.openLinkEnabled })}
+        />
+      )}
 
       <div>
         <Toggle
-          label="Parol bilan himoyalaş"
-          note="Havolalarni oçiş uçun parol söraladi (hamma havolalar uçun bitta parol)."
+          label="Parol qöyiş"
+          note="Ixtiyoriy. Havolani oçganda parol söraladi — hamma uçun bitta parol."
           on={passwordOn}
           disabled={busy}
           onToggle={() => {

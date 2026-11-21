@@ -38,7 +38,7 @@ export function PeopleEditor({ rows, onChange }: { rows: PersonRow[]; onChange: 
                 <input
                   value={row.name}
                   onChange={(e) => update(row.key, { name: e.target.value })}
-                  placeholder="Ism (ixtiyoriy)"
+                  placeholder="Ism"
                   maxLength={200}
                   className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-page px-2.5 text-sm outline-none placeholder:text-faint focus:border-accent sm:max-w-[200px]"
                 />

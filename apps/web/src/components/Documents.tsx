@@ -16,7 +16,7 @@ import {
   uploadDocument,
 } from '@/lib/signing';
 import { uploadErrorText, uploadForReview } from '@/lib/review';
-import { formatSize, SEND_ACCEPT, sendUploadError, UPLOAD_ACCEPT, UPLOAD_MAX_MB, uploadError } from '@/lib/upload';
+import { formatSize, pdfUploadError, SEND_ACCEPT, sendUploadError, UPLOAD_MAX_MB } from '@/lib/upload';
 import { CheckIcon, ChevronRightIcon, FileIcon, PenIcon, UploadIcon } from './Icons';
 
 /** One row of the signing list: a send of mine, or my own copy in someone else's send. */
@@ -67,6 +67,11 @@ export function Documents() {
     }
   }, []);
 
+  // `/contracts?view=files` (home's "Şartnomani tekşiring") opens on "Mening hujjatlarim".
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('view') === 'files') setView('files');
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([listSends('sent'), listSends('inbox')])
@@ -90,12 +95,12 @@ export function Documents() {
     };
   }, []);
 
-  /** "Hujjat yuklaş": files for the AI review (PDF / DOCX / TXT). */
+  /** "Hujjat yuklaş": PDF files for the AI review (PDF only, so they can be sent for signature too). */
   async function upload(list: FileList | null | undefined) {
     const picked = Array.from(list ?? []);
     if (picked.length === 0) return;
-    setError(picked.map(uploadError).find(Boolean) ?? '');
-    const ok = picked.filter((f) => !uploadError(f));
+    setError(picked.map(pdfUploadError).find(Boolean) ?? '');
+    const ok = picked.filter((f) => !pdfUploadError(f));
     if (ok.length === 0) return;
     setView('files');
     // One file: straight to its AI review. Several: upload them all, stay on the list.
@@ -152,7 +157,7 @@ export function Documents() {
       <input
         ref={input}
         type="file"
-        accept={UPLOAD_ACCEPT}
+        accept={SEND_ACCEPT}
         multiple
         hidden
         onChange={(e) => {
@@ -356,7 +361,7 @@ function MyFiles({
       <p className={`mb-3 text-sm transition ${dragging ? 'text-accent' : 'text-muted'}`}>
         {dragging
           ? 'Faylni qöyib yuboring'
-          : `Faylni şu yerga taşlang yoki «Hujjat yuklaş»ni bosing · PDF, DOCX, ${UPLOAD_MAX_MB} MB gaça`}
+          : `Faylni şu yerga taşlang yoki «Hujjat yuklaş»ni bosing · faqat PDF, ${UPLOAD_MAX_MB} MB gaça`}
       </p>
 
       {!files ? (

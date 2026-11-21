@@ -3,9 +3,8 @@
 import type { PartyWire, SigningRequestDetailWire } from '@lex/contracts';
 import { useEffect, useState } from 'react';
 import { documentParties } from '@/lib/signing';
-import { AccessSettings } from './AccessSettings';
 
-/** Step 3: title, message, which party they are, link settings, summary, send. */
+/** Step 3: title, message, which party they are, summary, send. (Who and the password are step 2.) */
 export function SendStep({
   draft,
   peopleCount,
@@ -16,7 +15,6 @@ export function SendStep({
   onTitle,
   onMessage,
   onPartyName,
-  onAccess,
   sending,
   error,
   onSend,
@@ -30,7 +28,6 @@ export function SendStep({
   onTitle: (v: string) => void;
   onMessage: (v: string) => void;
   onPartyName: (v: string) => void;
-  onAccess: (next: SigningRequestDetailWire) => void;
   sending: boolean;
   error: string;
   onSend: () => void;
@@ -47,10 +44,12 @@ export function SendStep({
   const summary = [
     '1 hujjat',
     `${fieldCount} ta maydon`,
-    `${peopleCount} ta odam`,
-    draft.openLinkEnabled ? 'oçiq havola bor' : 'oçiq havola yöq',
-    draft.hasPassword ? 'parol bilan' : 'parolsiz',
-  ].join(' · ');
+    peopleCount > 0 ? `${peopleCount} ta odamga` : null,
+    draft.openLinkEnabled ? 'umumiy havola' : null,
+    draft.hasPassword ? 'parol bilan' : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -95,9 +94,6 @@ export function SendStep({
           </Labeled>
         </div>
 
-        <h3 className="mt-8 mb-3 font-medium">Havola sozlamalari</h3>
-        <AccessSettings request={draft} onChange={onAccess} />
-
         <div className="mt-8 rounded-2xl bg-subtle px-4 py-3 text-sm text-muted">{summary}</div>
         {error && <p className="mt-3 text-sm text-danger">{error}</p>}
         <button
@@ -109,7 +105,7 @@ export function SendStep({
           {sending ? 'Yuborilmoqda…' : 'Yuboriş'}
         </button>
         {peopleCount === 0 && !draft.openLinkEnabled && (
-          <p className="mt-2 text-center text-sm text-muted">Odam qöşing yoki oçiq havolani yoqing.</p>
+          <p className="mt-2 text-center text-sm text-muted">Orqaga qaytib, kimga yuborişni tanlang.</p>
         )}
       </div>
     </div>

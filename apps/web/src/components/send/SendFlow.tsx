@@ -15,13 +15,13 @@ import { ApiError, documentPdf, getDraft, sendDraft, updateDraft } from '@/lib/s
 import { usePdf } from '@/lib/use-pdf';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '../Icons';
 import { FieldEditor } from './FieldEditor';
-import { PeopleEditor } from './PeopleEditor';
+import { initialMode, RecipientsStep, type RecipientMode } from './RecipientsStep';
 import { SendResult } from './SendResult';
 import { SendStep } from './SendStep';
 
 const STEPS = [
   { id: 'fields', label: 'Maydonlar' },
-  { id: 'people', label: 'Odamlar' },
+  { id: 'people', label: 'Qabul qiluvçilar' },
   { id: 'send', label: 'Yuboriş' },
 ] as const;
 type Step = (typeof STEPS)[number]['id'];
@@ -44,6 +44,7 @@ export function SendFlow({ id }: { id: string }) {
   const [title, setTitle] = useState('');
   const [fields, setFields] = useState<Field[]>([]);
   const [people, setPeople] = useState<PersonRow[]>([]);
+  const [mode, setMode] = useState<RecipientMode>('people');
   const [message, setMessage] = useState('');
   const [partyName, setPartyName] = useState('');
   const [save, setSave] = useState<SaveState>('idle');
@@ -61,6 +62,7 @@ export function SendFlow({ id }: { id: string }) {
         setFields(d.fields);
         setMessage(d.message ?? '');
         setPartyName(d.partyName ?? '');
+        setMode(initialMode(d));
         setPeople(
           d.recipients.length > 0
             ? d.recipients.map((r) => ({ key: r.id, name: r.name ?? '', channel: r.channel, contact: r.contact ?? '' }))
@@ -111,11 +113,20 @@ export function SendFlow({ id }: { id: string }) {
   useEffect(() => () => void flush(), [flush]);
 
   /** People rows → the draft, once every non-empty row is valid. */
-  const changePeople = (rows: PersonRow[]) => {
-    setPeople(rows);
+  const savePeople = (rows: PersonRow[]) => {
     const filled = rows.filter((r) => !isEmptyRow(r));
     if (filled.some((r) => rowProblem(r))) return;
     queue({ recipients: filled.map(toInput) as RecipientInput[] });
+  };
+  const changePeople = (rows: PersonRow[]) => {
+    setPeople(rows);
+    savePeople(rows);
+  };
+  /** "Umumiy havola orqali" sends to nobody by name; the typed rows stay here in case they switch back. */
+  const changeMode = (next: RecipientMode) => {
+    setMode(next);
+    if (next === 'link') queue({ recipients: [] });
+    else savePeople(people);
   };
 
   async function send() {
@@ -157,8 +168,9 @@ export function SendFlow({ id }: { id: string }) {
 
   const hasSignature = fields.some((f) => f.type === 'signature');
   const stepIndex = STEPS.findIndex((s) => s.id === step);
-  const filledPeople = people.filter((r) => !isEmptyRow(r));
-  const peopleOk = !filledPeople.some((r) => rowProblem(r));
+  const filledPeople = mode === 'people' ? people.filter((r) => !isEmptyRow(r)) : [];
+  const peopleOk =
+    mode === 'link' ? draft.openLinkEnabled : filledPeople.length > 0 && !filledPeople.some((r) => rowProblem(r));
   const canNext = step === 'fields' ? hasSignature : peopleOk;
 
   return (
@@ -182,7 +194,7 @@ export function SendFlow({ id }: { id: string }) {
             <span key={s.id} className="flex items-center gap-1.5">
               {i > 0 && <ChevronRightIcon className="size-3.5 text-faint" />}
               <span
-                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 ${
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 whitespace-nowrap ${
                   i === stepIndex ? 'bg-accent-soft font-medium text-accent' : i < stepIndex ? 'text-ink' : 'text-muted'
                 }`}
               >
@@ -221,7 +233,9 @@ export function SendFlow({ id }: { id: string }) {
                   ? undefined
                   : step === 'fields'
                     ? 'Avval kamida bitta Imzo maydoni qöying'
-                    : 'Xato kontaktlarni tuzating'
+                    : filledPeople.length === 0
+                      ? 'Kamida bitta odam qöşing'
+                      : 'Xato kontaktlarni tuzating'
               }
               onClick={async () => {
                 if (await flush()) setStep(STEPS[stepIndex + 1].id);
@@ -253,16 +267,14 @@ export function SendFlow({ id }: { id: string }) {
         ))}
 
       {step === 'people' && (
-        <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-5 py-8 sm:px-6">
-            <h2 className="text-xl font-medium">Odamlar</h2>
-            <p className="mt-1 mb-5 text-sm text-muted">
-              Har bir odam öz havolasini oladi va hujjatning öz nusxasini imzolaydi. Bu yerda hech kim bölmasa ham
-              böladi — keyingi qadamda oçiq havolani yoqiş mumkin.
-            </p>
-            <PeopleEditor rows={people} onChange={changePeople} />
-          </div>
-        </div>
+        <RecipientsStep
+          draft={draft}
+          mode={mode}
+          people={people}
+          onMode={changeMode}
+          onPeople={changePeople}
+          onAccess={setDraft}
+        />
       )}
 
       {step === 'send' && (
@@ -285,7 +297,6 @@ export function SendFlow({ id }: { id: string }) {
             setPartyName(v);
             queue({ partyName: v.trim() || null });
           }}
-          onAccess={setDraft}
           sending={sending}
           error={sendError}
           onSend={() => void send()}

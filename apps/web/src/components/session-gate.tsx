@@ -51,7 +51,7 @@ export function SessionGate({ children }: { children: ReactNode }) {
         <div className="flex max-w-sm flex-col items-center gap-3 text-center">
           <CloudOff className="size-8 text-muted" aria-hidden />
           <p className="text-sm text-muted">
-            Can&apos;t reach Lex. Check your connection and try again.
+            Can&apos;t reach Cralex. Check your connection and try again.
           </p>
           <button
             type="button"

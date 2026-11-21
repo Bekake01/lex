@@ -184,7 +184,7 @@ export async function login(credentials: {
   } catch {
     return {
       ok: false,
-      message: "Can't reach Lex. Check your connection and try again.",
+      message: "Can't reach Cralex. Check your connection and try again.",
     };
   }
   if (!res.ok) {
@@ -229,7 +229,7 @@ async function signInAt(
       body: JSON.stringify(body),
     });
   } catch {
-    return { ok: false, message: 'Lex bilan aloqa yöq. Internetni tekşirib, qayta urinib köring.' };
+    return { ok: false, message: 'Cralex bilan aloqa yöq. Internetni tekşirib, qayta urinib köring.' };
   }
   if (!res.ok) {
     const data = (await res.json().catch(() => null)) as { message?: unknown } | null;

@@ -141,6 +141,11 @@ export const reviewWireSchema = z.object({
   lawVersionDate: z.string().optional(),
   language: aiLanguageSchema,
   createdAt: z.string(),
+  /**
+   * Only when `status` is `failed`: why, written for the user (unreadable
+   * file, AI unavailable…). Never model output or contract text.
+   */
+  error: z.string().optional(),
 });
 export type ReviewWire = z.infer<typeof reviewWireSchema>;
 
@@ -195,6 +200,36 @@ export const keyConditionWireSchema = z.object({
 });
 export type KeyConditionWire = z.infer<typeof keyConditionWireSchema>;
 
+/** One plain-language point of a summary, tied to the clause it comes from. */
+export const summaryPointWireSchema = z.object({
+  text: z.string(),
+  /** The document's clause ref; empty when the point is about something the document leaves out. */
+  clauseRef: z.string(),
+});
+export type SummaryPointWire = z.infer<typeof summaryPointWireSchema>;
+
+/** Whose deadline it is, from the signer's side. */
+export const summaryWhoSchema = z.enum(['you', 'other', 'both']);
+export type SummaryWho = z.infer<typeof summaryWhoSchema>;
+
+/** A date or time limit from the contract, for the signer's deadline list. */
+export const summaryDeadlineWireSchema = z.object({
+  /** e.g. "har oyning 5-sanasi", "1-fevral", "ketişdan 30 kun oldin". */
+  when: z.string(),
+  what: z.string(),
+  who: summaryWhoSchema,
+  clauseRef: z.string(),
+});
+export type SummaryDeadlineWire = z.infer<typeof summaryDeadlineWireSchema>;
+
+/** A term that can hurt the signer, in plain words. */
+export const summaryWarningWireSchema = z.object({
+  text: z.string(),
+  severity: severitySchema,
+  clauseRef: z.string(),
+});
+export type SummaryWarningWire = z.infer<typeof summaryWarningWireSchema>;
+
 /** What the signing app shows before consent. Precomputed at send time. */
 export const recipientSummaryWireSchema = z.object({
   language: aiLanguageSchema,
@@ -204,6 +239,19 @@ export const recipientSummaryWireSchema = z.object({
   otherObligations: z.array(obligationWireSchema),
   keyConditions: z.array(keyConditionWireSchema),
   flaggedIssues: z.array(issueWireSchema).optional(),
+  /*
+   * Added 2026-11-21. Optional: summaries written before then don't have them.
+   */
+  /** What the signer receives: goods, money, a right, a service. */
+  youGet: z.array(summaryPointWireSchema).optional(),
+  /** What the signer pays or hands over, including rights they give up. */
+  youGive: z.array(summaryPointWireSchema).optional(),
+  /** Every date and time limit, in time order. */
+  deadlines: z.array(summaryDeadlineWireSchema).optional(),
+  /** Terms that can hurt the signer, most serious first. Empty = nothing stood out. */
+  watchOut: z.array(summaryWarningWireSchema).optional(),
+  /** How either side can end the contract early, the notice it needs and what it costs. */
+  howToEnd: z.array(summaryPointWireSchema).optional(),
 });
 export type RecipientSummaryWire = z.infer<typeof recipientSummaryWireSchema>;
 

@@ -51,6 +51,6 @@ function matches(pathname: string, paths: string[]): boolean {
 export const config = {
   // Everything except Next's build files and static assets (public/).
   matcher: [
-    '/((?!_next/static|_next/image|favicon\\.ico|sitemap\\.xml|robots\\.txt|.*\\.(?:png|jpe?g|gif|svg|webp|ico|txt|xml)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|manifest\\.webmanifest|sitemap\\.xml|robots\\.txt|.*\\.(?:png|jpe?g|gif|svg|webp|ico|txt|xml)$).*)',
   ],
 };

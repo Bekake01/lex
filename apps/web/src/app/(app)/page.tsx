@@ -1,11 +1,9 @@
-import { Suspense } from 'react';
-import { AskChatRoute } from '@/components/ask/AskChat';
+import { HomeActions } from '@/components/home/HomeActions';
 
-export default function AskPage() {
-  // AskChat reads ?q= (useSearchParams), so it needs a Suspense boundary with cacheComponents.
+export default function HomePage() {
   return (
-    <Suspense fallback={<div className="flex-1" />}>
-      <AskChatRoute />
-    </Suspense>
+    <div className="flex-1 overflow-y-auto">
+      <HomeActions />
+    </div>
   );
 }

@@ -25,7 +25,7 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: 'Lex — Imzolaş',
+  title: 'Cralex — Imzolaş',
   description: 'Sizga yuborilgan şartnomani körib çiqing va imzolang',
 };
 
@@ -43,8 +43,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
         <div className="px-3 pt-3 sm:px-6 sm:pt-4">
           <header className="frost mx-auto flex h-14 max-w-3xl items-center rounded-2xl px-4 sm:h-16 sm:px-6">
             <span className="flex items-center gap-2.5">
-              <LogoMark className="size-9" />
-              <span className="font-display text-2xl font-semibold tracking-tight text-ink">lex</span>
+              <LogoMark className="h-9 w-12" />
+              <span className="font-display text-2xl font-semibold tracking-tight text-ink">Cralex</span>
             </span>
             <span className="ml-auto hidden text-sm text-muted sm:inline">Xavfsiz elektron imzo</span>
             <ThemeToggle className="ml-3" />

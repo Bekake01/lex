@@ -73,7 +73,7 @@ export default function TeamPage() {
           </span>
           <h1 className="mt-4 text-2xl font-medium">Jamoa bilan işlang</h1>
           <p className="mt-2 text-ink/70">
-            Kompaniya tarifida 5 ta foydalanuvçi va oyiga 150 ta umumiy AI tekşiruv. Hamkasblaringizni email orqali
+            Kompaniya tarifida 5 ta foydalanuvçi va oyiga 150 ta umumiy AI tekşiruv. Hamkasblaringizni
             taklif qiling.
           </p>
           <Link href="/pricing" className="btn btn-primary mt-6">

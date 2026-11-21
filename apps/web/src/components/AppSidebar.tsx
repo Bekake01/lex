@@ -3,23 +3,23 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronsUpDown, CreditCard, FolderOpen, LogOut, PanelLeft, Plus, Scale, Users } from 'lucide-react';
+import { ChevronsUpDown, CreditCard, FolderOpen, House, LogOut, PanelLeft, Plus, Scale, Users } from 'lucide-react';
 import { ThemeToggle } from '@lex/theme';
 import { currentUser, logout } from '@/lib/auth';
-import { contracts, recentChats } from '@/lib/demo';
+import { recentChats } from '@/lib/demo';
 import { UsageMeter } from './billing/UsageMeter';
 import { Wordmark } from './Brand';
 import { LogoMark } from './Icons';
 
-const newCount = contracts.filter((c) => c.status === 'new').length;
 
 const NAV = [
-  { href: '/', label: 'Yuridik maslahat', Icon: Scale, badge: 0, match: (p: string) => p === '/' },
+  { href: '/', label: 'Bosh sahifa', Icon: House, badge: 0, match: (p: string) => p === '/' },
+  { href: '/ask', label: 'Yuridik maslahat', Icon: Scale, badge: 0, match: (p: string) => p === '/ask' },
   {
     href: '/contracts',
     label: 'Hujjatlar',
     Icon: FolderOpen,
-    badge: newCount,
+    badge: 0,
     match: (p: string) => p === '/contracts' || p === '/review',
   },
   {
@@ -54,20 +54,20 @@ export function AppSidebar() {
   // A fresh chat: a new ?n= value remounts the chat on "/".
   // Already on an empty chat: don't reload it, just put the cursor in the box.
   const newChat = () => {
-    const fresh = pathname === '/' ? document.querySelector<HTMLElement>('[data-new-chat]') : null;
+    const fresh = pathname === '/ask' ? document.querySelector<HTMLElement>('[data-new-chat]') : null;
     if (fresh) {
       fresh.querySelector('textarea')?.focus();
       return;
     }
-    router.push(`/?n=${Date.now()}`);
+    router.push(`/ask?n=${Date.now()}`);
   };
-  const activeQ = pathname === '/' ? params.get('q') : null;
+  const activeQ = pathname === '/ask' ? params.get('q') : null;
 
   if (!open) {
     return (
       <aside className="hidden w-[68px] shrink-0 flex-col items-center gap-2 py-4 md:flex">
         <button onClick={() => setOpen(true)} className="mb-2" aria-label="Panelni ochiş" title="Panelni ochiş">
-          <LogoMark className="size-9" />
+          <LogoMark className="h-9 w-12" />
         </button>
         <button
           onClick={newChat}
@@ -105,7 +105,7 @@ export function AppSidebar() {
     <aside className="hidden w-[272px] shrink-0 p-3 md:flex">
       <div className="flex min-h-0 flex-1 flex-col rounded-[1.4rem] bg-surface/60 shadow-[0_8px_30px_var(--shadow)] ring-1 ring-edge backdrop-blur-xl">
         <div className="flex items-center justify-between pt-4 pr-2 pb-6 pl-4">
-          <Link href="/" aria-label="Lex">
+          <Link href="/" aria-label="Cralex">
             <Wordmark small />
           </Link>
           <div className="flex items-center">
@@ -133,7 +133,7 @@ export function AppSidebar() {
           </button>
           <div className="mx-2.5 my-1 border-t border-edge" />
           {NAV.map(({ href, label, Icon, badge, match }) => {
-            const active = match(pathname) && !(href === '/' && activeQ);
+            const active = match(pathname) && !(href === '/ask' && activeQ);
             return (
               <Link
                 key={href}
@@ -163,7 +163,7 @@ export function AppSidebar() {
             return (
               <li key={c.id}>
                 <Link
-                  href={`/?q=${encodeURIComponent(c.q)}`}
+                  href={`/ask?q=${encodeURIComponent(c.q)}`}
                   className={`block truncate rounded-xl px-2.5 py-1.5 text-[15px] transition ${
                     active ? 'bg-surface text-ink shadow-sm' : 'text-ink/70 hover:bg-surface/70 hover:text-ink'
                   }`}
@@ -267,7 +267,7 @@ export function MobileBar() {
   const pathname = usePathname();
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 px-4 md:hidden">
-      <Link href="/" aria-label="Lex">
+      <Link href="/" aria-label="Cralex">
         <Wordmark small />
       </Link>
       <ThemeToggle className="ml-auto" />

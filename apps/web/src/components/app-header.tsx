@@ -13,7 +13,7 @@ export function AppHeader() {
   return (
     <header className="flex items-center justify-between border-b border-line px-6 py-3">
       <span className="text-xl font-bold tracking-tight">
-        Lex<span className="text-accent">.</span>
+        Cralex<span className="text-accent">.</span>
       </span>
       <div className="flex items-center gap-4">
         <span className="text-sm text-muted">

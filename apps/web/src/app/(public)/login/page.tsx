@@ -6,7 +6,7 @@ import { Wordmark } from '@/components/Brand';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = {
-  title: 'Kiriş · Lex',
+  title: 'Kiriş · Cralex',
 };
 
 const STEPS = [
