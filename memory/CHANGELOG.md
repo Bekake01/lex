@@ -2,6 +2,7 @@
 
 Newest first. Format: `YYYY-MM-DD · area · what changed · action needed (if any)`
 
+- 2026-11-21 · web, sign (theme), docs · **Build fix:** the header comment of `packages/theme/theme.css` contained the path `apps/` + `*` + `/src/…`; the `*/` closed the CSS comment early, so `pnpm build` of web and sign failed ("Missing opening ("). Path rewritten; both build again (clear `apps/*/.next` if an old error persists). Mac guide + LOCAL-PLAN now use Redis port **6391** (Docker). No action needed.
 - 2026-11-21 · api (AI track) · **BullMQ job ids use `.` not `:`** (`analyze.<id>`, `revise.<id>.<msgId>`…; BullMQ rejects custom ids with `:`). clauseRef prompt tightened (ref only, no heading) → `AI_PROMPT_VERSION` default **v3**. No action needed.
 - 2026-11-21 · law, docs · **Decision: Russian coverage (law Phase 15) is not needed for now**; law search stays Uzbek. No action needed.
 - 2026-11-21 · api (law), docs · **The MacBook is the team's run machine:** the whole project (DB with all laws, API, web, sign) runs there; setup in `docs/heavy-jobs-mac.md` (Job E: data, Job F: run the app) and `docs/LOCAL-PLAN.md`. `pnpm ingest:core` was run live against lex.uz from A's laptop: 16/16 acts OK (old Labour Code `repealed`); fixed: edition dates no longer pick amendments that take effect in the future. No action needed.

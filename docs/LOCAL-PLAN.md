@@ -96,13 +96,14 @@ A's laptop ── git push ──►  GitHub (lex, branch z-ai)  ◄── git p
 
 | Your computer | How |
 |---|---|
-| **Mac or Linux with Docker** | `pnpm services:up` (Postgres on port 5434, Redis on 6379) |
+| **Mac or Linux with Docker** (the Mac) | `pnpm services:up` (Postgres on port 5434, Redis on **6391**) |
 | **Windows without Docker** (A's laptop) | Postgres and Redis run in **WSL Ubuntu**. After every restart, run in PowerShell: `wsl -d Ubuntu -u root -- bash -c "service postgresql start && service redis-server start"` |
 
 In `apps/api/.env`, these should be:
 ```
 DATABASE_URL=postgres://lex:lex@localhost:5434/lex
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:6391     # Docker (the Mac)
+# REDIS_URL=redis://localhost:6379   # WSL Redis on Windows (its default port)
 ```
 
 ### 4.3 Create the tables
@@ -217,7 +218,7 @@ Still to do (details in [`dev-b-next-steps.md`](dev-b-next-steps.md)):
 |---|---|---|
 | Tests crash with "out of memory" | Too many tests at once on a small laptop | `pnpm test --maxWorkers=2` |
 | "Invalid environment: DATABASE_URL…" | Missing line in `apps/api/.env` | Copy it from `.env.example` |
-| Can't connect to port 5434 or 6379 (Windows) | WSL services stopped after a restart | Run the `wsl … service … start` line from 4.2 |
+| Can't connect to Postgres (5434) or Redis (6391 Docker / 6379 WSL) | WSL services stopped after a restart | Run the `wsl … service … start` line from 4.2 |
 | `Cannot find module '@lex/contracts'` | Shared packages not built | `pnpm --filter @lex/contracts --filter @lex/crypto build` |
 | `ingest:embed` stopped halfway | Network or sleep | Run it again; it continues where it stopped |
 | Disk full (A's laptop) | Datasets and test databases | Delete `apps/api/data/eval-db` and any `lex-hf-full-*` folders in `%TEMP%`; load only the subset |

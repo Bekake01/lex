@@ -127,14 +127,14 @@ This is the big one. It loads every law into a **real Postgres**, sends all ~190
 cd ~/path/to/lex
 git pull origin z-ai
 pnpm install
-pnpm services:up          # Postgres on port 5434, Redis on 6379
+pnpm services:up          # Postgres on port 5434, Redis on 6391
 ```
 
 **E2. Settings.** In `apps/api/.env`, next to your `VOYAGE_API_KEY`, add these lines if they aren't there:
 
 ```bash
 DATABASE_URL=postgres://lex:lex@localhost:5434/lex
-REDIS_URL=redis://localhost:6379
+REDIS_URL=redis://localhost:6391
 JWT_SECRET=any-long-random-text-at-least-32-characters-long
 EMBEDDING_PROVIDER=voyage
 ```
