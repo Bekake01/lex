@@ -199,6 +199,12 @@ export default function PricingPage() {
   );
 }
 
+/** Shown in checkout, not working yet (no merchant accounts). */
+const PROVIDERS = [
+  { id: 'payme', name: 'Payme' },
+  { id: 'click', name: 'Click' },
+] as const;
+
 function CheckoutDialog({
   plan,
   interval,
@@ -217,6 +223,8 @@ function CheckoutDialog({
   const [companyName, setCompanyName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  /** Payme / Click aren't connected yet: picking one only says so. */
+  const [soon, setSoon] = useState<string | null>(null);
   const amount = planPrice(plan, interval, seats);
 
   useEffect(() => {
@@ -282,8 +290,36 @@ function CheckoutDialog({
             </label>
           )}
 
+          <div className="space-y-2">
+            <div className="font-medium">Tölov usuli</div>
+            <div className="grid grid-cols-2 gap-2">
+              {PROVIDERS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    setError('');
+                    setSoon(p.name);
+                  }}
+                  aria-describedby={soon === p.name ? 'provider-soon' : undefined}
+                  className={`flex h-14 items-center justify-between rounded-xl border bg-page/70 px-3 transition hover:border-line-strong ${
+                    soon === p.name ? 'border-accent ring-4 ring-accent/10' : 'border-line'
+                  }`}
+                >
+                  <span className="text-base font-bold tracking-tight">{p.name}</span>
+                  <span className="rounded-full bg-subtle px-2 py-0.5 text-[11px] text-muted">Tez orada</span>
+                </button>
+              ))}
+            </div>
+            {soon && (
+              <p id="provider-soon" role="status" className="rounded-xl bg-subtle px-3 py-2.5 text-ink/80">
+                {soon} orqali tölov tez orada ulanadi. Hozircha test tölov bilan davom eting.
+              </p>
+            )}
+          </div>
+
           <div className="rounded-xl bg-accent-soft px-3 py-2.5 text-accent">
-            Test rejimi: karta sörlmaydi va pul yeçilmaydi.
+            Test tölov: karta sörlmaydi va pul yeçilmaydi.
           </div>
           {error && (
             <div role="alert" className="rounded-xl bg-danger-soft px-3 py-2.5 text-danger ring-1 ring-danger-line">
@@ -296,7 +332,7 @@ function CheckoutDialog({
             Bekor qiliş
           </button>
           <button onClick={pay} disabled={busy} className="btn btn-primary">
-            {busy ? 'Tölanmoqda…' : `${formatSom(amount)} tölaş`}
+            {busy ? 'Tölanmoqda…' : `Test tölov · ${formatSom(amount)}`}
           </button>
         </div>
       </div>
