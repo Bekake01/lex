@@ -47,7 +47,7 @@ export const envSchema = z
      * it goes through the web app's `/api` proxy (deployment).
      */
     REFRESH_COOKIE_PATH: z.string().startsWith('/').default('/auth'),
-    /** Public base URL of apps/sign, used to build signing links (prod: https://crasoftinc.com). */
+    /** Public base URL of apps/sign, used to build signing links. */
     SIGN_APP_URL: z.string().default('http://localhost:3001'),
 
     /** Resend, for signing invites by email. Without it emails are logged, not sent. */
@@ -67,7 +67,7 @@ export const envSchema = z
     JWT_SECRET: z.string().min(32, 'must be at least 32 characters'),
 
     /**
-     * Ed25519 seal key ring (JSON, same format as tech award's ESIGN_SEAL_KEYS):
+     * Ed25519 seal key ring (JSON):
      * seals every signed copy. Make one with `pnpm --filter api seal:keygen`.
      * Never delete an old key — mark it `retiring` so old seals still verify.
      */
@@ -112,7 +112,7 @@ export const envSchema = z
 
     /** Embeddings: Voyage voyage-3.5 (complements keyword search, nothing to host); needs VOYAGE_API_KEY. */
     EMBEDDING_PROVIDER: z.enum(['voyage', 'bge-m3']).default('voyage'),
-    VOYAGE_API_KEY: z.string().min(1).optional(),
+    VOYAGE_API_KEY: optionalSecret,
     EMBEDDING_URL: z.url().optional(),
 
     /** Daily lex.uz sync. Off unless explicitly enabled. */

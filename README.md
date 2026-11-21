@@ -14,6 +14,45 @@ AI legal review and e-signature for Uzbek contracts.
 
 The interface is in Uzbek.
 
+## Live demo
+
+**https://lex.crasoftinc.com** — fully configured (real AI, the full law index, email invites, sealed copies).
+Nothing to install and no `.env` needed.
+
+1. Open https://lex.crasoftinc.com/register and create an account (any email; the free plan has 3 contract
+   checks and 3 sends). Already have one? https://lex.crasoftinc.com/login
+2. **Yuridik savol bering** (ask a legal question): e.g. "Ish beruvchi 2 oydan beri maoş bermayapti, nima
+   qilay?". The answer cites the articles it used.
+3. **Şartnomani tekşiring** (check a contract): upload a PDF or DOCX contract. The full review takes about
+   3 minutes. Then click a finding to jump to its clause, or ask in the chat for a change and accept it (DOCX).
+4. **Imzoga yuboring** (send for signature): upload a PDF, place a signature field, add your own email and
+   send. Open the signing link (from the email or the result screen), read the summary, sign, and download the
+   sealed PDF and its certificate.
+
+The signing pages are served by the separate signing app, so the link opens on another host. That's expected.
+
+### Reviewing the code without keys
+
+You don't need a `.env` or Docker to check that the code works:
+
+```bash
+pnpm install
+pnpm test        # 490+ unit and integration tests; every file starts its own in-process Postgres (PGlite)
+pnpm lint
+```
+
+Good places to start reading:
+
+| What                                                                           | Where                                       |
+| ------------------------------------------------------------------------------ | ------------------------------------------- |
+| AI review pipeline (extract → classify → law search → review → citation check) | `apps/api/src/ai-review/`                   |
+| Prompts and the "contract is data" fencing                                     | `apps/api/src/ai-review/prompts.ts`         |
+| Law index and hybrid search                                                    | `apps/api/src/law/`                         |
+| Legal Q&A                                                                      | `apps/api/src/legal-qa/`                    |
+| Signing, sealing and the certificate                                           | `apps/api/src/signing/`, `packages/crypto/` |
+| Shared API shapes (Zod)                                                        | `packages/contracts/src/`                   |
+| Review quality eval                                                            | `apps/api/eval/ai-review/`                  |
+
 ## How the AI stays honest
 
 - **Grounded in real law.** Every AI call gets articles retrieved from an index of Uzbek legislation
@@ -46,26 +85,27 @@ model call never blocks a request, and every job is safe to retry.
 
 ## Apps
 
-| App         | What                                                          | Port |
-| ----------- | ------------------------------------------------------------- | ---- |
+| App         | What                                                           | Port |
+| ----------- | -------------------------------------------------------------- | ---- |
 | `apps/web`  | Next.js dashboard (Q&A, upload, AI review, send for signature) | 3000 |
-| `apps/sign` | Next.js public signing app for receivers (no login)           | 3001 |
-| `apps/api`  | NestJS backend, AI jobs, law index, Drizzle ORM               | 5000 |
-| Postgres    | Postgres 18 + pgvector (Docker)                               | 5434 |
-| Redis       | BullMQ jobs (Docker)                                          | 6391 |
+| `apps/sign` | Next.js public signing app for receivers (no login)            | 3001 |
+| `apps/api`  | NestJS backend, AI jobs, law index, Drizzle ORM                | 5000 |
+| Postgres    | Postgres 18 + pgvector (Docker)                                | 5434 |
+| Redis       | BullMQ jobs (Docker)                                           | 6391 |
 
-| Package              | What                                                                |
-| -------------------- | ------------------------------------------------------------------- |
+| Package              | What                                                                   |
+| -------------------- | ---------------------------------------------------------------------- |
 | `packages/contracts` | Zod schemas shared by the API and the frontends, plus sample responses |
-| `packages/crypto`    | Canonical hashing, Ed25519 seals and the signing certificate        |
-| `packages/theme`     | Colour tokens (light + dark) and shared button styles               |
+| `packages/crypto`    | Canonical hashing, Ed25519 seals and the signing certificate           |
+| `packages/theme`     | Colour tokens (light + dark) and shared button styles                  |
 
 Stack: TypeScript, NestJS, Next.js, Drizzle ORM, PostgreSQL + pgvector, Redis + BullMQ, OpenAI (Responses API,
 structured outputs), Voyage embeddings, pdf-lib / pdf.js, Tailwind CSS, Turborepo + pnpm.
 
 ## Getting started
 
-Requires Node 24+, pnpm and Docker.
+Requires Node 24+, pnpm and Docker. Running it locally needs your own API keys (below); the
+[live demo](#live-demo) needs none.
 
 ```bash
 pnpm install
@@ -129,7 +169,8 @@ Routes, errors and the code layout of the API are in [`apps/api/README.md`](apps
 
 ## Deployment (Railway)
 
-Five services in one Railway project. Each app builds from the repo root with its own Dockerfile.
+Five services in one Railway project. Each app builds from the repo root with its own Dockerfile. `web` is
+served at https://lex.crasoftinc.com.
 
 | Service    | Source                                  | Public | PORT |
 | ---------- | --------------------------------------- | ------ | ---- |
