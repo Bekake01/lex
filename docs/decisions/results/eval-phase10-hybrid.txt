@@ -1,0 +1,13 @@
+Search eval: hybrid search (keyword + embeddings)
+topic               n     R@5    R@10  hit@10  MRR
+ALL               102   92.3%   98.7%  100.0%  0.871
+rental             20   93.3%  100.0%  100.0%  0.799
+sale               18   93.5%   95.4%  100.0%  0.880
+services           12  100.0%  100.0%  100.0%  0.944
+employment         20   95.0%  100.0%  100.0%  0.908
+nda                 8   93.8%  100.0%  100.0%  0.906
+personal-data       6   77.8%  100.0%  100.0%  0.750
+consumer            8   93.8%  100.0%  100.0%  0.938
+general            10   80.0%   95.0%  100.0%  0.828
+
+Time per query: p50 423 ms, p95 706 ms

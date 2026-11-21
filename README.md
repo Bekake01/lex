@@ -44,7 +44,8 @@ In `apps/api/.env`:
 - `SIGN_TICKET_SECRET`: signs password tickets (optional in dev, required in production).
 - `STORAGE_DRIVER=local|r2` (default `local`); for `r2` also `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`,
   `S3_SECRET_ACCESS_KEY` (`S3_REGION` defaults to `auto`).
-- `SIGN_APP_URL` (default `http://localhost:3001`): the host signing links point to.
+- `SIGN_APP_URL` (default `http://localhost:3001`, production `https://crasoftinc.com`): the host signing links point to.
+- `RESEND_API_KEY` (optional): sends signing invites by email through Resend; without it they are only logged. `MAIL_FROM` (default `Cralex <no-reply@thetfone.com>`) is the one sender address.
 
 Then:
 

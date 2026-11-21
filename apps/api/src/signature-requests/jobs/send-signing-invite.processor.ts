@@ -3,13 +3,19 @@ import { Inject, Logger } from '@nestjs/common';
 import { DelayedError, type Job } from 'bullmq';
 import { and, eq, inArray } from 'drizzle-orm';
 import { DB, type Db } from '../../db/db.module.js';
-import { recipients, signatureRequests } from '../../db/schema/index.js';
+import {
+  recipients,
+  signatureRequests,
+  users,
+} from '../../db/schema/index.js';
+import { MailService } from '../../mail/mail.service.js';
 import {
   AI_WORKER_OPTIONS,
   QUEUE,
   type SendSigningInviteJob,
 } from '../../queue/queue.constants.js';
 import { SignatureRequestsService } from '../signature-requests.service.js';
+import { inviteEmail } from './invite-email.js';
 
 const RECHECK_MS = 3_000;
 
@@ -21,9 +27,10 @@ const RECHECK_MS = 3_000;
  * which the invite goes out anyway. A missing summary must never stop a
  * contract from being signed.
  *
- * `POST …/send` already marked the request sent. Delivery itself is not built
- * (channels are shown, not delivered): this processor logs the links. Phase 07
- * reworks it per channel.
+ * `POST …/send` already marked the request sent. Email goes out through
+ * Resend (`MailService`); Telegram / SMS are not delivered yet, so those
+ * people only get a log line and the sender shares their links from the UI.
+ * Each email carries an idempotency key, so a retried job never sends twice.
  */
 @Processor(QUEUE.sendSigningInvite, AI_WORKER_OPTIONS)
 export class SendSigningInviteProcessor extends WorkerHost {
@@ -32,6 +39,7 @@ export class SendSigningInviteProcessor extends WorkerHost {
   constructor(
     @Inject(DB) private readonly db: Db,
     private readonly signatureRequestsService: SignatureRequestsService,
+    private readonly mail: MailService,
   ) {
     super();
   }
@@ -66,6 +74,7 @@ export class SendSigningInviteProcessor extends WorkerHost {
     const people = await this.db
       .select({
         id: recipients.id,
+        fullName: recipients.fullName,
         channel: recipients.channel,
         contact: recipients.contact,
         token: recipients.token,
@@ -82,16 +91,47 @@ export class SendSigningInviteProcessor extends WorkerHost {
         ),
       );
 
-    // Real delivery (Telegram bot, SMS, Resend) is "Later": the sender shares
-    // the links from the UI. One line per person, so the log shows who is due.
+    const [sender] = await this.db
+      .select({ fullName: users.fullName })
+      .from(users)
+      .where(eq(users.id, request.createdByUserId))
+      .limit(1);
+    const senderName = sender?.fullName ?? 'Cralex foydalanuvçisi';
+
+    // Telegram / SMS are "Later": one log line per person, so the log shows
+    // who is due. Email goes out now.
+    const failed: string[] = [];
     for (const person of people) {
       this.logger.log(
         `invite ${signatureRequestId} → ${person.channel}${person.contact ? ` ${person.contact}` : ''} (recipient ${person.id})`,
       );
+      const url = this.signatureRequestsService.signUrl(person.token);
       // The link carries the token, so it is logged at debug level only.
-      this.logger.debug(
-        `link for ${person.id}: ${this.signatureRequestsService.signUrl(person.token)}`,
-      );
+      this.logger.debug(`link for ${person.id}: ${url}`);
+
+      if (person.channel !== 'email' || !person.contact) continue;
+      try {
+        await this.mail.send({
+          to: person.contact,
+          ...inviteEmail({
+            senderName,
+            recipientName: person.fullName,
+            title: request.title,
+            message: request.message,
+            signUrl: url,
+          }),
+          idempotencyKey: `invite.${person.id}`,
+        });
+      } catch (err) {
+        this.logger.error(
+          `invite email for recipient ${person.id} failed: ${(err as Error).message}`,
+        );
+        failed.push(person.id);
+      }
+    }
+    // Retry the job; people already emailed are skipped by Resend's idempotency key.
+    if (failed.length > 0) {
+      throw new Error(`invite email failed for ${failed.length} people`);
     }
   }
 }

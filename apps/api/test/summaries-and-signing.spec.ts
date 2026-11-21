@@ -26,6 +26,7 @@ import type {
   SendSigningInviteJob,
   SummarizeForRecipientsJob,
 } from '../src/queue/queue.constants.js';
+import { MailService } from '../src/mail/mail.service.js';
 import { SendSigningInviteProcessor } from '../src/signature-requests/jobs/send-signing-invite.processor.js';
 import { SignatureRequestsService } from '../src/signature-requests/signature-requests.service.js';
 import { StorageService } from '../src/storage/storage.service.js';
@@ -363,7 +364,11 @@ describe('summary job (one per send) and invite job', () => {
         noQueue,
         noQueue,
       );
-      return new SendSigningInviteProcessor(db, service);
+      return new SendSigningInviteProcessor(
+        db,
+        service,
+        new MailService(env()),
+      );
     }
 
     it('waits while the summary is still being written', async () => {

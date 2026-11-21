@@ -12,6 +12,7 @@ import { DocumentsModule } from './documents/documents.module.js';
 import { HealthController } from './health/health.controller.js';
 import { LawModule } from './law/law.module.js';
 import { LawSearchModule } from './law-search/law-search.module.js';
+import { MailModule } from './mail/mail.module.js';
 import { MeController } from './me/me.controller.js';
 import { QueueModule } from './queue/queue.module.js';
 import { SignatureRequestsModule } from './signature-requests/signature-requests.module.js';
@@ -27,6 +28,7 @@ import { AiUsageModule } from './usage/ai-usage.module.js';
     LawModule,
     StorageModule,
     QueueModule,
+    MailModule,
     // LawModule search for the AI review, or the fixtures on an empty index.
     LawSearchModule,
     DocumentsModule,

@@ -27,9 +27,9 @@ Edit in place to keep this current.
 - Demo shapes live in `apps/*/src/lib/demo.ts`; agree these with backend before wiring the API.
 
 ## In progress
-- Law Phases 8, 9, 14 done (Job E: hybrid R@10 96.1%, p95 ~1.25 s). **Phase 10 (search tuning) code done**: stored headings, focused keyword candidates, HNSW-friendly vector query, definition boost, personal-data anchor for all types. Waiting for Mac numbers (Job F, `docs/phase-10-and-next.md` §2.5; target p95 < 300 ms).
-- `apps/web` review screen on real data: plan `docs/review-wiring-plan.md`. **All 9 phases built** (text route, API client, real uploads, start / reuse / poll, findings card, contract text with two-way highlighting, correction chat, accept / reject edits + version switcher, "Imzoga yuboriş" for PDFs, demo screen removed). Left: the end-to-end run on the Mac (sign up → Word review → correction → accept v2 → free limit → PDF review → send).
-- Delivery: `send-signing-invite` logs one line per person (channel + contact); real Telegram / SMS / email delivery is "Later".
+- Law Phases 8, 9, 14 done (Job E: hybrid R@10 96.1%, p95 ~1.25 s). **Phase 10 (search tuning) code done**: stored headings, focused keyword candidates, HNSW-friendly vector query, definition boost, personal-data anchor for all types. Job F numbers in: hybrid R@10 98.7%, hit@10 100%, p95 706 ms (keyword p95 866 ms); **p95 < 300 ms still open**.
+- `apps/web` review screen on real data: plan `docs/review-wiring-plan.md`. **All 9 phases built** (text route, API client, real uploads, start / reuse / poll, findings card, contract text with two-way highlighting, correction chat, accept / reject edits + version switcher, "Imzoga yuboriş" for PDFs, demo screen removed). End-to-end run on the Mac done (Job F): all steps pass; small bugs listed in CHANGELOG (usage meter lag, "20–60 soniya" text, 2028 law date, low citations on v2).
+- Delivery: `send-signing-invite` **emails** people on the email channel via Resend (`src/mail/`, from `no-reply@thetfone.com`, link = `SIGN_APP_URL/sign/<token>`; no `RESEND_API_KEY` → logged only). Telegram / SMS still log one line and are "Later".
 - Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
 
 ## Decisions

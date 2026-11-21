@@ -41,8 +41,13 @@ export const envSchema = z
       .default('info'),
     /** The sender dashboard; the only origin allowed by CORS. */
     WEB_ORIGIN: z.url().default('http://localhost:3000'),
-    /** Public base URL of apps/sign, used to build signing links. */
+    /** Public base URL of apps/sign, used to build signing links (prod: https://crasoftinc.com). */
     SIGN_APP_URL: z.string().default('http://localhost:3001'),
+
+    /** Resend, for signing invites by email. Without it emails are logged, not sent. */
+    RESEND_API_KEY: optionalSecret,
+    /** Every email goes out from this one address (its domain is verified in Resend). */
+    MAIL_FROM: z.string().default('Cralex <no-reply@thetfone.com>'),
 
     /** Postgres with pgvector (docker-compose.yml at the repo root). */
     DATABASE_URL: z
