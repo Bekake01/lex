@@ -15,8 +15,7 @@ export const SESSION_ABSOLUTE_MS = 30 * DAY;
 export const REFRESH_GRACE_MS = 60 * 1000;
 
 export const REFRESH_COOKIE_NAME = 'refresh_token';
-// The browser sends the cookie only to the auth endpoints, never to the rest of the API.
-export const REFRESH_COOKIE_PATH = '/auth';
+// The cookie's path (the auth endpoints only) is REFRESH_COOKIE_PATH in config/env.ts.
 
 // RFC 5321 limit on an address.
 export const EMAIL_MAX_LENGTH = 320;

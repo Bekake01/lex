@@ -1,0 +1,25 @@
+# Never ship local secrets into an image.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Rebuilt inside the image (native modules must match linux).
+**/node_modules
+**/dist
+**/dist-tools
+**/.next
+**/.turbo
+**/*.tsbuildinfo
+
+# Not part of any deployed service.
+.git
+.claude
+dev
+CLAUDE.md
+**/AGENTS.md
+docker-compose.yml
+apps/api/data
+apps/api/uploads
+**/coverage
+**/.DS_Store
+**/*.log

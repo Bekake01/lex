@@ -26,7 +26,7 @@ import {
 import type { Request, Response } from 'express';
 import { clientInfo, type SignedInResponse } from '../auth/auth.controller.js';
 import { Public } from '../auth/auth.decorators.js';
-import { setRefreshCookie } from '../auth/refresh-cookie.js';
+import { setRefreshCookie, type RefreshCookieConfig } from '../auth/refresh-cookie.js';
 import {
   CurrentUserGuard,
   User,
@@ -161,13 +161,16 @@ export class TeamController {
 @Public()
 @Controller('invites')
 export class InvitesController {
-  private readonly secureCookie: boolean;
+  private readonly cookie: RefreshCookieConfig;
 
   constructor(
     private readonly team: TeamService,
     @Inject(ENV) env: Env,
   ) {
-    this.secureCookie = env.NODE_ENV === 'production';
+    this.cookie = {
+      secure: env.NODE_ENV === 'production',
+      path: env.REFRESH_COOKIE_PATH,
+    };
   }
 
   @Get(':token')
@@ -192,7 +195,7 @@ export class InvitesController {
       },
       clientInfo(req),
     );
-    setRefreshCookie(res, result.session, this.secureCookie);
+    setRefreshCookie(res, result.session, this.cookie);
     return {
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,

@@ -57,3 +57,25 @@ pnpm eval:review      # review quality (citation accuracy, issue precision)
 The AI API the frontend builds against is [`packages/contracts/src/ai.ts`](packages/contracts/src/ai.ts),
 with sample responses in [`packages/contracts/mocks/`](packages/contracts/mocks) and
 the route list in [`apps/api/README.md`](apps/api/README.md).
+
+## Deployment (Railway)
+
+Five services in one Railway project. Each app builds from the repo root with its own Dockerfile.
+
+| Service    | Source                                  | Public | PORT |
+| ---------- | --------------------------------------- | ------ | ---- |
+| `api`      | `docker/api.Dockerfile`                 | no     | 5000 |
+| `web`      | `docker/web.Dockerfile`                 | yes    | 3000 |
+| `sign`     | `docker/sign.Dockerfile`                | yes    | 3001 |
+| `postgres` | image `pgvector/pgvector:pg18` + volume | no     | 5432 |
+| `Redis`    | Railway Redis                           | no     | 6379 |
+
+- The browser never calls the API directly: `web` forwards `/api/*` to `API_URL` (a rewrite in
+  `apps/web/next.config.ts`), so the refresh cookie stays first-party. Set `NEXT_PUBLIC_API_URL=/api` on `web`
+  and `REFRESH_COOKIE_PATH=/api/auth` on `api`. Both `NEXT_PUBLIC_API_URL` and `API_URL` are read at build time on `web`.
+- `sign` forwards `/api/sign/*` to `API_URL` at runtime. `web` and `sign` reach the API over the private network
+  (`http://api.railway.internal:5000`).
+- `api` runs `docker/api-predeploy.sh` (Drizzle migrations) before each deploy and is health-checked on `/health`.
+- `PORT` is pinned on every service to the Dockerfile's `EXPOSE`, so the edge proxy and the app agree.
+- Deploy a service from a local checkout with `railway up --service <name>`; `.railwayignore` keeps `.env` files
+  and local data out of the upload.

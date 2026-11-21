@@ -1,8 +1,14 @@
 import type { CookieOptions, Request, Response } from 'express';
-import { REFRESH_COOKIE_NAME, REFRESH_COOKIE_PATH } from './auth.constants.js';
+import { REFRESH_COOKIE_NAME } from './auth.constants.js';
 import type { IssuedSession } from './session.service.js';
 
-function baseOptions(secure: boolean): CookieOptions {
+/** `secure` is off on http://localhost; `path` is where the browser sees the auth routes. */
+export interface RefreshCookieConfig {
+  secure: boolean;
+  path: string;
+}
+
+function baseOptions({ secure, path }: RefreshCookieConfig): CookieOptions {
   return {
     httpOnly: true,
     // Off on http://localhost in development, where Safari would drop it.
@@ -10,26 +16,26 @@ function baseOptions(secure: boolean): CookieOptions {
     // The web app (localhost:3000) and the API (localhost:5000) are the same
     // site, so Lax is enough against CSRF here.
     sameSite: 'lax',
-    path: REFRESH_COOKIE_PATH,
+    path,
   };
 }
 
 export function setRefreshCookie(
   res: Response,
   session: Pick<IssuedSession, 'refreshToken' | 'rememberMe' | 'idleExpiresAt'>,
-  secure: boolean,
+  config: RefreshCookieConfig,
 ): void {
   res.cookie(REFRESH_COOKIE_NAME, session.refreshToken, {
-    ...baseOptions(secure),
+    ...baseOptions(config),
     // Without "remember me" there is no expiry, so the cookie is gone when
     // the browser closes.
     ...(session.rememberMe ? { expires: session.idleExpiresAt } : {}),
   });
 }
 
-export function clearRefreshCookie(res: Response, secure: boolean): void {
+export function clearRefreshCookie(res: Response, config: RefreshCookieConfig): void {
   // The browser only drops it when name, path and flags match the original.
-  res.clearCookie(REFRESH_COOKIE_NAME, baseOptions(secure));
+  res.clearCookie(REFRESH_COOKIE_NAME, baseOptions(config));
 }
 
 /** Express 5 doesn't parse cookies, and this is the only one the API reads. */

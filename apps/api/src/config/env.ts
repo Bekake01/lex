@@ -41,6 +41,12 @@ export const envSchema = z
       .default('info'),
     /** The sender dashboard; the only origin allowed by CORS. */
     WEB_ORIGIN: z.url().default('http://localhost:3000'),
+    /**
+     * Where the browser sees the auth routes; the refresh cookie is sent only
+     * there. `/auth` when the browser calls the API directly, `/api/auth` when
+     * it goes through the web app's `/api` proxy (deployment).
+     */
+    REFRESH_COOKIE_PATH: z.string().startsWith('/').default('/auth'),
     /** Public base URL of apps/sign, used to build signing links (prod: https://crasoftinc.com). */
     SIGN_APP_URL: z.string().default('http://localhost:3001'),
 

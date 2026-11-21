@@ -17,6 +17,7 @@ import {
   clearRefreshCookie,
   readRefreshCookie,
   setRefreshCookie,
+  type RefreshCookieConfig,
 } from './refresh-cookie.js';
 import type { SessionUser } from './session.service.js';
 
@@ -32,13 +33,16 @@ export interface SignedInResponse {
 @Public()
 @Controller('auth')
 export class AuthController {
-  private readonly secureCookie: boolean;
+  private readonly cookie: RefreshCookieConfig;
 
   constructor(
     private readonly auth: AuthService,
     @Inject(ENV) env: Env,
   ) {
-    this.secureCookie = env.NODE_ENV === 'production';
+    this.cookie = {
+      secure: env.NODE_ENV === 'production',
+      path: env.REFRESH_COOKIE_PATH,
+    };
   }
 
   /** Email + password. Returns the access token and sets the refresh cookie. */
@@ -50,7 +54,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<SignedInResponse> {
     const result = await this.auth.login(parseLoginBody(body), clientInfo(req));
-    setRefreshCookie(res, result.session, this.secureCookie);
+    setRefreshCookie(res, result.session, this.cookie);
     return {
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,
@@ -70,7 +74,7 @@ export class AuthController {
       parseRegisterBody(body),
       clientInfo(req),
     );
-    setRefreshCookie(res, result.session, this.secureCookie);
+    setRefreshCookie(res, result.session, this.cookie);
     return {
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,
@@ -94,7 +98,7 @@ export class AuthController {
       // Not set on the grace path: the browser already holds the newer
       // cookie from the request that rotated first.
       if (result.rotatedSession) {
-        setRefreshCookie(res, result.rotatedSession, this.secureCookie);
+        setRefreshCookie(res, result.rotatedSession, this.cookie);
       }
       return {
         accessToken: result.accessToken,
@@ -104,7 +108,7 @@ export class AuthController {
     } catch (error) {
       // The cookie won't work again, so drop it. The frontend goes to the login page.
       if (error instanceof HttpException) {
-        clearRefreshCookie(res, this.secureCookie);
+        clearRefreshCookie(res, this.cookie);
       }
       throw error;
     }
@@ -124,7 +128,7 @@ export class AuthController {
     if (token) {
       await this.auth.logout(token);
     }
-    clearRefreshCookie(res, this.secureCookie);
+    clearRefreshCookie(res, this.cookie);
   }
 }
 
