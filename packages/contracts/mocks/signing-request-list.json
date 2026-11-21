@@ -1,0 +1,55 @@
+{
+  "requests": [
+    {
+      "id": "01999999-0000-7000-8000-000000000501",
+      "title": "Turar joy ijarasi şartnomasi",
+      "documentId": "01999999-0000-7000-8000-000000000101",
+      "documentName": "ijara-shartnomasi.pdf",
+      "message": "Assalomu alaykum! Iltimos, şartnomani körib çiqib imzolang.",
+      "partyName": "Ijaraga oluvçi",
+      "pageCount": 1,
+      "createdAt": "2026-11-21T09:00:00.000Z",
+      "status": "sent",
+      "openLinkEnabled": true,
+      "openLinkUrl": "http://localhost:3001/open/pQ7wXz2LmN4vB8cR1tY6uK3sD9fG5hJ0",
+      "hasPassword": true,
+      "recipientCount": 3,
+      "signedCount": 1,
+      "sentAt": "2026-11-21T09:15:00.000Z"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000502",
+      "title": "Mehnat şartnomasi",
+      "documentId": "01999999-0000-7000-8000-000000000102",
+      "documentName": "mehnat-shartnomasi.pdf",
+      "message": null,
+      "partyName": "Xodim",
+      "pageCount": 1,
+      "createdAt": "2026-11-21T11:40:00.000Z",
+      "status": "draft",
+      "openLinkEnabled": false,
+      "openLinkUrl": null,
+      "hasPassword": false,
+      "recipientCount": 0,
+      "signedCount": 0,
+      "sentAt": null
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000503",
+      "title": "Xizmat körsatiş şartnomasi",
+      "documentId": "01999999-0000-7000-8000-000000000103",
+      "documentName": "xizmat-shartnomasi.pdf",
+      "message": null,
+      "partyName": null,
+      "pageCount": 1,
+      "createdAt": "2026-11-19T14:00:00.000Z",
+      "status": "cancelled",
+      "openLinkEnabled": false,
+      "openLinkUrl": null,
+      "hasPassword": false,
+      "recipientCount": 2,
+      "signedCount": 0,
+      "sentAt": "2026-11-19T14:10:00.000Z"
+    }
+  ]
+}

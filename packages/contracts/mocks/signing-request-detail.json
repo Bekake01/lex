@@ -1,0 +1,141 @@
+{
+  "id": "01999999-0000-7000-8000-000000000501",
+  "title": "Turar joy ijarasi şartnomasi",
+  "documentId": "01999999-0000-7000-8000-000000000101",
+  "documentName": "ijara-shartnomasi.pdf",
+  "message": "Assalomu alaykum! Iltimos, şartnomani körib çiqib imzolang.",
+  "partyName": "Ijaraga oluvçi",
+  "fields": [
+    {
+      "id": "01999999-0000-7000-8000-000000000511",
+      "type": "name",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.7,
+      "w": 0.34,
+      "h": 0.03,
+      "required": true,
+      "label": "Ism familiya"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000512",
+      "type": "phone",
+      "page": 1,
+      "x": 0.54,
+      "y": 0.7,
+      "w": 0.3,
+      "h": 0.03,
+      "required": false,
+      "label": "Telefon"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000513",
+      "type": "date_input",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.75,
+      "w": 0.2,
+      "h": 0.03,
+      "required": true,
+      "label": "Ijara boşlanadigan sana"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000514",
+      "type": "checkbox",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.8,
+      "w": 0.025,
+      "h": 0.018,
+      "required": true,
+      "label": "Şartlar bilan tanişdim"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000515",
+      "type": "signature",
+      "page": 1,
+      "x": 0.12,
+      "y": 0.85,
+      "w": 0.3,
+      "h": 0.06,
+      "required": true,
+      "label": "Imzo"
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000516",
+      "type": "date",
+      "page": 1,
+      "x": 0.6,
+      "y": 0.87,
+      "w": 0.22,
+      "h": 0.03,
+      "required": true,
+      "label": "Imzolangan sana"
+    }
+  ],
+  "pageCount": 1,
+  "pageSizes": [
+    {
+      "w": 595,
+      "h": 842
+    }
+  ],
+  "createdAt": "2026-11-21T09:00:00.000Z",
+  "status": "sent",
+  "openLinkEnabled": true,
+  "openLinkUrl": "http://localhost:3001/open/pQ7wXz2LmN4vB8cR1tY6uK3sD9fG5hJ0",
+  "hasPassword": true,
+  "recipientCount": 3,
+  "signedCount": 1,
+  "sentAt": "2026-11-21T09:15:00.000Z",
+  "recipients": [
+    {
+      "id": "01999999-0000-7000-8000-000000000521",
+      "name": "Dilnoza Yusupova",
+      "channel": "email",
+      "contact": "dilnoza@example.com",
+      "source": "invite",
+      "status": "signed",
+      "viewedAt": "2026-11-21T09:20:00.000Z",
+      "signedAt": "2026-11-21T09:31:00.000Z",
+      "signUrl": "http://localhost:3001/sign/8kQ2Xr5tLpNvYbWcZdAeFgHiJkLmNoPqRsTuVwXyZ01",
+      "ready": true,
+      "signerName": "Dilnoza Yusupova",
+      "fieldValues": {
+        "01999999-0000-7000-8000-000000000511": "Dilnoza Yusupova",
+        "01999999-0000-7000-8000-000000000512": "+998 90 123 45 67",
+        "01999999-0000-7000-8000-000000000513": "2026-12-01",
+        "01999999-0000-7000-8000-000000000514": "true",
+        "01999999-0000-7000-8000-000000000516": "2026-11-21"
+      }
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000522",
+      "name": "Javlon Rahimov",
+      "channel": "telegram",
+      "contact": "@javlon_rahimov",
+      "source": "invite",
+      "status": "viewed",
+      "viewedAt": "2026-11-21T10:05:00.000Z",
+      "signedAt": null,
+      "signUrl": "http://localhost:3001/sign/Mn3Bv7Cx1Zl9Kj5Hg2Fd8Sa4Qw6Er0TyUiOpAsDfGh",
+      "ready": false,
+      "signerName": null,
+      "fieldValues": {}
+    },
+    {
+      "id": "01999999-0000-7000-8000-000000000523",
+      "name": "Şahzoda Qodirova",
+      "channel": "link",
+      "contact": null,
+      "source": "open_link",
+      "status": "pending",
+      "viewedAt": null,
+      "signedAt": null,
+      "signUrl": "http://localhost:3001/sign/Zx8Cv2Bn6Ml0Kj4Hg7Fd1Sa5Qw9Er3TyUiOpLkJhGf",
+      "ready": false,
+      "signerName": null,
+      "fieldValues": {}
+    }
+  ]
+}

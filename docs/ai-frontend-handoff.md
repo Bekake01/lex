@@ -110,14 +110,18 @@ The codes are in `AI_ERROR_CODES` in `@lex/contracts`.
 ## The signing app
 
 `GET /sign/:token/summary` is live, public, and reads a summary written at send
-time — it never calls the model, so it answers immediately. Unknown, already
-signed, cancelled and summary-less tokens all return the **same 404**, on
-purpose: a signing link must not reveal whether it ever existed.
+time — it never calls the model, so it answers immediately. There is **one
+summary per send** (not per person): `summarize-for-recipients` makes one model
+call and writes one `recipient_summaries` row keyed by `signature_request_id`;
+every link of that send reads it. Its `partyName` is the send's `partyName`,
+else the AI review's other party, else `imzolovçi`. Unknown, cancelled and
+summary-less tokens (and a password-protected link without a valid
+`x-sign-ticket`) all return the **same 404**: a signing link must not reveal
+whether it ever existed. `GET /sign/:token` says `hasSummary` so the page can
+skip the step without asking.
 
-`apps/sign` still renders `src/lib/demo.ts`
-(`src/app/sign/[token]/page.tsx:6`). That's the one place to swap in the real
-call. If the sign app proxies the API through its own route handler, add
-`/sign/:token/summary` to that route's allowlist.
+`apps/sign` uses it through its own pass-through (`/api/sign/...`) in the
+"Xulosa" step (`src/components/sign/SigningFlow.tsx`).
 
 ## Accepting an edit
 

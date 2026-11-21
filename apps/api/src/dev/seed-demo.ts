@@ -241,6 +241,7 @@ export async function seedDemo(
       documentId: document.id,
       createdByUserId: user.id,
       agencyId: user.agencyId,
+      title: document.name,
       status: 'sent',
       documentHash: document.sha256,
       summaryLanguage: 'uz',

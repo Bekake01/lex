@@ -238,6 +238,12 @@ export const documentWireSchema = z.object({
 });
 export type DocumentWire = z.infer<typeof documentWireSchema>;
 
+/** `GET /documents`: the caller's documents, latest versions only, newest first. */
+export const documentListSchema = z.object({
+  documents: z.array(documentWireSchema),
+});
+export type DocumentList = z.infer<typeof documentListSchema>;
+
 /* ---------------------------------------------------------- request bodies -- */
 
 export const createReviewBodySchema = z.object({

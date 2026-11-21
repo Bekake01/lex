@@ -1,7 +1,6 @@
 /*
  * Lex theme — the ONE color palette for apps/web and apps/sign.
- * Import it right after tailwindcss, by relative path (see apps/web/src/app/globals.css and apps/sign/src/app/globals.css):  @import 'tailwindcss'; @import '../../../../packages/theme/theme.css';
- * (Never write "apps/" followed by "*" and "/" in this comment: that pair closes a CSS comment and breaks the build.)
+ * Import it right after tailwindcss, by relative path (see apps/web and apps/sign src/app/globals.css):  @import 'tailwindcss'; @import '../../../../packages/theme/theme.css';
  *
  * Every color is a token with a light and a dark value, so a class like `bg-surface`
  * or `text-muted` is correct in both modes. Rules:
@@ -10,6 +9,7 @@
  *  - Need a new color? Add it here, in BOTH :root and [data-theme='dark'], and to @theme below.
  *  - Opacity modifiers work: `bg-surface/70`, `text-ink/60`, `border-accent/40`.
  *  - `dark:` exists for rare one-offs, but a token is almost always the better fix.
+ *  - `data-theme="light"` on an element keeps its subtree light (the PDF paper in apps/sign).
  *
  * Tokens
  *  page          app background                surface      cards, panels, inputs, dialogs
@@ -21,13 +21,15 @@
  *  on-color      text/icons on any solid colored fill (accent, success, danger, coral …)
  *  danger · warning · success · info · violet  — each with -soft (tinted bg) and -line (border)
  *  coral         "new" badges, brand highlight
+ *  paper         contract paper / signature pad (white in both modes)   paper-ink   ink drawn on it
  */
 
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @source './src';
 
-:root {
+:root,
+[data-theme='light'] {
   color-scheme: light;
 
   --page: #f5fbfc;
@@ -63,6 +65,9 @@
   --violet: #6c47ff;
   --violet-soft: #efedff;
   --violet-line: #d4cfff;
+
+  --paper: #ffffff;
+  --paper-ink: #0a1d2e;
 
   /* Page background art (see body below). */
   --grid: rgb(0 31 41 / 0.035);
@@ -111,6 +116,10 @@
   --violet: #ada9ff;
   --violet-soft: #221f4a;
   --violet-line: #3d3880;
+
+  /* Paper stays white: the signed PDF is white, so what is drawn must read on white. */
+  --paper: #ffffff;
+  --paper-ink: #0a1d2e;
 
   --grid: rgb(255 255 255 / 0.025);
   --mesh-mint: rgb(20 120 100 / 0.16);
@@ -163,6 +172,8 @@
   --color-violet: var(--violet);
   --color-violet-soft: var(--violet-soft);
   --color-violet-line: var(--violet-line);
+  --color-paper: var(--paper);
+  --color-paper-ink: var(--paper-ink);
 
   --font-sans: var(--font-figtree);
   --font-display: var(--font-outfit); /* headings */

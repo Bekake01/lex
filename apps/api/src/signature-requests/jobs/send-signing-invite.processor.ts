@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { DelayedError, type Job } from 'bullmq';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import { DB, type Db } from '../../db/db.module.js';
 import { recipients, signatureRequests } from '../../db/schema/index.js';
 import {
@@ -20,8 +20,9 @@ const RECHECK_MS = 3_000;
  * which the invite goes out anyway. A missing summary must never stop a
  * contract from being signed.
  *
- * Delivery itself (Resend) belongs to the email track; this processor marks the
- * request sent and logs the links so the flow is complete end to end today.
+ * `POST …/send` already marked the request sent. Delivery itself is not built
+ * (channels are shown, not delivered): this processor logs the links. Phase 07
+ * reworks it per channel.
  */
 @Processor(QUEUE.sendSigningInvite)
 export class SendSigningInviteProcessor extends WorkerHost {
@@ -42,8 +43,8 @@ export class SendSigningInviteProcessor extends WorkerHost {
       .from(signatureRequests)
       .where(eq(signatureRequests.id, signatureRequestId))
       .limit(1);
-    if (!request) return;
-    if (request.sentAt) return;
+    // Cancelled since (or never sent): nothing to deliver.
+    if (!request || request.status !== 'sent') return;
 
     const summariesPending =
       request.summariesStatus === 'queued' ||
@@ -64,26 +65,32 @@ export class SendSigningInviteProcessor extends WorkerHost {
     const people = await this.db
       .select({
         id: recipients.id,
-        email: recipients.email,
+        channel: recipients.channel,
+        contact: recipients.contact,
         token: recipients.token,
       })
       .from(recipients)
-      .where(eq(recipients.signatureRequestId, signatureRequestId));
+      .where(
+        and(
+          eq(recipients.signatureRequestId, signatureRequestId),
+          // Open-link copies were started by the person themselves.
+          eq(recipients.source, 'invite'),
+          job.data.recipientIds
+            ? inArray(recipients.id, job.data.recipientIds)
+            : undefined,
+        ),
+      );
 
+    // Real delivery (Telegram bot, SMS, Resend) is "Later": the sender shares
+    // the links from the UI. One line per person, so the log shows who is due.
     for (const person of people) {
+      this.logger.log(
+        `invite ${signatureRequestId} → ${person.channel}${person.contact ? ` ${person.contact}` : ''} (recipient ${person.id})`,
+      );
       // The link carries the token, so it is logged at debug level only.
       this.logger.debug(
-        `invite for recipient ${person.id}: ${this.signatureRequestsService.signUrl(person.token)}`,
+        `link for ${person.id}: ${this.signatureRequestsService.signUrl(person.token)}`,
       );
     }
-
-    await this.db
-      .update(signatureRequests)
-      .set({ status: 'sent', sentAt: new Date() })
-      .where(eq(signatureRequests.id, signatureRequestId));
-
-    this.logger.log(
-      `signature request ${signatureRequestId} sent to ${people.length} recipients`,
-    );
   }
 }

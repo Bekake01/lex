@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronsUpDown, FileText, LogOut, MessageCircle, PanelLeft, SquarePen } from 'lucide-react';
+import { ChevronsUpDown, FolderOpen, LogOut, PanelLeft, Plus, Scale } from 'lucide-react';
 import { ThemeToggle } from '@lex/theme';
 import { currentUser, logout } from '@/lib/auth';
 import { contracts, recentChats } from '@/lib/demo';
@@ -13,11 +13,11 @@ import { LogoMark } from './Icons';
 const newCount = contracts.filter((c) => c.status === 'new').length;
 
 const NAV = [
-  { href: '/', label: 'Savol beriş', Icon: MessageCircle, badge: 0, match: (p: string) => p === '/' },
+  { href: '/', label: 'Yuridik maslahat', Icon: Scale, badge: 0, match: (p: string) => p === '/' },
   {
     href: '/contracts',
-    label: 'Şartnomalar',
-    Icon: FileText,
+    label: 'Hujjatlar',
+    Icon: FolderOpen,
     badge: newCount,
     match: (p: string) => p === '/contracts' || p === '/review',
   },
@@ -43,7 +43,15 @@ export function AppSidebar() {
   const [open, setOpen] = useState(true);
 
   // A fresh chat: a new ?n= value remounts the chat on "/".
-  const newChat = () => router.push(`/?n=${Date.now()}`);
+  // Already on an empty chat: don't reload it, just put the cursor in the box.
+  const newChat = () => {
+    const fresh = pathname === '/' ? document.querySelector<HTMLElement>('[data-new-chat]') : null;
+    if (fresh) {
+      fresh.querySelector('textarea')?.focus();
+      return;
+    }
+    router.push(`/?n=${Date.now()}`);
+  };
   const activeQ = pathname === '/' ? params.get('q') : null;
 
   if (!open) {
@@ -52,9 +60,16 @@ export function AppSidebar() {
         <button onClick={() => setOpen(true)} className="mb-2" aria-label="Panelni ochiş" title="Panelni ochiş">
           <LogoMark className="size-9" />
         </button>
-        <RailButton label="Yangi savol" onClick={newChat} primary>
-          <SquarePen className="size-[18px]" />
-        </RailButton>
+        <button
+          onClick={newChat}
+          title="Yangi suhbat"
+          aria-label="Yangi suhbat"
+          className="group grid size-10 cursor-pointer place-items-center rounded-xl transition hover:bg-accent-soft"
+        >
+          <span className="grid size-[26px] place-items-center rounded-full bg-accent text-on-color transition group-hover:bg-accent-hover">
+            <Plus className="size-4" strokeWidth={2.5} />
+          </span>
+        </button>
         {NAV.map(({ href, label, Icon, badge, match }) => (
           <Link
             key={href}
@@ -80,15 +95,15 @@ export function AppSidebar() {
   return (
     <aside className="hidden w-[272px] shrink-0 p-3 md:flex">
       <div className="flex min-h-0 flex-1 flex-col rounded-[1.4rem] bg-surface/60 shadow-[0_8px_30px_var(--shadow)] ring-1 ring-edge backdrop-blur-xl">
-        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between pt-4 pr-2 pb-6 pl-4">
           <Link href="/" aria-label="Lex">
             <Wordmark small />
           </Link>
-          <div className="flex items-center gap-0.5">
-          <ThemeToggle />
+          <div className="flex items-center">
+          <ThemeToggle className="!size-7" />
           <button
             onClick={() => setOpen(false)}
-            className="btn btn-ghost btn-icon btn-sm"
+            className="grid size-7 cursor-pointer place-items-center rounded-lg text-ink/55 transition hover:bg-subtle hover:text-ink"
             aria-label="Panelni yopiş"
             title="Panelni yopiş"
           >
@@ -97,24 +112,24 @@ export function AppSidebar() {
           </div>
         </div>
 
-        <div className="px-3">
+        <nav className="flex flex-col gap-0.5 px-3">
           <button
             onClick={newChat}
-            className="btn btn-primary w-full justify-start px-3.5"
+            className="group flex cursor-pointer items-center gap-3 rounded-xl px-2.5 py-1.5 text-left text-[15px] font-medium text-ink transition hover:bg-accent-soft active:scale-[0.98]"
           >
-            <SquarePen className="size-4" />
-            Yangi savol
+            <span className="-ml-0.5 grid size-[22px] place-items-center rounded-full bg-accent text-on-color transition group-hover:bg-accent-hover">
+              <Plus className="size-3.5" strokeWidth={2.5} />
+            </span>
+            <span className="flex-1">Yangi suhbat</span>
           </button>
-        </div>
-
-        <nav className="mt-4 flex flex-col gap-0.5 px-3">
+          <div className="mx-2.5 my-1 border-t border-edge" />
           {NAV.map(({ href, label, Icon, badge, match }) => {
             const active = match(pathname) && !(href === '/' && activeQ);
             return (
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${
+                className={`flex items-center gap-3 rounded-xl px-2.5 py-1.5 text-[15px] transition ${
                   active ? 'bg-surface font-medium text-ink shadow-sm' : 'text-ink/70 hover:bg-surface/70 hover:text-ink'
                 }`}
               >
@@ -130,22 +145,22 @@ export function AppSidebar() {
           })}
         </nav>
 
-        <div className="mt-6 px-6 pb-1.5 text-[11px] font-semibold tracking-[0.12em] text-ink/40 uppercase">
+        <div className="mt-5 px-5.5 pb-1 text-[13px] font-medium text-ink/45">
           Söngi suhbatlar
         </div>
-        <ul className="min-h-0 flex-1 overflow-y-auto px-3 pb-2">
+        <ul className="flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-3 pb-2">
           {recentChats.map((c) => {
             const active = activeQ === c.q;
             return (
               <li key={c.id}>
                 <Link
                   href={`/?q=${encodeURIComponent(c.q)}`}
-                  className={`group flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+                  className={`block truncate rounded-xl px-2.5 py-1.5 text-[15px] transition ${
                     active ? 'bg-surface text-ink shadow-sm' : 'text-ink/70 hover:bg-surface/70 hover:text-ink'
                   }`}
+                  title={c.title}
                 >
-                  <span className={`size-1.5 shrink-0 rounded-full ${active ? 'bg-accent' : 'bg-ink/15 group-hover:bg-ink/30'}`} />
-                  <span className="truncate">{c.title}</span>
+                  {c.title}
                 </Link>
               </li>
             );
@@ -157,29 +172,6 @@ export function AppSidebar() {
         </div>
       </div>
     </aside>
-  );
-}
-
-function RailButton({
-  children,
-  label,
-  onClick,
-  primary,
-}: {
-  children: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  primary?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      title={label}
-      aria-label={label}
-      className={`btn btn-icon ${primary ? 'btn-primary' : 'btn-ghost'}`}
-    >
-      {children}
-    </button>
   );
 }
 

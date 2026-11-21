@@ -28,7 +28,9 @@ export interface SummaryBody {
 }
 
 /**
- * One recipient's plain-language summary, computed at send time.
+ * The plain-language summary of a send, computed at send time. One per send:
+ * everyone signing it is the same party. `recipientId` is legacy (null for new
+ * rows).
  *
  * `GET /sign/:token/summary` only ever reads this table: the signing path never
  * calls the model.
@@ -41,11 +43,11 @@ export const recipientSummaries = pgTable(
       .default(sql`uuidv7()`),
     signatureRequestId: uuid()
       .notNull()
-      .references(() => signatureRequests.id, { onDelete: 'cascade' }),
-    recipientId: uuid()
-      .notNull()
-      .references(() => recipients.id, { onDelete: 'cascade' })
-      .unique('recipient_summaries_recipient_id_unique'),
+      .references(() => signatureRequests.id, { onDelete: 'cascade' })
+      .unique('recipient_summaries_signature_request_id_unique'),
+    recipientId: uuid().references(() => recipients.id, {
+      onDelete: 'cascade',
+    }),
 
     partyName: text().notNull(),
     language: aiLanguage().notNull(),

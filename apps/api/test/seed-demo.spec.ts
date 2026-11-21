@@ -2,6 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
+import type { Queue } from 'bullmq';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ReviewService } from '../src/ai-review/review.service.js';
 import type { AiService } from '../src/ai-review/ai.service.js';
@@ -100,9 +101,12 @@ describe('staging seed', () => {
   });
 
   it('serves the signing summary for the printed link', async () => {
-    const summary = await new SigningService(db).summaryForToken(
-      seed.signToken,
-    );
+    const summary = await new SigningService(
+      db,
+      { SIGN_TICKET_SECRET: 'x'.repeat(32) } as Env,
+      storage,
+      { add: async () => ({}) } as unknown as Queue,
+    ).summaryForToken(seed.signToken);
     expect(summary.partyName).toBe('Dilnoza Yusupova');
     expect(summary.yourObligations.length).toBeGreaterThan(0);
     expect(summary.keyConditions.length).toBeGreaterThan(0);

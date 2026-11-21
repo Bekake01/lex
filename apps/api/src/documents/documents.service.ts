@@ -4,7 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { and, asc, eq, isNull, or } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, or } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import type { CurrentUser } from '../common/current-user.js';
 import { sha256 } from '../common/hash.js';
 import { DB, type Db } from '../db/db.module.js';
@@ -106,6 +107,18 @@ export class DocumentsService {
       .where(eq(documents.id, id))
       .limit(1);
     return row;
+  }
+
+  /** The user's own documents, latest version of each chain, newest first. */
+  async listForUser(user: CurrentUser): Promise<Document[]> {
+    const child = alias(documents, 'child');
+    return this.db
+      .select({ doc: documents })
+      .from(documents)
+      .leftJoin(child, eq(child.parentDocumentId, documents.id))
+      .where(and(eq(documents.ownerUserId, user.id), isNull(child.id)))
+      .orderBy(desc(documents.createdAt))
+      .then((rows) => rows.map((r) => r.doc));
   }
 
   /** 404 when it does not exist, 403 when it belongs to someone else. */

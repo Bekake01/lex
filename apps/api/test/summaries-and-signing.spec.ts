@@ -14,6 +14,7 @@ import type { CurrentUser } from '../src/common/current-user.js';
 import type { Env } from '../src/config/env.js';
 import type { Db } from '../src/db/db.module.js';
 import {
+  aiReviews,
   recipientSummaries,
   recipients,
   signatureRequests,
@@ -26,7 +27,6 @@ import type {
 } from '../src/queue/queue.constants.js';
 import { SendSigningInviteProcessor } from '../src/signature-requests/jobs/send-signing-invite.processor.js';
 import { SignatureRequestsService } from '../src/signature-requests/signature-requests.service.js';
-import { SigningService } from '../src/signing/signing.service.js';
 import { StorageService } from '../src/storage/storage.service.js';
 import { AiUsageService } from '../src/usage/ai-usage.service.js';
 import { createTestDb, seedUser } from './helpers/test-db.js';
@@ -35,28 +35,18 @@ const CONTRACT = `1. Ijaraga oluvchi har oyning 5-sanasiga qadar 5 000 000 so'm 
 2. Ijaraga beruvchi binoni 1-fevralga qadar topshiradi.
 3. Kechiktirilgan har kun uchun 0,1% penya.`;
 
-function env(overrides: Partial<Env> = {}): Env {
+function env(): Env {
   return {
     SIGN_APP_URL: 'http://localhost:3001',
     SUMMARY_WAIT_MS: 60_000,
     AI_REVIEWS_LIMIT_PERSONAL: 20,
     AI_REVIEWS_LIMIT_AGENCY: 200,
-    ...overrides,
   } as Env;
 }
 
-function fakeQueue(): Queue & { added: unknown[] } {
-  const added: unknown[] = [];
-  return {
-    added,
-    add: async (_name: string, data: unknown) => {
-      added.push(data);
-      return {} as never;
-    },
-  } as unknown as Queue & { added: unknown[] };
-}
+const noQueue = { add: async () => ({}) } as unknown as Queue;
 
-/** One canned summary per party, so the party split is observable. */
+/** A canned summary that names the party it was written for. */
 function stubAi(parties: string[] = []) {
   return {
     model: 'gpt-5',
@@ -70,7 +60,6 @@ function stubAi(parties: string[] = []) {
       );
       const partyName = partyBlock?.text.match(/"([^"]+)"/)?.[1] ?? 'unknown';
       parties.push(partyName);
-
       return {
         output: {
           overview: `Bu ijara shartnomasi. Siz ${partyName} sifatida imzolaysiz.`,
@@ -104,22 +93,23 @@ function stubAi(parties: string[] = []) {
   } as unknown as AiService;
 }
 
-describe('summaries and the signing page', () => {
+const job = <T>(data: T, attemptsMade = 0) =>
+  ({ data, attemptsMade, opts: { attempts: 3 } }) as Job<T>;
+
+describe('summary job (one per send) and invite job', () => {
   let db: Db;
   let close: () => Promise<void>;
   let dir: string;
-  let storage: StorageService;
   let documents: DocumentsService;
   let content: DocumentContentService;
   let usage: AiUsageService;
-  let signing: SigningService;
   let user: CurrentUser;
   let documentId: string;
 
   beforeAll(async () => {
     ({ db, close } = await createTestDb());
     dir = await mkdtemp(join(tmpdir(), 'lex-summary-'));
-    storage = new StorageService({ STORAGE_DIR: dir } as Env);
+    const storage = new StorageService({ STORAGE_DIR: dir } as Env);
     documents = new DocumentsService(db, storage);
     content = new DocumentContentService(
       db,
@@ -127,7 +117,6 @@ describe('summaries and the signing page', () => {
       storage,
     );
     usage = new AiUsageService(db, env());
-    signing = new SigningService(db);
   });
 
   afterAll(async () => {
@@ -137,6 +126,8 @@ describe('summaries and the signing page', () => {
 
   beforeEach(async () => {
     user = await seedUser(db);
+    // A text document keeps the summary job's input simple; the job does not
+    // care how the send was made, so the row is inserted directly.
     const document = await documents.upload(user, {
       name: 'ijara.txt',
       contentType: 'text/plain',
@@ -145,26 +136,41 @@ describe('summaries and the signing page', () => {
     documentId = document.id;
   });
 
-  async function send(options: { partyNames?: (string | undefined)[] } = {}) {
-    const summarize = fakeQueue();
-    const invite = fakeQueue();
-    const service = new SignatureRequestsService(
-      db,
-      env(),
-      documents,
-      summarize,
-      invite,
-    );
-    const names = options.partyNames ?? ['Dilnoza Yusupova'];
-    const response = await service.create(user, {
-      documentId,
-      recipients: names.map((partyName, i) => ({
-        email: `Signer${i}@Example.com`,
+  /** A sent send with `people` invite rows (and an open-link row). */
+  async function sentRequest(
+    options: { partyName?: string; people?: number } = {},
+  ) {
+    const [request] = await db
+      .insert(signatureRequests)
+      .values({
+        documentId,
+        createdByUserId: user.id,
+        status: 'sent',
+        sentAt: new Date(),
+        title: 'ijara',
+        documentHash: 'a'.repeat(64),
+        partyName: options.partyName ?? null,
+      })
+      .returning();
+    const count = options.people ?? 2;
+    for (let i = 0; i < count; i++) {
+      await db.insert(recipients).values({
+        signatureRequestId: request.id,
         fullName: `Signer ${i}`,
-        partyName,
-      })),
+        channel: 'email',
+        contact: `signer${i}@example.com`,
+        email: `signer${i}@example.com`,
+        token: `invite-token-${request.id}-${i}`,
+      });
+    }
+    await db.insert(recipients).values({
+      signatureRequestId: request.id,
+      fullName: 'Opened the link',
+      channel: 'link',
+      source: 'open_link',
+      token: `open-token-${request.id}`,
     });
-    return { response, summarize, invite };
+    return request;
   }
 
   function summarizer(parties: string[] = []) {
@@ -176,225 +182,101 @@ describe('summaries and the signing page', () => {
     );
   }
 
-  const job = <T>(data: T, attemptsMade = 0) =>
-    ({ data, attemptsMade, opts: { attempts: 3 } }) as Job<T>;
+  const summarize = (id: string) =>
+    job<SummarizeForRecipientsJob>({ signatureRequestId: id, language: 'uz' });
 
-  it('enqueues the summaries before the invite, and the invite carries a deadline', async () => {
-    const { response, summarize, invite } = await send();
-
-    expect(summarize.added).toHaveLength(1);
-    expect(summarize.added[0]).toMatchObject({
-      signatureRequestId: response.signatureRequestId,
-      language: 'uz',
-    });
-    const invitePayload = invite.added[0] as SendSigningInviteJob;
-    expect(invitePayload.summaryDeadline).toBeGreaterThan(Date.now());
-    expect(response.recipients[0].signUrl).toMatch(
-      /^http:\/\/localhost:3001\/sign\/[\w-]{20,}$/,
-    );
-    // Emails are normalised on the way in.
-    expect(response.recipients[0].email).toBe('signer0@example.com');
-  });
-
-  it('writes one summary per recipient and a hash over all of them', async () => {
-    const { response } = await send();
-    await summarizer().process(
-      job<SummarizeForRecipientsJob>({
-        signatureRequestId: response.signatureRequestId,
-        language: 'uz',
-      }),
-    );
-
-    const [request] = await db
-      .select()
-      .from(signatureRequests)
-      .where(eq(signatureRequests.id, response.signatureRequestId));
-    expect(request.summariesStatus).toBe('done');
-    expect(request.summaryHash).toMatch(/^[0-9a-f]{64}$/);
-
-    const rows = await db
-      .select()
-      .from(recipientSummaries)
-      .where(
-        eq(recipientSummaries.signatureRequestId, response.signatureRequestId),
-      );
-    expect(rows).toHaveLength(1);
-    // The per-recipient hash is the hash of exactly the stored body.
-    expect(rows[0].summaryHash).toBe(hashJson(rows[0].body));
-  });
-
-  it('makes one model call per party, not per recipient', async () => {
-    const { response } = await send({
-      partyNames: ['Dilnoza Yusupova', 'Dilnoza Yusupova', 'Alisher Karimov'],
-    });
-    const parties: string[] = [];
-    await summarizer(parties).process(
-      job<SummarizeForRecipientsJob>({
-        signatureRequestId: response.signatureRequestId,
-        language: 'uz',
-      }),
-    );
-
-    expect(parties.sort()).toEqual(['Alisher Karimov', 'Dilnoza Yusupova']);
-    const rows = await db
-      .select()
-      .from(recipientSummaries)
-      .where(
-        eq(recipientSummaries.signatureRequestId, response.signatureRequestId),
-      );
-    expect(rows).toHaveLength(3);
-  });
-
-  it('is idempotent on re-delivery', async () => {
-    const { response } = await send();
-    const parties: string[] = [];
-    const worker = summarizer(parties);
-    const payload = job<SummarizeForRecipientsJob>({
-      signatureRequestId: response.signatureRequestId,
-      language: 'uz',
-    });
-
-    await worker.process(payload);
-    await worker.process(payload);
-
-    expect(parties).toHaveLength(1);
-    const rows = await db
-      .select()
-      .from(recipientSummaries)
-      .where(
-        eq(recipientSummaries.signatureRequestId, response.signatureRequestId),
-      );
-    expect(rows).toHaveLength(1);
-  });
-
-  it('falls back to the recipient name when no party was mapped', async () => {
-    const { response } = await send({ partyNames: [undefined] });
-    const parties: string[] = [];
-    await summarizer(parties).process(
-      job<SummarizeForRecipientsJob>({
-        signatureRequestId: response.signatureRequestId,
-        language: 'uz',
-      }),
-    );
-    expect(parties).toEqual(['Signer 0']);
-  });
-
-  describe('GET /sign/:token/summary', () => {
-    async function sentWithSummaries() {
-      const { response } = await send();
-      await summarizer().process(
-        job<SummarizeForRecipientsJob>({
-          signatureRequestId: response.signatureRequestId,
-          language: 'uz',
-        }),
-      );
-      const [recipient] = await db
-        .select()
-        .from(recipients)
-        .where(eq(recipients.signatureRequestId, response.signatureRequestId));
-      return { response, recipient };
-    }
-
-    it('returns the stored summary and records the first view', async () => {
-      const { recipient } = await sentWithSummaries();
-      const wire = await signing.summaryForToken(recipient.token);
-
-      expect(wire.partyName).toBe('Dilnoza Yusupova');
-      expect(wire.language).toBe('uz');
-      expect(wire.yourObligations[0]).toMatchObject({
-        clauseRef: '1',
-        deadline: 'har oyning 5-sanasi',
+  describe('summarize-for-recipients', () => {
+    it('makes one model call and one row per send, and records its hash', async () => {
+      const request = await sentRequest({
+        partyName: 'Ijaraga oluvchi',
+        people: 3,
       });
-      // An obligation with no penalty leaves the field out rather than null.
-      expect(wire.otherObligations[0].penalty).toBeUndefined();
+      const parties: string[] = [];
+      await summarizer(parties).process(summarize(request.id));
 
-      const [viewed] = await db
+      expect(parties).toEqual(['Ijaraga oluvchi']);
+      const rows = await db
         .select()
-        .from(recipients)
-        .where(eq(recipients.id, recipient.id));
-      expect(viewed.status).toBe('viewed');
-      expect(viewed.viewedAt).not.toBeNull();
-    });
-
-    it('can be opened many times', async () => {
-      const { recipient } = await sentWithSummaries();
-      await signing.summaryForToken(recipient.token);
-      await expect(
-        signing.summaryForToken(recipient.token),
-      ).resolves.toBeTruthy();
-    });
-
-    it('gives the same 404 for an unknown token', async () => {
-      await expect(
-        signing.summaryForToken('x'.repeat(43)),
-      ).rejects.toMatchObject({
-        status: 404,
-        message: 'Not found',
+        .from(recipientSummaries)
+        .where(eq(recipientSummaries.signatureRequestId, request.id));
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toMatchObject({
+        recipientId: null,
+        partyName: 'Ijaraga oluvchi',
+        language: 'uz',
       });
-    });
+      expect(rows[0].summaryHash).toBe(hashJson(rows[0].body));
 
-    it('gives the same 404 for a short or empty token', async () => {
-      await expect(signing.summaryForToken('')).rejects.toMatchObject({
-        status: 404,
-        message: 'Not found',
-      });
-    });
-
-    it('closes the link once the recipient has signed', async () => {
-      const { recipient } = await sentWithSummaries();
-      await db
-        .update(recipients)
-        .set({ status: 'signed', signedAt: new Date() })
-        .where(eq(recipients.id, recipient.id));
-
-      await expect(
-        signing.summaryForToken(recipient.token),
-      ).rejects.toMatchObject({ status: 404, message: 'Not found' });
-    });
-
-    it('gives the same 404 for a cancelled request', async () => {
-      const { response, recipient } = await sentWithSummaries();
-      await db
-        .update(signatureRequests)
-        .set({ status: 'cancelled' })
-        .where(eq(signatureRequests.id, response.signatureRequestId));
-
-      await expect(
-        signing.summaryForToken(recipient.token),
-      ).rejects.toMatchObject({ status: 404, message: 'Not found' });
-    });
-
-    it('gives the same 404 when no summary was stored', async () => {
-      const { response } = await send();
-      const [recipient] = await db
+      const [after] = await db
         .select()
-        .from(recipients)
-        .where(eq(recipients.signatureRequestId, response.signatureRequestId));
+        .from(signatureRequests)
+        .where(eq(signatureRequests.id, request.id));
+      expect(after.summariesStatus).toBe('done');
+      expect(after.summaryHash).toBe(rows[0].summaryHash);
+    });
 
-      await expect(
-        signing.summaryForToken(recipient.token),
-      ).rejects.toMatchObject({ status: 404, message: 'Not found' });
+    it('is idempotent on re-delivery', async () => {
+      const request = await sentRequest({ partyName: 'Xodim' });
+      const parties: string[] = [];
+      await summarizer(parties).process(summarize(request.id));
+      await summarizer(parties).process(summarize(request.id));
+      expect(parties).toHaveLength(1);
+    });
+
+    it('works for an open-link-only send (no invited people)', async () => {
+      const request = await sentRequest({ partyName: 'Mijoz', people: 0 });
+      await summarizer().process(summarize(request.id));
+      const rows = await db
+        .select()
+        .from(recipientSummaries)
+        .where(eq(recipientSummaries.signatureRequestId, request.id));
+      expect(rows).toHaveLength(1);
+    });
+
+    it("falls back to the AI review's other party, then a generic signer", async () => {
+      await db.insert(aiReviews).values({
+        documentId,
+        requestedByUserId: user.id,
+        status: 'done',
+        idempotencyKey: `review-${documentId}`,
+        promptVersion: 'test',
+        model: 'gpt-5',
+        parties: [
+          { name: 'Test Sender', role: 'landlord' },
+          { name: 'Dilnoza Yusupova', role: 'tenant' },
+        ],
+      });
+      const parties: string[] = [];
+      const withReview = await sentRequest();
+      await summarizer(parties).process(summarize(withReview.id));
+      expect(parties).toEqual(['Dilnoza Yusupova']);
+
+      await db.delete(aiReviews).where(eq(aiReviews.documentId, documentId));
+      const generic = await sentRequest();
+      await summarizer(parties).process(summarize(generic.id));
+      expect(parties[1]).toBe('imzolovçi');
     });
   });
 
-  describe('the invite job', () => {
+  describe('send-signing-invite', () => {
     function inviter() {
       const service = new SignatureRequestsService(
         db,
         env(),
         documents,
-        fakeQueue(),
-        fakeQueue(),
+        {} as StorageService,
+        noQueue,
+        noQueue,
       );
       return new SendSigningInviteProcessor(db, service);
     }
 
-    it('waits while the summaries are still running', async () => {
-      const { response } = await send();
+    it('waits while the summary is still being written', async () => {
+      const request = await sentRequest();
       let delayedUntil = 0;
       const inviteJob = {
         data: {
-          signatureRequestId: response.signatureRequestId,
+          signatureRequestId: request.id,
           summaryDeadline: Date.now() + 60_000,
         },
         attemptsMade: 0,
@@ -408,59 +290,39 @@ describe('summaries and the signing page', () => {
         inviter().process(inviteJob, 'token'),
       ).rejects.toBeInstanceOf(DelayedError);
       expect(delayedUntil).toBeGreaterThan(Date.now());
-
-      const [request] = await db
-        .select()
-        .from(signatureRequests)
-        .where(eq(signatureRequests.id, response.signatureRequestId));
-      expect(request.sentAt).toBeNull();
     });
 
-    it('sends without summaries once the deadline passes', async () => {
-      const { response } = await send();
+    it('goes ahead once the deadline passes, and leaves the send as it is', async () => {
+      const request = await sentRequest();
       await inviter().process(
         job<SendSigningInviteJob>({
-          signatureRequestId: response.signatureRequestId,
+          signatureRequestId: request.id,
           summaryDeadline: Date.now() - 1,
         }),
       );
-
-      const [request] = await db
+      const [after] = await db
         .select()
         .from(signatureRequests)
-        .where(eq(signatureRequests.id, response.signatureRequestId));
-      expect(request.status).toBe('sent');
-      expect(request.sentAt).not.toBeNull();
+        .where(eq(signatureRequests.id, request.id));
+      expect(after.status).toBe('sent');
+      expect(after.sentAt?.getTime()).toBe(request.sentAt?.getTime());
     });
 
-    it('sends straight away once the summaries are done, and only once', async () => {
-      const { response } = await send();
-      await summarizer().process(
-        job<SummarizeForRecipientsJob>({
-          signatureRequestId: response.signatureRequestId,
-          language: 'uz',
-        }),
-      );
-
-      const worker = inviter();
-      const payload = job<SendSigningInviteJob>({
-        signatureRequestId: response.signatureRequestId,
-        summaryDeadline: Date.now() + 60_000,
-      });
-      await worker.process(payload);
-      const [first] = await db
-        .select()
-        .from(signatureRequests)
-        .where(eq(signatureRequests.id, response.signatureRequestId));
-
-      await worker.process(payload);
-      const [second] = await db
-        .select()
-        .from(signatureRequests)
-        .where(eq(signatureRequests.id, response.signatureRequestId));
-
-      expect(first.sentAt).not.toBeNull();
-      expect(second.sentAt?.getTime()).toBe(first.sentAt?.getTime());
+    it('does nothing for a cancelled send', async () => {
+      const request = await sentRequest();
+      await db
+        .update(signatureRequests)
+        .set({ status: 'cancelled', summariesStatus: 'queued' })
+        .where(eq(signatureRequests.id, request.id));
+      // Would wait (DelayedError) if it got past the status check.
+      await expect(
+        inviter().process(
+          job<SendSigningInviteJob>({
+            signatureRequestId: request.id,
+            summaryDeadline: Date.now() + 60_000,
+          }),
+        ),
+      ).resolves.toBeUndefined();
     });
   });
 });

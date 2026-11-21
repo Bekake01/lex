@@ -19,7 +19,7 @@ A sender uploads a contract and **AI checks it against Uzbek legislation** (lex.
 | `packages/contracts` | Zod schemas + mock responses — the boundary with the frontend |
 | `packages/crypto`    | Canonical hashing and the certificate lines                   |
 
-Signing links look like `http://localhost:3001/sign/<token>`.
+Signing links look like `http://localhost:3001/sign/<token>`; a send's open link is `http://localhost:3001/open/<publicToken>`.
 
 ## Getting started
 
@@ -36,10 +36,20 @@ pnpm dev              # all apps
 # or: pnpm dev:api / pnpm dev:web / pnpm dev:sign
 ```
 
-Fill `OPENAI_API_KEY` in `apps/api/.env` for the AI review. Then:
+In `apps/api/.env`:
+
+- `OPENAI_API_KEY`: for the AI review and the signer summary.
+- `SEAL_KEYS`: the seal key ring for signed copies. Run `pnpm --filter api seal:keygen` and paste the line it prints.
+  Without it a signed copy is never sealed (no download). Never delete a key once copies are sealed with it.
+- `SIGN_TICKET_SECRET`: signs password tickets (optional in dev, required in production).
+- `STORAGE_DRIVER=local|r2` (default `local`); for `r2` also `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`,
+  `S3_SECRET_ACCESS_KEY` (`S3_REGION` defaults to `auto`).
+- `SIGN_APP_URL` (default `http://localhost:3001`): the host signing links point to.
+
+Then:
 
 ```bash
-pnpm seed:demo        # a sender with a finished review and a signing link
+pnpm seed:demo        # a sender with a finished review (login demo@lex.local / demo)
 pnpm eval:review      # review quality (citation accuracy, issue precision)
 ```
 

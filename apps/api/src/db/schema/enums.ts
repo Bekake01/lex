@@ -51,11 +51,32 @@ export const partyRole = pgEnum('party_role', [
   'recipient',
   'other',
 ]);
+/**
+ * Signing uses `draft → sent → cancelled`. `pending` and `completed` are from
+ * the old one-envelope model; Postgres can't drop enum values, so they stay
+ * unused.
+ */
 export const signatureRequestStatus = pgEnum('signature_request_status', [
   'pending',
   'sent',
   'completed',
   'cancelled',
+  'draft',
+]);
+export const deliveryChannel = pgEnum('delivery_channel', [
+  'email',
+  'telegram',
+  'sms',
+  'link',
+]);
+export const recipientSource = pgEnum('recipient_source', [
+  'invite',
+  'open_link',
+]);
+export const signatureMethod = pgEnum('signature_method', [
+  'typed',
+  'drawn',
+  'uploaded',
 ]);
 export const recipientStatus = pgEnum('recipient_status', [
   'pending',

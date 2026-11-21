@@ -10,6 +10,12 @@ import {
   recipientSummaryWireSchema,
   reviewMessageWireSchema,
   reviewWireSchema,
+  lockedViewSchema,
+  openLinkInfoSchema,
+  sendSigningResponseSchema,
+  signerViewSchema,
+  signingRequestDetailWireSchema,
+  signingRequestListSchema,
 } from '@lex/contracts';
 import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
@@ -36,6 +42,13 @@ const cases: [string, z.ZodType][] = [
   ['recipient-summary.json', recipientSummaryWireSchema],
   ['ai-usage.json', aiUsageWireSchema],
   ['signature-request-created.json', createSignatureRequestResponseSchema],
+  ['signing-draft.json', signingRequestDetailWireSchema],
+  ['signing-request-detail.json', signingRequestDetailWireSchema],
+  ['signing-request-list.json', signingRequestListSchema],
+  ['signing-send-response.json', sendSigningResponseSchema],
+  ['signer-view.json', signerViewSchema],
+  ['signer-view-locked.json', lockedViewSchema],
+  ['open-link-info.json', openLinkInfoSchema],
 ];
 
 describe('contract mocks', () => {
