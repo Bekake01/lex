@@ -1,0 +1,31 @@
+{
+  "documentId": "01999999-0000-7000-8000-00000000000a",
+  "text": "1. Shartnoma predmeti\nIjaraga beruvchi Toshkent shahri, Yunusobod tumanidagi ikki xonali kvartirani ijaraga oluvchiga yashash uchun foydalanishga topshiradi.\n\n2. Ijara haqi\nIjara haqi oyiga 5 000 000 so'm. U har oyning 5-sanasiga qadar ijaraga beruvchining bank hisobiga o'tkaziladi.\n\n3. Ijaraga beruvchi ijara haqini istalgan vaqtda, ijaraga oluvchini ogohlantirmasdan oshirishi mumkin.\n\n4. Shartnomani bekor qilish\nIjaraga oluvchi ikki oylik ijara haqi miqdorida depozit to'laydi. Depozit qaytarilmaydi.\n",
+  "clauses": [
+    {
+      "ref": "1",
+      "heading": "Shartnoma predmeti",
+      "start": 0,
+      "end": 159
+    },
+    {
+      "ref": "2",
+      "heading": "Ijara haqi",
+      "start": 159,
+      "end": 285
+    },
+    {
+      "ref": "3",
+      "start": 285,
+      "end": 389
+    },
+    {
+      "ref": "4",
+      "heading": "Shartnomani bekor qilish",
+      "start": 389,
+      "end": 506
+    }
+  ],
+  "scanned": false,
+  "language": "uz-latn"
+}

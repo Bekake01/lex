@@ -1,6 +1,8 @@
 import {
   partyRoleSchema,
   type CitationWire,
+  type ClauseWire,
+  type DocumentTextWire,
   type DocumentVersionWire,
   type DocumentWire,
   type EditWire,
@@ -112,6 +114,28 @@ export function toDocumentVersionWire(doc: Document): DocumentVersionWire {
   };
 }
 
+/** Clause refs + offsets, without each clause's text (the text is one string). */
+function toClauseWires(doc: Document): ClauseWire[] {
+  return (doc.extractedClauses ?? []).map((c) => ({
+    ref: c.ref,
+    ...(c.heading ? { heading: c.heading } : {}),
+    start: c.start,
+    end: c.end,
+  }));
+}
+
+/** Null until the document has been read (the first review reads it). */
+export function toDocumentTextWire(doc: Document): DocumentTextWire | null {
+  if (doc.extractedText === null && !doc.scanned) return null;
+  return {
+    documentId: doc.id,
+    text: doc.scanned ? '' : (doc.extractedText ?? ''),
+    clauses: doc.scanned ? [] : toClauseWires(doc),
+    scanned: doc.scanned,
+    language: doc.extractedLanguage,
+  };
+}
+
 export function toDocumentWire(doc: Document, isLatest: boolean): DocumentWire {
   return {
     id: doc.id,
@@ -125,14 +149,7 @@ export function toDocumentWire(doc: Document, isLatest: boolean): DocumentWire {
     // Present once the document has been read; the offsets index the same
     // extracted text the review quotes from.
     ...(doc.extractedClauses && doc.extractedClauses.length > 0
-      ? {
-          clauses: doc.extractedClauses.map((c) => ({
-            ref: c.ref,
-            ...(c.heading ? { heading: c.heading } : {}),
-            start: c.start,
-            end: c.end,
-          })),
-        }
+      ? { clauses: toClauseWires(doc) }
       : {}),
     ...(doc.scanned ? { scanned: true } : {}),
     createdAt: doc.createdAt.toISOString(),

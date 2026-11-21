@@ -238,6 +238,26 @@ export const documentWireSchema = z.object({
 });
 export type DocumentWire = z.infer<typeof documentWireSchema>;
 
+/**
+ * `GET /documents/:id/text`: the extracted text the review quoted from, so a
+ * screen can render the contract and highlight `issue.clauseRange` in it.
+ * Offsets (`clauses`, `clauseRange`) are UTF-16 indexes into `text`, so
+ * `text.slice(start, end)` works directly in JavaScript.
+ */
+export const documentTextWireSchema = z.object({
+  documentId: z.string(),
+  /** Empty for a scanned PDF: show the file instead (`GET /documents/:id/file`). */
+  text: z.string(),
+  clauses: z.array(clauseWireSchema),
+  scanned: z.boolean(),
+  /** Detected language of the text, e.g. `uz-latn`, `uz-cyrl`, `ru`. */
+  language: z.string().nullable(),
+});
+export type DocumentTextWire = z.infer<typeof documentTextWireSchema>;
+
+export const rejectEditsResponseSchema = z.object({ rejected: z.number().int() });
+export type RejectEditsResponse = z.infer<typeof rejectEditsResponseSchema>;
+
 /** `GET /documents`: the caller's documents, latest versions only, newest first. */
 export const documentListSchema = z.object({
   documents: z.array(documentWireSchema),
@@ -311,10 +331,14 @@ export const API_PATHS = {
   document: (id: string) => `/documents/${id}`,
   documentReviews: (id: string) => `/documents/${id}/reviews`,
   documentVersions: (id: string) => `/documents/${id}/versions`,
+  /** `DocumentTextWire`: the text the review read, for showing + highlighting. */
+  documentText: (id: string) => `/documents/${id}/text`,
   documentParties: (id: string) => `/documents/${id}/parties`,
   review: (id: string) => `/reviews/${id}`,
   reviewMessages: (id: string) => `/reviews/${id}/messages`,
   acceptEdits: (id: string) => `/reviews/${id}/edits/accept`,
+  /** Same body as accept (`{ editIds }`); answers `RejectEditsResponse`. */
+  rejectEdits: (id: string) => `/reviews/${id}/edits/reject`,
   signatureRequests: '/signature-requests',
   signSummary: (token: string) => `/sign/${token}/summary`,
   aiUsage: '/me/ai-usage',
@@ -335,4 +359,6 @@ export const AI_ERROR_CODES = {
    * when the law track's `applyEdits` lands, and nothing else answers 501.
    */
   editsNotAvailable: 'EDITS_NOT_AVAILABLE',
+  /** `GET /documents/:id/text` before the first review read the file (409). */
+  documentNotRead: 'DOCUMENT_NOT_READ',
 } as const;

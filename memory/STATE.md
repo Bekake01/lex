@@ -27,7 +27,7 @@ Edit in place to keep this current.
 
 ## In progress
 - Law Phases 8, 9, 14 code done: hybrid search (keyword + Voyage), core laws from lex.uz with anchors, daily lex.uz sync (`pnpm sync:lexuz` / `SYNC_ENABLED`). Waiting for the MacBook run (Job E: ingest:hf → ingest:core → ingest:embed → eval). Next: Phase 10 tuning · AI team (zuhriddin). Plan: `docs/LOCAL-PLAN.md`.
-- `apps/web` review screen · frontend team.
+- `apps/web` review screen on real data: plan `docs/review-wiring-plan.md` (9 phases). Phase 1 done (`GET /documents/:id/text`); phases 2–9 (web) next · frontend team.
 - Delivery: `send-signing-invite` logs one line per person (channel + contact); real Telegram / SMS / email delivery is "Later".
 - Frontend UI (demo data) → wire to the API (`packages/contracts`, `pnpm seed:demo`) · frontend (Malika)
 

@@ -26,12 +26,15 @@ edit id and the signing link, plus curl lines that work as printed.
 | `POST /documents` (multipart `file`) | `DocumentWire`                      |
 | `GET /documents/:id`                 | `DocumentWire`                      |
 | `GET /documents/:id/versions`        | `DocumentVersionWire[]`             |
+| `GET /documents/:id/text`            | `DocumentTextWire`                  |
+| `GET /documents/:id/file`            | the original bytes                  |
 | `GET /documents/:id/parties`         | `PartyWire[]`                       |
 | `POST /documents/:id/reviews`        | `{ reviewId }`                      |
 | `GET /reviews/:id`                   | `ReviewWire`                        |
 | `POST /reviews/:id/messages`         | `{ messageId }`                     |
 | `GET /reviews/:id/messages`          | `ReviewMessageWire[]`               |
 | `POST /reviews/:id/edits/accept`     | `{ documentId, version }`           |
+| `POST /reviews/:id/edits/reject`     | `{ rejected }`                      |
 | `POST /signature-requests`           | ids + signing links                 |
 | `GET /sign/:token/summary`           | `RecipientSummaryWire` (**public**) |
 | `GET /me/ai-usage`                   | `AiUsageWire`                       |
@@ -90,20 +93,25 @@ not have:** show `clauseRef` as text and don't try to highlight it.
 works (the model reads the file as an image), but there are no clauses and no
 offsets, so a scanned document gets no highlighting.
 
-The offsets index the extracted text. Serving that text is not a route yet —
-if a screen wants to render the contract and highlight inside it, ask the AI
-track and we'll add `GET /documents/:id/text` rather than you re-extracting it
-in the browser.
+The offsets index the extracted text, which **`GET /documents/:id/text`**
+serves: `{ documentId, text, clauses, scanned, language }`. Offsets are
+JavaScript string indexes, so `text.slice(clause.start, clause.end)` is the
+clause and `text.slice(issue.clauseRange.start, issue.clauseRange.end)` is
+what to highlight. Before the first review has read the file it answers
+**409 `DOCUMENT_NOT_READ`**; a scanned PDF answers `text: ''`, `clauses: []`,
+`scanned: true` — show the file itself (`GET /documents/:id/file`) instead.
+Mock: `packages/contracts/mocks/document-text.json` (its offsets match
+`document.json` and `review-done.json`).
 
 ## Errors worth a branch
 
 | Status + code              | When                                                             |
 | -------------------------- | ---------------------------------------------------------------- |
-| `402 REVIEW_LIMIT_REACHED` | Monthly review quota used up; `GET /me/ai-usage` has the numbers |
+| `402 REVIEW_LIMIT_REACHED` | The plan's AI checks are used up; `GET /billing/me` has the numbers (`docs/billing.md`) |
 | `422 EDITS_NEED_DOCX`      | Edits can only be applied to a DOCX                              |
 | `422 EDIT_NOT_APPLICABLE`  | The document moved on, so the edit no longer matches             |
 | `409 NOT_LATEST_VERSION`   | Only the newest version of a document can be sent                |
-| `501 EDITS_NOT_AVAILABLE`  | DOCX editing is not built yet (temporary, see below)             |
+| `409 DOCUMENT_NOT_READ`    | `GET /documents/:id/text` before the first review                |
 
 The codes are in `AI_ERROR_CODES` in `@lex/contracts`.
 
@@ -130,8 +138,6 @@ version + 1 with a new `sha256` and `parentDocumentId`, then starts a review of
 the new version automatically. The response is `{ documentId, version }` —
 point the screen at the new `documentId`.
 
-Applying edits to DOCX is being built by the law track. **Until it lands this
-route answers `501 EDITS_NOT_AVAILABLE`** — show the server's message ("…not
-available yet. The suggested wording is still here, and nothing was changed");
-the edit stays `proposed`, so the button can be offered again later. Nothing
-else in the API answers 501, and this code disappears when the feature lands.
+Applying edits works on **DOCX** (formatting kept). A PDF or text document
+answers `422 EDITS_NEED_DOCX`: show the suggested wording so the user can copy
+it. `POST /reviews/:id/edits/reject` takes the same `{ editIds }` body.

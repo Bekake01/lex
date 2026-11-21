@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Controller,
   Get,
   Inject,
@@ -19,10 +20,12 @@ import {
   kindOfContentType,
   sniffDocumentKind,
 } from '../law/documents/file-type.js';
-import type {
-  DocumentList,
-  DocumentVersionWire,
-  DocumentWire,
+import {
+  AI_ERROR_CODES,
+  type DocumentList,
+  type DocumentTextWire,
+  type DocumentVersionWire,
+  type DocumentWire,
 } from '@lex/contracts';
 import {
   CurrentUserGuard,
@@ -32,7 +35,11 @@ import {
 import { contentDisposition } from '../common/pdf-file.js';
 import { ENV, type Env } from '../config/env.js';
 import { StorageService } from '../storage/storage.service.js';
-import { toDocumentVersionWire, toDocumentWire } from '../ai-review/mappers.js';
+import {
+  toDocumentTextWire,
+  toDocumentVersionWire,
+  toDocumentWire,
+} from '../ai-review/mappers.js';
 import {
   ALLOWED_CONTENT_TYPES,
   DocumentsService,
@@ -121,6 +128,27 @@ export class DocumentsController {
       disposition: contentDisposition('inline', document.name),
       length: bytes.byteLength,
     });
+  }
+
+  /**
+   * The text the review read, with clause offsets, for rendering the contract
+   * and highlighting `issue.clauseRange`. Reads the stored extraction, never
+   * re-extracts. 409 DOCUMENT_NOT_READ before the first review.
+   */
+  @Get(':id/text')
+  async text(
+    @User() user: CurrentUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<DocumentTextWire> {
+    const document = await this.documents.forUser(user, id);
+    const wire = toDocumentTextWire(document);
+    if (!wire) {
+      throw new ConflictException({
+        code: AI_ERROR_CODES.documentNotRead,
+        message: 'The document has not been read yet: start a review first',
+      });
+    }
+    return wire;
   }
 
   /** Every version of this document, oldest first. */

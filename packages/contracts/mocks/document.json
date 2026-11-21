@@ -12,24 +12,24 @@
       "ref": "1",
       "heading": "Shartnoma predmeti",
       "start": 0,
-      "end": 148
+      "end": 159
     },
     {
       "ref": "2",
       "heading": "Ijara haqi",
-      "start": 148,
-      "end": 402
+      "start": 159,
+      "end": 285
     },
     {
       "ref": "3",
-      "start": 402,
-      "end": 611
+      "start": 285,
+      "end": 389
     },
     {
       "ref": "4",
       "heading": "Shartnomani bekor qilish",
-      "start": 611,
-      "end": 840
+      "start": 389,
+      "end": 506
     }
   ],
   "scanned": false,

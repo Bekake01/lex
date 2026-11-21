@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import {
   aiUsageWireSchema,
   createSignatureRequestResponseSchema,
+  documentTextWireSchema,
   documentVersionWireSchema,
   documentWireSchema,
   partyWireSchema,
@@ -39,6 +40,7 @@ const cases: [string, z.ZodType][] = [
   ['parties.json', z.array(partyWireSchema)],
   ['versions.json', z.array(documentVersionWireSchema)],
   ['document.json', documentWireSchema],
+  ['document-text.json', documentTextWireSchema],
   ['recipient-summary.json', recipientSummaryWireSchema],
   ['ai-usage.json', aiUsageWireSchema],
   ['signature-request-created.json', createSignatureRequestResponseSchema],
@@ -71,5 +73,20 @@ describe('contract mocks', () => {
     expect(review.issues.some((i) => i.citation !== null)).toBe(true);
     // "No supporting norm found" is a real state the frontend has to render.
     expect(review.issues.some((i) => i.citation === null)).toBe(true);
+  });
+
+  it('review-done clause ranges point at their quotes in document-text', () => {
+    const review = reviewWireSchema.parse(
+      JSON.parse(readFileSync(join(mocksDir, 'review-done.json'), 'utf8')),
+    );
+    const doc = documentTextWireSchema.parse(
+      JSON.parse(readFileSync(join(mocksDir, 'document-text.json'), 'utf8')),
+    );
+    const ranged = review.issues.filter((i) => i.clauseRange);
+    expect(ranged.length).toBeGreaterThan(0);
+    for (const issue of ranged) {
+      const { start, end } = issue.clauseRange!;
+      expect(doc.text.slice(start, end)).toContain(issue.quote);
+    }
   });
 });
