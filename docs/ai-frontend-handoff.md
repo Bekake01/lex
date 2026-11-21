@@ -112,6 +112,7 @@ Mock: `packages/contracts/mocks/document-text.json` (its offsets match
 | `422 EDIT_NOT_APPLICABLE`  | The document moved on, so the edit no longer matches             |
 | `409 NOT_LATEST_VERSION`   | Only the newest version of a document can be sent                |
 | `409 DOCUMENT_NOT_READ`    | `GET /documents/:id/text` before the first review                |
+| `501 EDITS_NOT_AVAILABLE`  | Only on a backend with `LAW_SEARCH_MODE=fake`                    |
 
 The codes are in `AI_ERROR_CODES` in `@lex/contracts`.
 
@@ -141,3 +142,12 @@ point the screen at the new `documentId`.
 Applying edits works on **DOCX** (formatting kept). A PDF or text document
 answers `422 EDITS_NEED_DOCX`: show the suggested wording so the user can copy
 it. `POST /reviews/:id/edits/reject` takes the same `{ editIds }` body.
+
+Verified against a real DOCX on 2026-11-21: accepting an edit produced v2 with
+a new sha256 and `parentDocumentId`, v1 untouched, a re-review started on its
+own, and accepting the same edit twice returned the same version rather than a
+third one.
+
+`501 EDITS_NOT_AVAILABLE` only happens on a backend running the stand-in
+document processing (`LAW_SEARCH_MODE=fake`), which cannot edit a DOCX. Show
+the server's message if you see it; the edit stays `proposed`.

@@ -19,7 +19,10 @@ review is marked `failed` with "OPENAI_API_KEY is not set".
 
 Two models: the **review** and **revise** calls run on `AI_MODEL` at
 `AI_EFFORT`, and **classify** and the **recipient summaries** run on
-`AI_MODEL_LIGHT` at medium effort. Classify reads the whole document, so that
+`AI_MODEL_LIGHT` at medium effort. Measured on 2026-11-21 (`gpt-5` /
+`gpt-5-mini`, effort `high`): **~$0.17 and ~3 minutes per document** — classify
+20s/$0.003, review 165s/$0.165 — and a scanned PDF took 470s, because the model
+reads the page images. Classify reads the whole document, so that
 split is the biggest cost lever here; set `AI_MODEL_LIGHT` to the same value as
 `AI_MODEL` and re-run `pnpm eval:review` to see what it costs in quality.
 
@@ -72,7 +75,8 @@ from `POST /auth/login`; `CurrentUserGuard` then loads the user row.
 
 Errors the frontend branches on: `402 REVIEW_LIMIT_REACHED`,
 `422 EDITS_NEED_DOCX`, `422 EDIT_NOT_APPLICABLE`, `409 NOT_LATEST_VERSION`,
-and `501 EDITS_NOT_AVAILABLE` until the law track's DOCX `applyEdits` lands.
+and `501 EDITS_NOT_AVAILABLE` when the backend runs the stand-in document
+processing (`LAW_SEARCH_MODE=fake`), which cannot edit a DOCX.
 
 **Clauses.** Once a document has been read, `DocumentWire.clauses` carries the
 document's own numbering (`4.2`, `7-modda`) with the offsets each clause takes

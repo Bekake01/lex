@@ -114,9 +114,10 @@ export class EditsService {
           ),
         );
 
-      // Until the law track's Phase 13 lands, `applyEdits` throws. Answering
-      // 501 with a code beats a 500 the frontend cannot explain; this branch
-      // is dead the day the real implementation arrives.
+      // The real `applyEdits` (law Phase 13) landed, so this now only fires
+      // for the stand-in processing service (`LAW_SEARCH_MODE=fake`), which
+      // cannot edit a DOCX. Answering 501 with a code beats a 500 the
+      // frontend cannot explain.
       if (
         error instanceof Error &&
         error.message.includes('not built yet') &&
