@@ -1,0 +1,17 @@
+Search eval: hybrid search (keyword + embeddings)
+topic               n     R@5    R@10  hit@10  MRR
+ALL               102   88.1%   96.1%   98.0%  0.825
+rental             20   93.3%  100.0%  100.0%  0.777
+sale               18   88.0%   95.4%  100.0%  0.852
+services           12   91.7%  100.0%  100.0%  0.903
+employment         20   95.0%  100.0%  100.0%  0.874
+nda                 8   81.3%   87.5%   87.5%  0.790
+personal-data       6   38.9%   72.2%   83.3%  0.556
+consumer            8   93.8%  100.0%  100.0%  0.875
+general            10   90.0%   95.0%  100.0%  0.836
+
+Missed in top 10 (2):
+  nda-01  "tijorat siri tushunchasi"  want -2460801-a3  got -2460801-a10,-2460801-a11,-2460801-a6
+  pd-02  "shaxsga doir maʼlumotlarni uchinchi shaxslarga berish"  want -4396419-a13  got -180552-a1097,-180552-a767,-6257288-a176
+
+Time per query: p50 874 ms, p95 1246 ms
