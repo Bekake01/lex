@@ -191,7 +191,10 @@ export class SearchService {
         .select({
           total: count(),
           core: count(sql`CASE WHEN ${lawActs.core} THEN 1 END`),
-          latest: max(lawActs.versionDate),
+          // Acts that come into force later carry a future date; skip them.
+          latest: sql<
+            string | null
+          >`max(${lawActs.versionDate}) filter (where ${lawActs.versionDate} <= current_date)`,
         })
         .from(lawActs),
       this.db.select({ total: count() }).from(lawArticles),

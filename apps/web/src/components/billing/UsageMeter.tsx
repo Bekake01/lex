@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PLANS, type BillingOverviewWire } from '@lex/contracts';
-import { DEMO_LOGIN } from '@/lib/auth';
 import { getOverview, onBillingChanged } from '@/lib/billing';
 
 /** Sidebar card: plan name and AI checks left, with an upgrade link. */
@@ -11,7 +10,6 @@ export function UsageMeter() {
   const [data, setData] = useState<BillingOverviewWire | null>(null);
 
   useEffect(() => {
-    if (DEMO_LOGIN) return;
     let alive = true;
     const load = () =>
       getOverview()

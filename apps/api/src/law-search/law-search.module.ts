@@ -3,7 +3,6 @@ import { ENV, type Env } from '../config/env.js';
 import { DocumentProcessingService } from '../law/documents/document-processing.service.js';
 import { LawModule } from '../law/law.module.js';
 import { DbLawSearchService } from './db-law-search.service.js';
-import { FakeDocProcessingService } from './fake-doc-processing.service.js';
 import { FakeLawSearchService } from './fake-law-search.service.js';
 import { DOC_PROCESSING, LAW_SEARCH } from './law-search.types.js';
 
@@ -18,7 +17,6 @@ import { DOC_PROCESSING, LAW_SEARCH } from './law-search.types.js';
   providers: [
     DbLawSearchService,
     FakeLawSearchService,
-    FakeDocProcessingService,
     {
       provide: LAW_SEARCH,
       inject: [ENV, DbLawSearchService, FakeLawSearchService],

@@ -1,10 +1,10 @@
 /**
- * The internal interface between the AI track (B) and the law-data track (A),
- * frozen on day 2. Changes are add-only: new optional fields or new methods.
+ * The interface between the AI pipeline and the law index. Changes are
+ * add-only: new optional fields or new methods.
  *
  * The real implementation is `DbLawSearchService` over `LawModule`
  * (`src/law/`); the shapes below mirror `src/law/law.types.ts`.
- * Until A's `/search` is live, `FakeLawSearchService` answers from fixtures.
+ * While the law tables are empty, `FakeLawSearchService` answers from fixtures.
  */
 import type { ActType, ContractType } from '@lex/contracts';
 

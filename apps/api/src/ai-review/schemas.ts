@@ -171,3 +171,82 @@ export const summaryOutputSchema = z.object({
     .describe('How either side can end the contract early, notice and cost'),
 });
 export type SummaryOutput = z.infer<typeof summaryOutputSchema>;
+
+/* ------------------------------------------------------- legal Q&A (/ask) -- */
+
+/** Call 1 of a legal question: its language and what to search the law for. */
+export const qaPlanOutputSchema = z.object({
+  language: z
+    .enum(['uz', 'ru', 'en'])
+    .describe('The language the person wrote in (Uzbek in any script is uz)'),
+  searchQueries: z
+    .array(z.string().min(3).max(120))
+    .max(8)
+    .describe(
+      'Uzbek Latin search queries for the legislation index: the legal topics ' +
+        'the question raises. Empty when it is not a legal question',
+    ),
+});
+export type QaPlanOutput = z.infer<typeof qaPlanOutputSchema>;
+
+/**
+ * Uzbekistan's emergency numbers. The model may only pick from these, so it
+ * can never invent a phone number for a person in trouble.
+ */
+const EMERGENCY_NUMBER = z.enum(['101', '102', '103', '104', '112']);
+
+/** Call 2: the answer card. */
+export const qaAnswerOutputSchema = z.object({
+  topic: z.string().max(80).describe('A short title for the situation'),
+  urgent: z
+    .object({
+      text: z.string().describe('What to do right now, in one sentence'),
+      numbers: z
+        .array(z.object({ label: z.string(), number: EMERGENCY_NUMBER }))
+        .min(1)
+        .max(3),
+    })
+    .nullable()
+    .describe('Only when life, health or safety is at risk right now'),
+  summary: z
+    .string()
+    .describe('The direct answer, in two to four plain sentences'),
+  consequences: z
+    .array(
+      z.object({
+        title: z.string(),
+        text: z.string().describe('What the law says happens, plainly'),
+        articleId: z
+          .string()
+          .nullable()
+          .describe('articleId of the given article it rests on, or null'),
+      }),
+    )
+    .max(6),
+  steps: z
+    .array(z.string())
+    .max(8)
+    .describe('What the person should do, in order'),
+  contacts: z
+    .array(
+      z.object({
+        kind: z.enum(['police', 'medical', 'court', 'lawyer', 'gov']),
+        name: z.string().describe('The body to turn to, e.g. a district court'),
+        detail: z.string().describe('Why or when to go there'),
+        phone: EMERGENCY_NUMBER.nullable(),
+      }),
+    )
+    .max(5),
+  template: z
+    .object({ title: z.string(), text: z.string() })
+    .nullable()
+    .describe('A document to fill in, only when the person needs to write one'),
+  followUps: z
+    .array(z.string().max(120))
+    .max(3)
+    .describe('Questions the person may want to ask next'),
+  suggestContractReview: z
+    .boolean()
+    .describe('True when the person wants a contract checked'),
+});
+export type QaAnswerOutput = z.infer<typeof qaAnswerOutputSchema>;

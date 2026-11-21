@@ -11,8 +11,8 @@ import type {
 } from './law-search.types.js';
 
 /**
- * Stands in for A's `LawSearchService` until the law tables are loaded
- * (Sync 1). Keyword overlap over a handful of fixture articles — enough to
+ * Answers law searches from fixtures while the law tables are empty (and in
+ * tests). Keyword overlap over a handful of fixture articles — enough to
  * exercise retrieval, the citation check and the eval harness end to end.
  */
 @Injectable()

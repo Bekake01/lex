@@ -114,9 +114,8 @@ export class EditsService {
           ),
         );
 
-      // The real `applyEdits` landed, so this now only fires
-      // for the stand-in processing service (`LAW_SEARCH_MODE=fake`), which
-      // cannot edit a DOCX. Answering 501 with a code beats a 500 the
+      // Only a processing service that cannot edit a DOCX (the test double)
+      // ends up here. Answering 501 with a code beats a 500 the
       // frontend cannot explain.
       if (
         error instanceof Error &&

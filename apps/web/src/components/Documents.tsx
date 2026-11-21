@@ -2,13 +2,11 @@
 
 import type { DocumentWire, SigningRequestRow } from '@lex/contracts';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEMO_LOGIN } from '@/lib/auth';
 import { formatWhen } from '@/lib/format';
 import {
   createDraft,
-  DEMO_DRAFT_ID,
   listDocuments,
   listSends,
   sendStartError,
@@ -50,7 +48,8 @@ type View = 'signing' | 'files';
 
 /** "Hujjatlar" page: documents in a signing flow (with filters) and the user's own files. */
 export function Documents() {
-  const [view, setView] = useState<View>('signing');
+  // `/contracts?view=files` (home's "Şartnomani tekşiring") opens on "Mening hujjatlarim".
+  const [view, setView] = useState<View>(useSearchParams().get('view') === 'files' ? 'files' : 'signing');
   const [sends, setSends] = useState<SigningRow[] | null>(null);
   const [files, setFiles] = useState<DocumentWire[] | null>(null);
   const [error, setError] = useState('');
@@ -65,11 +64,6 @@ export function Documents() {
     } catch {
       setFiles([]);
     }
-  }, []);
-
-  // `/contracts?view=files` (home's "Şartnomani tekşiring") opens on "Mening hujjatlarim".
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get('view') === 'files') setView('files');
   }, []);
 
   useEffect(() => {
@@ -114,7 +108,6 @@ export function Documents() {
       }
       return;
     }
-    if (DEMO_LOGIN) return;
     setBusy(true);
     try {
       for (const f of ok) await uploadDocument(f);
@@ -144,7 +137,6 @@ export function Documents() {
   /** A PDF already uploaded → a new draft. */
   async function sendExisting(doc: DocumentWire) {
     setError('');
-    if (DEMO_LOGIN) return router.push(`/documents/send/${DEMO_DRAFT_ID}`);
     try {
       router.push(`/documents/send/${(await createDraft(doc.id)).id}`);
     } catch (err) {

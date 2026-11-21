@@ -7,8 +7,8 @@ import {
 } from './law-search.types.js';
 
 /**
- * Fallback `extractText` / `applyEdits` for when the law module's document
- * processing is not wired in.
+ * A minimal `DocProcessingService` for tests (the app always uses the real
+ * `DocumentProcessingService`).
  *
  * - plain text / markdown: split into clauses here.
  * - PDF: reported as `scanned`, which makes the review send the PDF to the model
@@ -41,9 +41,7 @@ export class FakeDocProcessingService implements DocProcessingService {
   async applyEdits(docx: Uint8Array, edits: ApplyEdit[]): Promise<Uint8Array> {
     void docx;
     void edits;
-    throw new Error(
-      'Applying edits to DOCX is not built yet',
-    );
+    throw new Error('Applying edits to DOCX is not built yet');
   }
 }
 

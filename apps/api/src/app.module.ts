@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { LoggerModule } from 'nestjs-pino';
 import { AiReviewModule } from './ai-review/ai-review.module.js';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { ConfigModule } from './config/config.module.js';
@@ -12,6 +10,7 @@ import { DocumentsModule } from './documents/documents.module.js';
 import { HealthController } from './health/health.controller.js';
 import { LawModule } from './law/law.module.js';
 import { LawSearchModule } from './law-search/law-search.module.js';
+import { LegalQaModule } from './legal-qa/legal-qa.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { MeController } from './me/me.controller.js';
 import { QueueModule } from './queue/queue.module.js';
@@ -33,6 +32,7 @@ import { AiUsageModule } from './usage/ai-usage.module.js';
     LawSearchModule,
     DocumentsModule,
     AiReviewModule,
+    LegalQaModule,
     SignatureRequestsModule,
     SigningModule,
     AiUsageModule,
@@ -62,7 +62,6 @@ import { AiUsageModule } from './usage/ai-usage.module.js';
       }),
     }),
   ],
-  controllers: [AppController, HealthController, MeController],
-  providers: [AppService],
+  controllers: [HealthController, MeController],
 })
 export class AppModule {}

@@ -95,6 +95,11 @@ export class AiUsageService {
     return this.increment(scope, usage, { summariesUsed: count });
   }
 
+  /** Legal Q&A answers are free on every plan: cost and tokens only. */
+  recordQuestion(scope: UsageScope, usage: AiUsageTotals) {
+    return this.increment(scope, usage, {});
+  }
+
   /**
    * One upsert per job: the row is created on first use and incremented after
    * that, so a re-delivered job that already finished never double-counts

@@ -3,30 +3,32 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { toNewAlphabet } from '@/lib/alphabet';
-import { uploadErrorText, uploadForReview } from '@/lib/review';
+import type { LegalChatMessageWire, LegalChatWire } from '@lex/contracts';
+import { askQuestion, chatSettled, getChat } from '@/lib/legal-qa';
+import { errorText, poll, uploadErrorText, uploadForReview } from '@/lib/review';
 import { UPLOAD_ACCEPT, uploadError } from '@/lib/upload';
-import { answerFor, type LegalAnswer } from '@/lib/legalQa';
 import { ArrowUpIcon, CheckIcon, FileIcon, LogoMark, ScaleIcon, UploadIcon } from '../Icons';
 import { Disclaimer } from '../Disclaimer';
 import { AnswerCard } from './AnswerCard';
 
-type Msg =
-  | { id: string; role: 'user'; text: string }
-  | { id: string; role: 'assistant'; answer: LegalAnswer }
-  | { id: string; role: 'assistant'; contractHint: true };
-
-const STEPS = ['Vaziyat tahlil qilinmoqda', 'Rasmiy qonunlardan tegişli moddalar qidirilmoqda', 'Javob tayyorlanmoqda'];
-
-let seq = 0;
-const uid = () => `q${++seq}`;
+// What the answer job does, in order. The job reports no progress, so the
+// steps advance on a timer and the last one spins until the answer is in.
+const STEPS = ['Savol tahlil qilinmoqda', 'Rasmiy qonunlardan tegişli moddalar qidirilmoqda', 'Javob yozilmoqda'];
+const STEP_MS = 5000;
 
 export function AskChat() {
-  const initial = useSearchParams().get('q')?.trim() ?? '';
-  const [messages, setMessages] = useState<Msg[]>([]);
-  const [step, setStep] = useState<number | null>(null); // null = idle
+  const params = useSearchParams();
+  const chatParam = params.get('chat');
+  const initial = params.get('q')?.trim() ?? '';
+  const [chat, setChat] = useState<LegalChatWire | null>(null);
+  const [loading, setLoading] = useState(chatParam !== null);
+  const [sending, setSending] = useState(false);
+  const [askError, setAskError] = useState('');
+  const [step, setStep] = useState(0);
+  const [pollRound, setPollRound] = useState(0);
   const [input, setInput] = useState('');
-  const pending = useRef<Msg | null>(null);
+  /** The question on its way, shown until the chat has it. */
+  const [asked, setAsked] = useState('');
   const started = useRef(false);
   const end = useRef<HTMLDivElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -35,46 +37,75 @@ export function AskChat() {
   const [uploading, setUploading] = useState(false);
   const [dragging, setDragging] = useState(false);
 
-  const busy = step !== null;
+  const chatId = chat?.id ?? chatParam;
+  const waiting = chat !== null && !chatSettled(chat);
+  const busy = sending || waiting;
 
-  function ask(raw: string) {
+  // An open chat (?chat=): load it, and poll while an answer is being written.
+  useEffect(() => {
+    if (!chatParam) return;
+    return poll(
+      () => getChat(chatParam),
+      chatSettled,
+      (c) => {
+        setChat(c);
+        setLoading(false);
+      },
+      (err) => {
+        setAskError(errorText(err, 'Suhbatni oçib bölmadi.'));
+        setLoading(false);
+      },
+    );
+  }, [chatParam, pollRound]);
+
+  async function ask(raw: string) {
     const text = raw.trim();
     if (!text || busy) return;
     setInput('');
-    setMessages((m) => [...m, { id: uid(), role: 'user', text }]);
-    // TODO: POST to apps/api (legal Q&A with law-search) and stream the answer.
-    const norm = toNewAlphabet(text);
-    pending.current = /şartnoma/i.test(norm) && /tekşir|körib/i.test(norm)
-      ? { id: uid(), role: 'assistant', contractHint: true }
-      : { id: uid(), role: 'assistant', answer: answerFor(text) };
+    setAsked(text);
+    setAskError('');
     setStep(0);
+    setSending(true);
+    try {
+      const res = await askQuestion(chatId, text);
+      if (!chatId) {
+        // A new chat gets its own URL, so a reload or the sidebar reopens it.
+        // `sending` stays on: this view is replaced by the one for that URL.
+        router.replace(`/ask?chat=${res.chatId}`);
+        return;
+      }
+      // Poll again now that a new answer is pending.
+      setChat(await getChat(chatId));
+      setPollRound((n) => n + 1);
+      setAsked('');
+      setSending(false);
+    } catch (err) {
+      setAsked('');
+      setInput(text);
+      setAskError(errorText(err, 'Savolni yuborib bölmadi. Qayta urinib köring.'));
+      setSending(false);
+    }
   }
 
   // Ask the question passed from the home page once.
   useEffect(() => {
-    if (initial && !started.current) {
+    if (initial && !chatParam && !started.current) {
       started.current = true;
-      ask(initial);
+      void ask(initial);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
-  // Fake "thinking" steps, then reveal the answer.
+  // The waiting steps.
   useEffect(() => {
-    if (step === null) return;
-    const t = setTimeout(() => {
-      if (step + 1 < STEPS.length) return setStep(step + 1);
-      const msg = pending.current;
-      pending.current = null;
-      setStep(null);
-      if (msg) setMessages((m) => [...m, msg]);
-    }, 700);
+    if (!busy || step + 1 >= STEPS.length) return;
+    const t = setTimeout(() => setStep(step + 1), STEP_MS);
     return () => clearTimeout(t);
-  }, [step]);
+  }, [busy, step]);
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [messages, step]);
+  }, [chat, busy]);
 
   const pickFile = () => fileInput.current?.click();
 
@@ -108,8 +139,11 @@ export function AskChat() {
     />
   );
 
+  if (loading) return <div className="flex-1" />;
+
+  const messages = chat?.messages ?? [];
   const empty = messages.length === 0 && !busy;
-  const firstQuestion = messages.find((m): m is Extract<Msg, { role: 'user' }> => m.role === 'user')?.text;
+  const firstQuestion = messages.find((m) => m.role === 'user')?.text ?? (asked || undefined);
 
   const composer = (
     <Composer
@@ -161,6 +195,7 @@ export function AskChat() {
               {uploading ? 'Yuklanmoqda…' : dragging ? 'Faylni qöyib yuboring' : 'Hujjat yuklaş'}
             </button>
             {fileError && <p className="mt-1 text-center text-[13px] text-danger">{fileError}</p>}
+            {askError && <p className="mt-1 text-center text-[13px] text-danger">{askError}</p>}
           </div>
         </div>
         <Disclaimer />
@@ -181,33 +216,21 @@ export function AskChat() {
 
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-8">
-          {messages.map((m) =>
-            m.role === 'user' ? (
-              <div key={m.id} className="flex animate-fade-up justify-end">
-                <div className="max-w-[85%] rounded-2xl bg-subtle px-4 py-2.5 text-[15px]">{m.text}</div>
-              </div>
-            ) : 'answer' in m ? (
-              <Row key={m.id}>
-                <AnswerCard answer={m.answer} onFollowUp={ask} />
-              </Row>
-            ) : (
-              <Row key={m.id}>
-                <p className="text-[15px] leading-relaxed">
-                  Sizga kelgan şartnomalar “Hujjatlar” bölimida — oçsangiz, AI tekşiruvi avtomatik boşlanadi.
-                </p>
-                <Link href="/contracts" className="btn btn-primary btn-sm mt-3">
-                  <FileIcon className="size-4" /> Hujjatlarni oçiş
-                </Link>
-              </Row>
-            ),
+          {messages.map((m) => (
+            <Message key={m.id} message={m} onFollowUp={(q) => void ask(q)} />
+          ))}
+          {asked && (
+            <div className="flex animate-fade-up justify-end">
+              <div className="max-w-[85%] rounded-2xl bg-subtle px-4 py-2.5 text-[15px] whitespace-pre-wrap">{asked}</div>
+            </div>
           )}
 
           {busy && (
             <Row>
               <ol className="flex flex-col gap-2 text-sm">
                 {STEPS.map((s, i) => (
-                  <li key={s} className={`flex items-center gap-2.5 ${i > step! ? 'text-faint' : 'text-muted'}`}>
-                    {i < step! ? (
+                  <li key={s} className={`flex items-center gap-2.5 ${i > step ? 'text-faint' : 'text-muted'}`}>
+                    {i < step ? (
                       <CheckIcon className="size-4 text-success" />
                     ) : i === step ? (
                       <span className="size-4 animate-spin rounded-full border-2 border-accent/25 border-t-accent" />
@@ -220,6 +243,7 @@ export function AskChat() {
               </ol>
             </Row>
           )}
+          {askError && <p className="text-sm text-danger">{askError}</p>}
           <div ref={end} />
         </div>
       </div>
@@ -275,6 +299,34 @@ function Composer({
   );
 }
 
+function Message({ message: m, onFollowUp }: { message: LegalChatMessageWire; onFollowUp: (q: string) => void }) {
+  if (m.role === 'user') {
+    return (
+      <div className="flex animate-fade-up justify-end">
+        <div className="max-w-[85%] rounded-2xl bg-subtle px-4 py-2.5 text-[15px] whitespace-pre-wrap">{m.text}</div>
+      </div>
+    );
+  }
+  if (m.status === 'pending') return null;
+  if (m.status === 'failed' || !m.answer) {
+    return (
+      <Row>
+        <p className="text-[15px] text-danger">Javob tayyorlab bölmadi. Savolni qayta yuborib köring.</p>
+      </Row>
+    );
+  }
+  return (
+    <Row>
+      <AnswerCard answer={m.answer} onFollowUp={onFollowUp} />
+      {m.answer.suggestContractReview && (
+        <Link href="/contracts?view=files" className="btn btn-primary btn-sm mt-4">
+          <FileIcon className="size-4" /> Şartnomani yuklaş
+        </Link>
+      )}
+    </Row>
+  );
+}
+
 function Row({ children }: { children: ReactNode }) {
   return (
     <div className="flex animate-fade-up gap-3">
@@ -284,8 +336,9 @@ function Row({ children }: { children: ReactNode }) {
   );
 }
 
-/** A new ?q= (recent chat) or ?n= (new chat) starts a fresh conversation. */
+/** A new ?chat= (recent chat), ?q= (question from home) or ?n= (new chat) starts afresh. */
 export function AskChatRoute() {
   const params = useSearchParams();
-  return <AskChat key={`${params.get('q') ?? ''}|${params.get('n') ?? ''}`} />;
+  const key = ['chat', 'q', 'n'].map((k) => params.get(k) ?? '').join('|');
+  return <AskChat key={key} />;
 }

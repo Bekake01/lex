@@ -4,8 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { DocumentWire } from '@lex/contracts';
-import { DEMO_LOGIN } from '@/lib/auth';
-import { createDraft, DEMO_DRAFT_ID, sendStartError } from '@/lib/signing';
+import { createDraft, sendStartError } from '@/lib/signing';
 import { SendIcon, XIcon } from '../Icons';
 
 const isPdf = (doc: DocumentWire) => doc.contentType === 'application/pdf' || doc.name.toLowerCase().endsWith('.pdf');
@@ -26,7 +25,6 @@ export function SendForSigning({ doc }: { doc: DocumentWire }) {
       setNote(note === 'pdf' ? null : 'pdf');
       return;
     }
-    if (DEMO_LOGIN) return router.push(`/documents/send/${DEMO_DRAFT_ID}`);
     setBusy(true);
     setNote(null);
     try {
@@ -64,7 +62,7 @@ export function SendForSigning({ doc }: { doc: DocumentWire }) {
             <>
               <p className="pr-6 font-medium">Imzolaş uçun PDF kerak</p>
               <p className="mt-1.5 text-ink/80">
-                Imzoga faqat PDF yuboriladi. Faylni Word'da oçing: <b>Fayl → Saqlaş</b>, turini <b>PDF</b> qilib
+                Imzoga faqat PDF yuboriladi. Faylni Wordʼda oçing: <b>Fayl → Saqlaş</b>, turini <b>PDF</b> qilib
                 saqlang. Söng PDF ni Hujjatlar sahifasida «Imzoga yuboriş» orqali yuklang.
               </p>
               {!doc.isLatest && (

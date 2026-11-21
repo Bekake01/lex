@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ChevronsUpDown, CreditCard, FolderOpen, House, LogOut, Menu, PanelLeft, Plus, Scale, Users, X } from 'lucide-react';
 import { ThemeToggle } from '@lex/theme';
 import { currentUser, logout } from '@/lib/auth';
-import { recentChats } from '@/lib/demo';
+import type { LegalChatListItem } from '@lex/contracts';
+import { listChats, onChatsChanged } from '@/lib/legal-qa';
 import { UsageMeter } from './billing/UsageMeter';
 import { Wordmark } from './Brand';
 import { LogoMark } from './Icons';
@@ -53,6 +54,25 @@ function useNewChat() {
     }
     router.push(`/ask?n=${Date.now()}`);
   };
+}
+
+/** The signed-in user's legal chats, reloaded whenever one is asked in. */
+function useRecentChats(): LegalChatListItem[] {
+  const [chats, setChats] = useState<LegalChatListItem[]>([]);
+  useEffect(() => {
+    let alive = true;
+    const load = () =>
+      listChats()
+        .then((c) => alive && setChats(c))
+        .catch(() => undefined);
+    void load();
+    const off = onChatsChanged(load);
+    return () => {
+      alive = false;
+      off();
+    };
+  }, []);
+  return chats;
 }
 
 /**
@@ -126,7 +146,8 @@ function SidebarPanel({
   const pathname = usePathname();
   const params = useSearchParams();
   const newChat = useNewChat();
-  const activeQ = pathname === '/ask' ? params.get('q') : null;
+  const activeChat = pathname === '/ask' ? params.get('chat') : null;
+  const chats = useRecentChats();
 
   return (
     <div
@@ -177,7 +198,7 @@ function SidebarPanel({
         </button>
         <div className="mx-2.5 my-1 border-t border-edge" />
         {NAV.map(({ href, label, Icon, badge, match }) => {
-          const active = match(pathname) && !(href === '/ask' && activeQ);
+          const active = match(pathname) && !(href === '/ask' && activeChat);
           return (
             <Link
               key={href}
@@ -203,12 +224,13 @@ function SidebarPanel({
         Söngi suhbatlar
       </div>
       <ul className="flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-3 pb-2">
-        {recentChats.map((c) => {
-          const active = activeQ === c.q;
+        {chats.length === 0 && <li className="px-2.5 py-1.5 text-[13px] text-ink/40">Hali suhbat yöq</li>}
+        {chats.map((c) => {
+          const active = activeChat === c.id;
           return (
             <li key={c.id}>
               <Link
-                href={`/ask?q=${encodeURIComponent(c.q)}`}
+                href={`/ask?chat=${c.id}`}
                 onClick={onNavigate}
                 className={`block truncate rounded-xl px-2.5 py-1.5 text-[15px] transition ${
                   active ? 'bg-surface text-ink shadow-sm' : 'text-ink/70 hover:bg-surface/70 hover:text-ink'
@@ -324,7 +346,11 @@ export function MobileBar() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
-  useEffect(() => setOpen(false), [pathname]);
+  const [shownPath, setShownPath] = useState(pathname);
+  if (shownPath !== pathname) {
+    setShownPath(pathname);
+    setOpen(false);
+  }
 
   const current = NAV.find((n) => n.match(pathname));
 

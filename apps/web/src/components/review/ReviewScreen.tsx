@@ -268,7 +268,7 @@ function Waiting({ review, runningSince }: { review: ReviewWire | null; runningS
           </li>
         ))}
       </ol>
-      <p className="mt-3 text-xs text-faint">Odatda 20–60 soniya. Sahifani yopsangiz ham tekşiruv davom etadi.</p>
+      <p className="mt-3 text-xs text-faint">Odatda 2–4 daqiqa. Sahifani yopsangiz ham tekşiruv davom etadi.</p>
     </Row>
   );
 }

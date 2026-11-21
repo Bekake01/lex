@@ -265,7 +265,7 @@ export class AnalyzeDocumentProcessor extends WorkerHost {
       // failure". Matched by name rather than by import: the class lives in
       // the law module, behind the DOC_PROCESSING interface.
       if (original.name === 'DocumentExtractionError') return original.message;
-      // The stand-in extractor, for file types it cannot read yet.
+      // An extractor that cannot read this file type.
       if (original.message.startsWith('Document extraction')) {
         return original.message;
       }

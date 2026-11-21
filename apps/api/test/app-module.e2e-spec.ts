@@ -4,6 +4,7 @@ import { AiService } from '../src/ai-review/ai.service.js';
 import { ReviewService } from '../src/ai-review/review.service.js';
 import { AppModule } from '../src/app.module.js';
 import { EditsService } from '../src/ai-review/edits.service.js';
+import { LegalQaService } from '../src/legal-qa/legal-qa.service.js';
 import { SigningService } from '../src/signing/signing.service.js';
 import { AiUsageService } from '../src/usage/ai-usage.service.js';
 import {
@@ -36,6 +37,7 @@ describe('AppModule', () => {
     expect(moduleRef.get(EditsService)).toBeInstanceOf(EditsService);
     expect(moduleRef.get(SigningService)).toBeInstanceOf(SigningService);
     expect(moduleRef.get(AiUsageService)).toBeInstanceOf(AiUsageService);
+    expect(moduleRef.get(LegalQaService)).toBeInstanceOf(LegalQaService);
   });
 
   it('resolves the law-search seam', () => {

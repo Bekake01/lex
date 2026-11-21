@@ -14,3 +14,4 @@ export * from './recipients.js';
 export * from './recipient-summaries.js';
 export * from './ai-usage.js';
 export * from './billing.js';
+export * from './legal-chats.js';

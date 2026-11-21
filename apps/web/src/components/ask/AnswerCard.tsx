@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
-import type { ContactKind, LegalAnswer } from '@/lib/legalQa';
+import type { CitationWire, LegalAnswerWire, LegalContactKind } from '@lex/contracts';
 import {
   AlertIcon,
   BuildingIcon,
@@ -15,7 +15,7 @@ import {
   UserIcon,
 } from '../Icons';
 
-const contactIcon: Record<ContactKind, { Icon: typeof ShieldIcon; tone: string }> = {
+const contactIcon: Record<LegalContactKind, { Icon: typeof ShieldIcon; tone: string }> = {
   police: { Icon: ShieldIcon, tone: 'bg-info-soft text-info' },
   medical: { Icon: HeartPulseIcon, tone: 'bg-danger-soft text-danger' },
   court: { Icon: ScaleIcon, tone: 'bg-warning-soft text-warning' },
@@ -23,7 +23,7 @@ const contactIcon: Record<ContactKind, { Icon: typeof ShieldIcon; tone: string }
   gov: { Icon: BuildingIcon, tone: 'bg-success-soft text-success' },
 };
 
-export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onFollowUp: (q: string) => void }) {
+export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswerWire; onFollowUp: (q: string) => void }) {
   const [done, setDone] = useState<Set<number>>(new Set());
   const [copied, setCopied] = useState(false);
 
@@ -58,38 +58,41 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
         <p className="mt-3 text-[16px] leading-relaxed">{a.summary}</p>
       </div>
 
-      {a.consequences && (
+      {a.consequences.length > 0 && (
         <Section title="Qonun böyiça nima böladi">
           <div className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
-            {a.consequences.map((c) => (
-              <div key={c.title} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:gap-4">
+            {a.consequences.map((c, i) => (
+              <div key={i} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">{c.title}</div>
                   <div className="text-sm text-ink/75">{c.text}</div>
                 </div>
-                <a
-                  href={c.citation.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-lg border border-line bg-page px-2 py-1 text-xs hover:border-accent/40 hover:text-accent"
-                >
-                  <ScaleIcon className="size-3.5" />
-                  {c.citation.law.replace(' töğrisidagi kodeks', '')}, {c.citation.article}
-                  <ExternalIcon className="size-3" />
-                </a>
+                {c.citation && (
+                  <a
+                    href={c.citation.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={c.citation.actTitle}
+                    className="inline-flex max-w-full shrink-0 items-center gap-1.5 self-start rounded-lg border border-line bg-page px-2 py-1 text-xs hover:border-accent/40 hover:text-accent sm:max-w-[45%]"
+                  >
+                    <ScaleIcon className="size-3.5 shrink-0" />
+                    <span className="truncate">{citationLabel(c.citation)}</span>
+                    <ExternalIcon className="size-3 shrink-0" />
+                  </a>
+                )}
               </div>
             ))}
           </div>
         </Section>
       )}
 
-      {a.steps && (
+      {a.steps.length > 0 && (
         <Section title="Hozir nima qiliş kerak">
           <ol className="flex flex-col gap-2">
             {a.steps.map((s, i) => {
               const checked = done.has(i);
               return (
-                <li key={s}>
+                <li key={i}>
                   <button
                     onClick={() =>
                       setDone((d) => {
@@ -138,10 +141,10 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
         </Section>
       )}
 
-      {a.contacts && (
+      {a.contacts.length > 0 && (
         <Section title="Qayerga murojaat qiliş">
           <div className="grid gap-2 sm:grid-cols-2">
-            {a.contacts.map((c) => {
+            {a.contacts.map((c, i) => {
               const { Icon, tone } = contactIcon[c.kind];
               const body = (
                 <>
@@ -162,11 +165,11 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
               );
               const cls = 'flex items-center gap-3 rounded-xl border border-line bg-surface p-3';
               return c.phone ? (
-                <a key={c.name} href={`tel:${c.phone}`} className={`${cls} transition hover:border-line-strong`}>
+                <a key={i} href={`tel:${c.phone}`} className={`${cls} transition hover:border-line-strong`}>
                   {body}
                 </a>
               ) : (
-                <div key={c.name} className={cls}>
+                <div key={i} className={cls}>
                   {body}
                 </div>
               );
@@ -191,6 +194,12 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
       )}
     </div>
   );
+}
+
+/** "Mehnat kodeksi, 72-modda": the act's short name and the article. */
+function citationLabel(c: CitationWire): string {
+  const act = c.actTitle.replace(/^O[ʻ'‘`]?zbekiston Respublikasining\s+/i, '');
+  return c.articleNumber ? `${act}, ${c.articleNumber}-modda` : act;
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

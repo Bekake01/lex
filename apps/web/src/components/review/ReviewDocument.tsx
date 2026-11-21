@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { DocumentTextWire, IssueWire } from '@lex/contracts';
 import { buildBlocks } from '@/lib/clause-blocks';
-import { severityMeta } from '@/lib/demo';
+import { severityMeta } from '@/lib/severity';
 import { errorText, getDocumentFile, getDocumentText } from '@/lib/review';
 import { usePdf } from '@/lib/use-pdf';
 import { FileIcon, XIcon } from '../Icons';
@@ -37,10 +37,16 @@ export function ReviewDocument({
   const [doc, setDoc] = useState<DocumentTextWire | null>(null);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    let alive = true;
+  // Another document: clear the old text while rendering, not in an effect.
+  const [shownId, setShownId] = useState(documentId);
+  if (shownId !== documentId) {
+    setShownId(documentId);
     setDoc(null);
     setError('');
+  }
+
+  useEffect(() => {
+    let alive = true;
     getDocumentText(documentId)
       .then((d) => alive && setDoc(d))
       .catch((err) => alive && setError(errorText(err, 'Hujjat matnini olib bölmadi.')));

@@ -1,7 +1,7 @@
 /**
- * The AI boundary with the frontend team (`apps/web`, `apps/sign`).
+ * The AI boundary between the API and the frontends (`apps/web`, `apps/sign`).
  *
- * This file is the only thing the frontend builds against. Changes after it is
+ * This file is the only thing the frontends build against. Changes after it is
  * shared are **add-only**: new optional fields or new routes, never a rename or
  * a removal.
  *
@@ -312,6 +312,85 @@ export const documentListSchema = z.object({
 });
 export type DocumentList = z.infer<typeof documentListSchema>;
 
+/* -------------------------------------------------------- legal Q&A (/ask) -- */
+
+export const legalContactKindSchema = z.enum([
+  'police',
+  'medical',
+  'court',
+  'lawyer',
+  'gov',
+]);
+export type LegalContactKind = z.infer<typeof legalContactKindSchema>;
+
+/**
+ * The answer to a general legal question. Sections the question does not need
+ * are null / empty. `citation` is always from the articles the server
+ * retrieved for this question, or null.
+ */
+export const legalAnswerWireSchema = z.object({
+  topic: z.string(),
+  /** Danger to life, health or safety: emergency numbers to call now. */
+  urgent: z
+    .object({
+      text: z.string(),
+      numbers: z.array(z.object({ label: z.string(), number: z.string() })),
+    })
+    .nullable(),
+  summary: z.string(),
+  /** What the law says happens, each with its article. */
+  consequences: z.array(
+    z.object({
+      title: z.string(),
+      text: z.string(),
+      citation: citationWireSchema.nullable(),
+    }),
+  ),
+  steps: z.array(z.string()),
+  contacts: z.array(
+    z.object({
+      kind: legalContactKindSchema,
+      name: z.string(),
+      detail: z.string(),
+      phone: z.string().nullable(),
+    }),
+  ),
+  /** A ready text to fill in (an application, a claim, a letter). */
+  template: z.object({ title: z.string(), text: z.string() }).nullable(),
+  followUps: z.array(z.string()),
+  /** The question is about checking a contract: offer the upload. */
+  suggestContractReview: z.boolean(),
+});
+export type LegalAnswerWire = z.infer<typeof legalAnswerWireSchema>;
+
+/** One turn: a user question, or the assistant answer to it. */
+export const legalChatMessageWireSchema = z.object({
+  id: z.string(),
+  role: messageRoleSchema,
+  /** The question (user); empty for the assistant. */
+  text: z.string(),
+  status: messageStatusSchema,
+  /** Assistant, once `status` is `done`. */
+  answer: legalAnswerWireSchema.nullable(),
+  error: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type LegalChatMessageWire = z.infer<typeof legalChatMessageWireSchema>;
+
+/** `GET /legal-chats`: the sidebar list, newest first. */
+export const legalChatListItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  updatedAt: z.string(),
+});
+export type LegalChatListItem = z.infer<typeof legalChatListItemSchema>;
+
+/** `GET /legal-chats/:id`: poll until no assistant message is `pending`. */
+export const legalChatWireSchema = legalChatListItemSchema.extend({
+  messages: z.array(legalChatMessageWireSchema),
+});
+export type LegalChatWire = z.infer<typeof legalChatWireSchema>;
+
 /* ---------------------------------------------------------- request bodies -- */
 
 export const createReviewBodySchema = z.object({
@@ -371,6 +450,19 @@ export type CreateSignatureRequestResponse = z.infer<
   typeof createSignatureRequestResponseSchema
 >;
 
+export const askQuestionBodySchema = z.object({
+  text: z.string().trim().min(1).max(2000),
+});
+export type AskQuestionBody = z.infer<typeof askQuestionBodySchema>;
+
+/** `POST /legal-chats` and `POST /legal-chats/:id/messages`. */
+export const askQuestionResponseSchema = z.object({
+  chatId: z.string(),
+  /** The assistant message that will hold the answer. */
+  messageId: z.string(),
+});
+export type AskQuestionResponse = z.infer<typeof askQuestionResponseSchema>;
+
 /* ----------------------------------------------------------------- paths -- */
 
 /** Single source of truth for the frontend's fetch calls. */
@@ -390,6 +482,11 @@ export const API_PATHS = {
   signatureRequests: '/signature-requests',
   signSummary: (token: string) => `/sign/${token}/summary`,
   aiUsage: '/me/ai-usage',
+  /** `POST` a first question (new chat) · `GET` the list. */
+  legalChats: '/legal-chats',
+  legalChat: (id: string) => `/legal-chats/${id}`,
+  /** `POST` a follow-up question in this chat. */
+  legalChatMessages: (id: string) => `/legal-chats/${id}/messages`,
 } as const;
 
 /** Error codes the frontend branches on. */
@@ -402,10 +499,7 @@ export const AI_ERROR_CODES = {
   editNotApplicable: 'EDIT_NOT_APPLICABLE',
   /** Only the latest version of a document can be sent (409). */
   notLatestVersion: 'NOT_LATEST_VERSION',
-  /**
-   * Applying edits to a DOCX is not available (501): only the fallback
-   * processing service (`LAW_SEARCH_MODE=fake`) answers it.
-   */
+  /** Applying edits to a DOCX is not available on this server (501). */
   editsNotAvailable: 'EDITS_NOT_AVAILABLE',
   /** `GET /documents/:id/text` before the first review read the file (409). */
   documentNotRead: 'DOCUMENT_NOT_READ',

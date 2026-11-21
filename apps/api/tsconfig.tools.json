@@ -6,6 +6,6 @@
     "noEmit": false,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "eval/**/*.ts", "scripts/**/*.ts"],
+  "include": ["src/**/*.ts", "eval/**/*.ts"],
   "exclude": ["src/**/*.spec.ts"]
 }

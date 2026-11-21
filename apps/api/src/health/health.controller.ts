@@ -1,5 +1,5 @@
 import { Controller, Get, Inject } from '@nestjs/common';
-import { max, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import type { HealthResponse } from '../law/law.types.js';
 import { DB, type Db } from '../db/db.module.js';
 import { lawActs } from '../db/schema/index.js';
@@ -22,7 +22,14 @@ export class HealthController {
     } catch {
       return { ok: true, db: false, indexVersionDate: null };
     }
-    const [row] = await this.db.select({ latest: max(lawActs.versionDate) }).from(lawActs);
+    // Acts that come into force later carry a future date; skip them.
+    const [row] = await this.db
+      .select({
+        latest: sql<
+          string | null
+        >`max(${lawActs.versionDate}) filter (where ${lawActs.versionDate} <= current_date)`,
+      })
+      .from(lawActs);
     return { ok: true, db: true, indexVersionDate: row?.latest ?? null };
   }
 }

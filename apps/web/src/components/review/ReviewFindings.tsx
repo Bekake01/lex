@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { IssueWire, ReviewWire, Severity } from '@lex/contracts';
-import { severityMeta } from '@/lib/demo';
+import { severityMeta } from '@/lib/severity';
 import { ChevronRightIcon, ExternalIcon, ScaleIcon } from '../Icons';
 
 const RISK: Record<NonNullable<ReviewWire['riskLevel']>, { label: string; text: string }> = {

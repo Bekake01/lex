@@ -14,6 +14,7 @@ export const QUEUE = {
   summarizeForRecipients: 'summarize-for-recipients',
   sendSigningInvite: 'send-signing-invite',
   completeSubmission: 'complete-submission',
+  answerQuestion: 'answer-question',
 } as const;
 
 /**
@@ -53,6 +54,15 @@ export interface CompleteSubmissionJob {
   recipientId: string;
 }
 
+/** One answer in a legal Q&A chat (`/ask`). */
+export interface AnswerQuestionJob {
+  chatId: string;
+  /** The question. */
+  userMessageId: string;
+  /** The assistant row that will hold the answer. */
+  assistantMessageId: string;
+}
+
 /**
  * BullMQ builds its Redis keys around `:`, so it rejects a custom job id that
  * contains one ("Custom Id cannot contain :"). Ids are joined with `.`; the
@@ -70,6 +80,8 @@ export const jobIdForInvite = (signatureRequestId: string, batchId?: string) =>
     : `invite.${signatureRequestId}`;
 export const jobIdForComplete = (recipientId: string) =>
   `complete.${recipientId}`;
+export const jobIdForAnswer = (assistantMessageId: string) =>
+  `answer.${assistantMessageId}`;
 
 /**
  * Worker options for every AI job, passed to `@Processor`.

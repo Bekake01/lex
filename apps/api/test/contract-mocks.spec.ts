@@ -7,6 +7,8 @@ import {
   documentTextWireSchema,
   documentVersionWireSchema,
   documentWireSchema,
+  legalChatListItemSchema,
+  legalChatWireSchema,
   partyWireSchema,
   recipientSummaryWireSchema,
   reviewMessageWireSchema,
@@ -22,7 +24,7 @@ import { z } from 'zod';
 import { describe, expect, it } from 'vitest';
 
 /**
- * The mock responses the frontend team builds against must stay valid against
+ * The mock responses the frontends build against must stay valid against
  * the schemas in `ai.ts`. If a schema changes and a mock does not, this is
  * where it is caught — before the frontend finds out.
  */
@@ -51,6 +53,8 @@ const cases: [string, z.ZodType][] = [
   ['signer-view.json', signerViewSchema],
   ['signer-view-locked.json', lockedViewSchema],
   ['open-link-info.json', openLinkInfoSchema],
+  ['legal-chats.json', z.array(legalChatListItemSchema)],
+  ['legal-chat.json', legalChatWireSchema],
 ];
 
 describe('contract mocks', () => {

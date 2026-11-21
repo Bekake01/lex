@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   jobIdForAnalyze,
+  jobIdForAnswer,
   jobIdForInvite,
   jobIdForRevise,
   jobIdForSummarize,
@@ -21,6 +22,7 @@ describe('job ids', () => {
     jobIdForRevise(ID, OTHER),
     jobIdForSummarize(ID),
     jobIdForInvite(ID),
+    jobIdForAnswer(ID),
   ];
 
   it.each(all)('%s contains no colon', (jobId) => {

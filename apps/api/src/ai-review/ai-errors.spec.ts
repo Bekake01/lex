@@ -12,6 +12,19 @@ describe('toAiError', () => {
     expect(error.retryable).toBe(true);
   });
 
+  it('does not retry an account without credit', () => {
+    const error = toAiError(
+      new OpenAI.RateLimitError(
+        429,
+        { code: 'insufficient_quota', type: 'insufficient_quota' },
+        'no credit',
+        new Headers(),
+      ),
+    );
+    expect(error.code).toBe(AI_ERROR.quotaExhausted);
+    expect(error.retryable).toBe(false);
+  });
+
   it('retries a connection failure', () => {
     const error = toAiError(
       new OpenAI.APIConnectionError({ message: 'socket' }),

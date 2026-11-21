@@ -25,6 +25,7 @@ export const AI_ERROR = {
   truncated: 'AI_TRUNCATED',
   unparsable: 'AI_UNPARSABLE',
   rateLimited: 'AI_RATE_LIMITED',
+  quotaExhausted: 'AI_QUOTA_EXHAUSTED',
   overloaded: 'AI_OVERLOADED',
   badRequest: 'AI_BAD_REQUEST',
   connection: 'AI_CONNECTION',
@@ -36,7 +37,14 @@ export function toAiError(error: unknown): AiError {
   if (error instanceof AiError) return error;
 
   if (error instanceof OpenAI.RateLimitError) {
-    // 429 is also "quota exhausted"; retrying that is harmless and short.
+    // 429 also means "no credit left" — that does not pass with a retry.
+    if (error.code === 'insufficient_quota') {
+      return new AiError(
+        'The AI account has run out of credit',
+        AI_ERROR.quotaExhausted,
+        false,
+      );
+    }
     return new AiError('AI rate limit reached', AI_ERROR.rateLimited, true);
   }
   if (error instanceof OpenAI.APIConnectionError) {

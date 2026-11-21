@@ -1,0 +1,64 @@
+{
+  "id": "01a1fb10-2b3c-7d4e-8f50-6a7b8c9d0e1f",
+  "title": "Ish beruvchi ikki oydan beri ish haqini bermayapti",
+  "updatedAt": "2026-11-21T10:15:00.000Z",
+  "messages": [
+    {
+      "id": "01a1fb10-2b3c-7d4e-8f50-6a7b8c9d0e20",
+      "role": "user",
+      "text": "Ish beruvchi ikki oydan beri ish haqini bermayapti, nima qilay?",
+      "status": "done",
+      "answer": null,
+      "error": null,
+      "createdAt": "2026-11-21T10:14:20.000Z"
+    },
+    {
+      "id": "01a1fb10-2b3c-7d4e-8f50-6a7b8c9d0e21",
+      "role": "assistant",
+      "text": "",
+      "status": "done",
+      "answer": {
+        "topic": "Ish haqi kechiktirilgan",
+        "urgent": null,
+        "summary": "Ish beruvchi ish haqini kamida oyiga bir marta, shartnomada belgilangan muddatda to'lashi shart. Avval yozma talab qiling: bu keyingi bosqichlarda dalil bo'ladi.",
+        "consequences": [
+          {
+            "title": "Shartnoma shartlari",
+            "text": "Xodimning ahvolini qonunga nisbatan yomonlashtiruvchi shartlar haqiqiy emas.",
+            "citation": {
+              "articleId": "fx-labor-a72",
+              "actTitle": "O'zbekiston Respublikasining Mehnat kodeksi",
+              "articleNumber": "72",
+              "sourceUrl": "https://lex.uz/docs/6257288",
+              "versionDate": "2026-06-01"
+            }
+          }
+        ],
+        "steps": [
+          "Mehnat shartnomasi, buyruq va bank ko'chirmalarini saqlang",
+          "Ish beruvchiga yozma talabnoma bering va nusxasiga qabul belgisini oling",
+          "Javob bo'lmasa, Davlat mehnat inspeksiyasiga shikoyat qiling"
+        ],
+        "contacts": [
+          {
+            "kind": "gov",
+            "name": "Davlat mehnat inspeksiyasi",
+            "detail": "Bepul tekshiruv, ish beruvchiga ko'rsatma beradi",
+            "phone": null
+          },
+          {
+            "kind": "court",
+            "name": "Fuqarolik ishlari bo'yicha tuman sudi",
+            "detail": "Mehnat nizolari bo'yicha",
+            "phone": null
+          }
+        ],
+        "template": null,
+        "followUps": ["Sudga qanday murojaat qilaman?"],
+        "suggestContractReview": false
+      },
+      "error": null,
+      "createdAt": "2026-11-21T10:14:20.500Z"
+    }
+  ]
+}

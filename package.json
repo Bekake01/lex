@@ -18,15 +18,13 @@
     "db:generate": "pnpm --filter api db:generate",
     "db:migrate": "pnpm --filter api db:migrate",
     "db:studio": "pnpm --filter api db:studio",
-    "db:seed": "pnpm --filter api db:seed",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "ingest:hf": "pnpm --filter api ingest:hf",
     "redis:up": "docker compose up -d redis",
     "services:up": "docker compose up -d",
     "services:down": "docker compose down",
-    "eval:review": "pnpm --filter api eval:review",
-    "seed:demo": "pnpm --filter api seed:demo"
+    "eval:review": "pnpm --filter api eval:review"
   },
   "devDependencies": {
     "prettier": "^3.10.1",

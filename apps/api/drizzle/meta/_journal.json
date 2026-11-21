@@ -64,6 +64,13 @@
       "when": 1795246684450,
       "tag": "0008_law_heading_tsv",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795266371594,
+      "tag": "0009_legal_chats",
+      "breakpoints": true
     }
   ]
 }

@@ -31,6 +31,7 @@ import { QUEUE } from './queue.constants.js';
       { name: QUEUE.summarizeForRecipients },
       { name: QUEUE.sendSigningInvite },
       { name: QUEUE.completeSubmission },
+      { name: QUEUE.answerQuestion },
     ),
   ],
   exports: [BullModule],

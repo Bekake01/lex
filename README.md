@@ -1,25 +1,67 @@
 # Cralex
 
-AI legal review + e-signature for Uzbek contracts.
+AI legal review and e-signature for Uzbek contracts.
 
-A sender uploads a contract and **AI checks it against Uzbek legislation** (lex.uz), citing real articles. It suggests fixes on request, and then the contract is sent for signature. The receiver opens a **signing link**. They can open it as many times as they like, but they can sign only once, and the link closes after signing. Before signing, they read a plain-language **summary of the contract and of their own obligations**. Both parties then get a **sealed, verifiable signed document**.
+- **Check a contract.** Upload a PDF, DOCX or text file. The AI reads it against Uzbek legislation and lists
+  the problems, each with its clause, how severe it is, what to change, and the law article it rests on.
+- **Fix it in a chat.** Ask for changes in plain words ("make the deposit refundable"). The AI proposes exact
+  edits. Accepting them writes a new version of the Word file, and that version is reviewed again automatically.
+- **Ask a legal question.** Describe a situation ("my employer hasn't paid me for two months"). You get the
+  answer, what the law says (with articles), the steps to take, where to go and, when needed, a template to fill in.
+- **Send it for signature.** Place fields on the PDF, add people, and send. Each person gets a link, reads a
+  plain-language summary of what they are agreeing to (their duties, deadlines, what to watch out for), fills in
+  and signs **their own copy**, and gets a sealed PDF with a verifiable certificate.
+
+The interface is in Uzbek.
+
+## How the AI stays honest
+
+- **Grounded in real law.** Every AI call gets articles retrieved from an index of Uzbek legislation
+  (lex.uz + an open corpus, ~190k article parts, keyword + vector search). The model may only cite articles it
+  was given, and the server checks it: a citation that was not retrieved is dropped (`citation: null`) instead
+  of shown as a guess.
+- **Documents are data.** Contract text and questions are fenced as data in every prompt, so a contract that
+  says "ignore your instructions" is reported, not obeyed.
+- **Structured output only.** Every answer comes back as JSON against a Zod schema and is validated again on
+  the server. Raw model output never reaches the browser.
+- **Measured.** `pnpm eval:review` scores citation accuracy and issue precision on labelled cases, and
+  `pnpm --filter api eval:search` scores law search (recall@10 ≈ 99% on 102 queries with hybrid search).
+- **The signing path never calls the model.** The summary a signer reads was written when the document was sent
+  and is stored with a hash, so everyone signs against the same text.
+
+```mermaid
+flowchart LR
+  U[Upload] --> X[Extract text<br/>+ clauses]
+  X --> C[Classify<br/>type, parties,<br/>search queries]
+  C --> S[Law search<br/>Postgres + pgvector]
+  S --> R[Review<br/>grounded in<br/>retrieved articles]
+  R --> V[Citation check<br/>on the server]
+  V --> D[(Findings)]
+  D --> E[Correction chat<br/>→ new version]
+  D --> P[Send → signer<br/>summaries]
+```
+
+All AI work runs as BullMQ jobs: a request returns an id at once and the page polls for the result, so a slow
+model call never blocks a request, and every job is safe to retry.
 
 ## Apps
 
-| App            | What                                                | Port |
-| -------------- | --------------------------------------------------- | ---- |
-| `apps/web`     | Next.js sender dashboard (upload, AI review, send)  | 3000 |
-| `apps/sign`    | Next.js public signing app for receivers (no login) | 3001 |
-| `apps/api`     | NestJS backend + AI jobs, Drizzle ORM               | 5000 |
-| Postgres       | Docker (`docker-compose.yml`)                       | 5434 |
-| Redis          | Docker, BullMQ jobs                                 | 6391 |
+| App         | What                                                          | Port |
+| ----------- | ------------------------------------------------------------- | ---- |
+| `apps/web`  | Next.js dashboard (Q&A, upload, AI review, send for signature) | 3000 |
+| `apps/sign` | Next.js public signing app for receivers (no login)           | 3001 |
+| `apps/api`  | NestJS backend, AI jobs, law index, Drizzle ORM               | 5000 |
+| Postgres    | Postgres 18 + pgvector (Docker)                               | 5434 |
+| Redis       | BullMQ jobs (Docker)                                          | 6391 |
 
-| Package              | What                                                          |
-| -------------------- | ------------------------------------------------------------- |
-| `packages/contracts` | Zod schemas + mock responses — the boundary with the frontend |
-| `packages/crypto`    | Canonical hashing and the certificate lines                   |
+| Package              | What                                                                |
+| -------------------- | ------------------------------------------------------------------- |
+| `packages/contracts` | Zod schemas shared by the API and the frontends, plus sample responses |
+| `packages/crypto`    | Canonical hashing, Ed25519 seals and the signing certificate        |
+| `packages/theme`     | Colour tokens (light + dark) and shared button styles               |
 
-Signing links look like `http://localhost:3001/sign/<token>`; a send's open link is `http://localhost:3001/open/<publicToken>`.
+Stack: TypeScript, NestJS, Next.js, Drizzle ORM, PostgreSQL + pgvector, Redis + BullMQ, OpenAI (Responses API,
+structured outputs), Voyage embeddings, pdf-lib / pdf.js, Tailwind CSS, Turborepo + pnpm.
 
 ## Getting started
 
@@ -27,36 +69,63 @@ Requires Node 24+, pnpm and Docker.
 
 ```bash
 pnpm install
+cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
 cp apps/sign/.env.example apps/sign/.env.local
-cp apps/api/.env.example apps/api/.env
 pnpm services:up      # Postgres (5434) + Redis (6391) in Docker
-pnpm db:migrate       # apply Drizzle migrations
-pnpm dev              # all apps
-# or: pnpm dev:api / pnpm dev:web / pnpm dev:sign
+pnpm db:migrate       # apply the Drizzle migrations
+pnpm dev              # all three apps (or pnpm dev:api / dev:web / dev:sign)
 ```
+
+Open http://localhost:3000/register and create an account (the free plan has 3 contract checks).
 
 In `apps/api/.env`:
 
-- `OPENAI_API_KEY`: for the AI review and the signer summary.
-- `SEAL_KEYS`: the seal key ring for signed copies. Run `pnpm --filter api seal:keygen` and paste the line it prints.
-  Without it a signed copy is never sealed (no download). Never delete a key once copies are sealed with it.
-- `SIGN_TICKET_SECRET`: signs password tickets (optional in dev, required in production).
+- `OPENAI_API_KEY`: needed for the AI review, the legal Q&A and the signer summaries.
+- `JWT_SECRET`: 32+ random characters (`openssl rand -base64 48`).
+- `SEAL_KEYS`: the key ring that seals signed copies. Run `pnpm --filter api seal:keygen` and paste the line it
+  prints. Without it a signed copy is never sealed. Never delete a key once copies are sealed with it.
+- `SIGN_TICKET_SECRET`: signs password tickets (optional in development, required in production).
 - `STORAGE_DRIVER=local|r2` (default `local`); for `r2` also `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`,
-  `S3_SECRET_ACCESS_KEY` (`S3_REGION` defaults to `auto`).
-- `SIGN_APP_URL` (default `http://localhost:3001`, production `https://crasoftinc.com`): the host signing links point to.
-- `RESEND_API_KEY` (optional): sends signing invites by email through Resend; without it they are only logged. `MAIL_FROM` (default `Cralex <no-reply@thetfone.com>`) is the one sender address.
+  `S3_SECRET_ACCESS_KEY`.
+- `SIGN_APP_URL` (default `http://localhost:3001`): the host signing links point to.
+- `RESEND_API_KEY` (optional): emails signing invites through Resend; without it they are only logged.
+  `MAIL_FROM` is the sender address.
+- `VOYAGE_API_KEY` (optional): embeddings for hybrid law search; without it search is keyword only.
 
-Then:
+### Law data
+
+With empty law tables the API answers from a small set of built-in fixture articles, which is enough to try the
+flow. For real answers, load the legislation:
 
 ```bash
-pnpm seed:demo        # a sender with a finished review (login demo@lex.local / demo)
-pnpm eval:review      # review quality (citation accuracy, issue precision)
+# download the corpus to apps/api/data/hf/articles.parquet first:
+# https://huggingface.co/datasets/sukhrobnurali/uzbek-legal-corpus (articles)
+pnpm ingest:hf                      # the open corpus
+pnpm --filter api ingest:core       # the core codes from lex.uz, current edition (~6 min)
+pnpm --filter api ingest:embed      # optional: embeddings for hybrid search (VOYAGE_API_KEY)
 ```
 
-The AI API the frontend builds against is [`packages/contracts/src/ai.ts`](packages/contracts/src/ai.ts),
-with sample responses in [`packages/contracts/mocks/`](packages/contracts/mocks) and
-the route list in [`apps/api/README.md`](apps/api/README.md).
+### Tests
+
+```bash
+pnpm test                           # unit + integration tests (in-process Postgres, no Docker needed)
+pnpm --filter api test:e2e          # boots the whole API; needs pnpm services:up
+pnpm lint
+pnpm eval:review                    # AI review quality on labelled cases (spends OpenAI tokens)
+```
+
+Routes, errors and the code layout of the API are in [`apps/api/README.md`](apps/api/README.md).
+
+## Current limits
+
+- Payments are in **test mode**: choosing a plan activates it at once and no money is taken. Payme and Click
+  are not connected yet.
+- Signing invites are delivered by **email**. Telegram and SMS recipients are saved, and the sender shares their
+  link by hand.
+- Only a PDF can be sent for signature, and only a Word file can be edited by the AI (other formats get the
+  suggested text to copy).
+- The AI output is a risk review and general legal information, not legal advice.
 
 ## Deployment (Railway)
 

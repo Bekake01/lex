@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import { AuthCard, FormError, inputClass, labelClass } from '@/components/billing/AuthCard';
-import { DEMO_LOGIN, login, register } from '@/lib/auth';
+import { register } from '@/lib/auth';
 
 /** Sign-up: a free account with 3 AI checks, signed in right away. */
 export default function RegisterPage() {
@@ -27,9 +27,7 @@ export default function RegisterPage() {
     }
     setError(null);
     setPending(true);
-    const result = DEMO_LOGIN
-      ? await login({ email: input.email, password: input.password, rememberMe: true })
-      : await register(input);
+    const result = await register(input);
     if (result.ok) {
       router.replace('/');
       return;

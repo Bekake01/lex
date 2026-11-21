@@ -37,10 +37,16 @@ export function useReviewChat(reviewId: string | null) {
     );
   }, [reviewId]);
 
-  useEffect(() => {
+  // Another review: start from an empty chat (set while rendering, not in an effect).
+  const [shownReview, setShownReview] = useState(reviewId);
+  if (shownReview !== reviewId) {
+    setShownReview(reviewId);
     setMessages([]);
     setLoaded(false);
     setError('');
+  }
+
+  useEffect(() => {
     follow();
     return () => stopPoll.current?.();
   }, [follow]);
