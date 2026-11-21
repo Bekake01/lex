@@ -1,6 +1,6 @@
 # Plan: real documents on the review screen (`/review`)
 
-**Status (2026-11-21): Phase 1 done; phases 2–9 (web) not started.**
+**Status (2026-11-21): Phases 1–2 done; phases 3–9 (web) not started.**
 
 ## Goal
 
@@ -49,7 +49,7 @@ Each phase is small, can be merged on its own, and leaves the app working. Phase
 - Fix `docs/ai-frontend-handoff.md`: remove the old "501 EDITS_NOT_AVAILABLE" note and add the new route.
 - **Done when:** a test covers owner, stranger, not-read-yet and scanned, and `curl` returns the seeded demo document's text.
 
-### Phase 2: review API client (web)
+### Phase 2: review API client (web) ✅
 
 - New `apps/web/src/lib/review.ts`, with one function per route. Each uses `apiFetch` and the `@lex/contracts` types, and throws `ApiError` with the server's `code` and `message`.
 - `poll(fn, isDone, everyMs)`: stops on done, on unmount and on errors, and backs off to 5 s after a minute.
