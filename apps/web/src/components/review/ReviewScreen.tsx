@@ -135,7 +135,7 @@ export function ReviewScreen({ documentId }: { documentId: string }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line px-4">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line px-3 sm:gap-3 sm:px-4">
         <FileIcon className="size-[18px] shrink-0 text-muted" />
         <div className="min-w-0 flex-1 truncate text-[15px] font-medium">{doc?.name ?? 'Hujjat'}</div>
         {versions.length > 1 ? (
@@ -159,8 +159,8 @@ export function ReviewScreen({ documentId }: { documentId: string }) {
         )}
         {phase.kind === 'done' && doc?.isLatest && <SendForSigning doc={doc} />}
         {phase.kind === 'done' && (
-          <button onClick={() => setDocOpen(true)} className="btn btn-secondary btn-sm lg:hidden">
-            <FileIcon className="size-4" /> Hujjat
+          <button onClick={() => setDocOpen(true)} className="btn btn-secondary btn-sm shrink-0 lg:hidden">
+            <FileIcon className="size-4" /> <span className="hidden sm:inline">Hujjat</span>
           </button>
         )}
       </header>
@@ -168,7 +168,7 @@ export function ReviewScreen({ documentId }: { documentId: string }) {
       <div className="flex min-h-0 flex-1">
       <section className="flex min-w-0 flex-1 flex-col">
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 py-8">
+        <div className="mx-auto flex max-w-2xl flex-col gap-6 px-3 py-6 sm:px-4 sm:py-8">
           {doc && !doc.isLatest && <OldVersion doc={doc} versions={versions} />}
           {(phase.kind === 'loading' || phase.kind === 'waiting') && (
             <Waiting review={phase.kind === 'waiting' ? phase.review : null} runningSince={runningSince} />

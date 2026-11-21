@@ -33,7 +33,7 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal
         aria-label={title}
-        className="w-full max-w-md animate-fade-up rounded-2xl bg-surface shadow-xl"
+        className="max-h-[90dvh] w-full max-w-md animate-fade-up overflow-y-auto rounded-2xl bg-surface shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">

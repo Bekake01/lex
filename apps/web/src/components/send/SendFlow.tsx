@@ -175,7 +175,7 @@ export function SendFlow({ id }: { id: string }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-page px-3 sm:px-4">
+      <header className="flex h-14 shrink-0 items-center gap-1.5 border-b border-line bg-page px-2 sm:gap-3 sm:px-4">
         <Link href="/contracts" aria-label="Hujjatlarga qaytiş" className="btn btn-ghost btn-icon btn-sm">
           <ChevronLeftIcon className="size-4" />
         </Link>
@@ -189,23 +189,25 @@ export function SendFlow({ id }: { id: string }) {
           className="hidden max-w-[220px] min-w-0 flex-1 rounded-lg border border-transparent px-2 py-1 font-medium hover:border-line focus:border-accent focus:outline-none md:block"
         />
 
-        <nav aria-label="Qadamlar" className="mx-auto flex items-center gap-1.5 text-sm">
+        {/* Phones have no room for three labelled steps: dots there, labels from sm. */}
+        <nav aria-label="Qadamlar" className="mx-auto flex min-w-0 items-center gap-1 text-sm sm:gap-1.5">
           {STEPS.map((s, i) => (
-            <span key={s.id} className="flex items-center gap-1.5">
-              {i > 0 && <ChevronRightIcon className="size-3.5 text-faint" />}
+            <span key={s.id} className="flex items-center gap-1 sm:gap-1.5">
+              {i > 0 && <ChevronRightIcon className="size-3.5 shrink-0 text-faint" />}
               <span
-                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 whitespace-nowrap ${
-                  i === stepIndex ? 'bg-accent-soft font-medium text-accent' : i < stepIndex ? 'text-ink' : 'text-muted'
+                aria-current={i === stepIndex ? 'step' : undefined}
+                className={`flex items-center gap-1.5 rounded-full px-1 py-1 whitespace-nowrap sm:px-2.5 ${
+                  i === stepIndex ? 'text-accent sm:bg-accent-soft sm:font-medium' : i < stepIndex ? 'text-ink' : 'text-muted'
                 }`}
               >
                 <span
-                  className={`grid size-5 place-items-center rounded-full text-xs ${
+                  className={`grid size-5 shrink-0 place-items-center rounded-full text-xs ${
                     i === stepIndex ? 'bg-accent text-on-color' : i < stepIndex ? 'bg-ink text-page' : 'bg-subtle'
                   }`}
                 >
                   {i < stepIndex ? <CheckIcon className="size-3" /> : i + 1}
                 </span>
-                {s.label}
+                <span className={i === stepIndex ? 'max-[380px]:hidden' : 'hidden sm:inline'}>{s.label}</span>
               </span>
             </span>
           ))}
@@ -217,11 +219,11 @@ export function SendFlow({ id }: { id: string }) {
           {save === 'error' && <span className="text-danger">Saqlanmadi</span>}
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {step !== 'fields' && (
             <button type="button" onClick={() => setStep(STEPS[stepIndex - 1].id)} className="btn btn-ghost btn-sm">
               <ChevronLeftIcon className="size-4" />
-              Orqaga
+              <span className="hidden sm:inline">Orqaga</span>
             </button>
           )}
           {step !== 'send' && (
@@ -242,7 +244,7 @@ export function SendFlow({ id }: { id: string }) {
               }}
               className="btn btn-primary btn-sm"
             >
-              Keyingi
+              <span className="hidden sm:inline">Keyingi</span>
               <ChevronRightIcon className="size-4" />
             </button>
           )}

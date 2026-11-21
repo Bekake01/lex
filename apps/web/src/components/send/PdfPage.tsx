@@ -81,8 +81,8 @@ export function PdfPage({
       <div
         data-page-overlay
         className="absolute inset-0"
-        onMouseDown={(e) => {
-          // A click on bare page area clears the selection.
+        onPointerDown={(e) => {
+          // A click / tap on bare page area clears the selection.
           if (e.target === e.currentTarget) onSelect(null);
         }}
         onDragOver={(e) => e.preventDefault()}
@@ -128,11 +128,15 @@ function FieldBox({
   const strong = meta.family === 'mark';
 
   /**
-   * One pointer gesture for both moving and resizing. The overlay is measured
-   * when the drag STARTS, so a page re-rendered at a new zoom can't leave
-   * stale pixel maths behind.
+   * One pointer gesture for both moving and resizing, so a finger on a phone
+   * drags a box exactly like a mouse does (`touch-action: none` below stops
+   * the page scrolling under the drag). The overlay is measured when the drag
+   * STARTS, so a page re-rendered at a new zoom can't leave stale pixel maths
+   * behind.
    */
-  function startGesture(e: React.MouseEvent, mode: 'move' | 'resize') {
+  function startGesture(e: React.PointerEvent, mode: 'move' | 'resize') {
+    // Secondary mouse buttons shouldn't start a drag.
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
     e.stopPropagation();
     onSelect();
@@ -144,7 +148,8 @@ function FieldBox({
     const startY = e.clientY;
     const origin = { x: field.x, y: field.y, w: field.w, h: field.h };
 
-    const onMove = (ev: MouseEvent) => {
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
       const dx = (ev.clientX - startX) / bounds.width;
       const dy = (ev.clientY - startY) / bounds.height;
       if (mode === 'move') {
@@ -159,19 +164,22 @@ function FieldBox({
         });
       }
     };
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('mouseup', onUp);
+    const onUp = (ev: PointerEvent) => {
+      if (ev.pointerId !== e.pointerId) return;
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
     };
-    window.addEventListener('mousemove', onMove);
-    window.addEventListener('mouseup', onUp);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   }
 
   return (
     <div
-      onMouseDown={(e) => startGesture(e, 'move')}
+      onPointerDown={(e) => startGesture(e, 'move')}
       title={`${meta.label}${field.required ? ' (majburiy)' : ''}`}
-      className={`absolute cursor-move rounded-[3px] ${strong ? 'border-2' : 'border'} border-accent`}
+      className={`absolute touch-none cursor-move rounded-[3px] ${strong ? 'border-2' : 'border'} border-accent`}
       style={{
         left: `${field.x * 100}%`,
         top: `${field.y * 100}%`,
@@ -199,10 +207,12 @@ function FieldBox({
 
       {selected && (
         <span
-          onMouseDown={(e) => startGesture(e, 'resize')}
+          onPointerDown={(e) => startGesture(e, 'resize')}
           role="presentation"
-          className="absolute -right-1.5 -bottom-1.5 size-3 cursor-se-resize rounded-sm border border-surface bg-accent"
-        />
+          className="absolute -right-3 -bottom-3 grid size-6 touch-none cursor-se-resize place-items-center"
+        >
+          <span className="size-3 rounded-sm border border-surface bg-accent" />
+        </span>
       )}
     </div>
   );
