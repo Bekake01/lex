@@ -141,6 +141,11 @@ export const reviewWireSchema = z.object({
   lawVersionDate: z.string().optional(),
   language: aiLanguageSchema,
   createdAt: z.string(),
+  /**
+   * Only when `status` is `failed`: why, written for the user (unreadable
+   * file, AI unavailable…). Never model output or contract text.
+   */
+  error: z.string().optional(),
 });
 export type ReviewWire = z.infer<typeof reviewWireSchema>;
 

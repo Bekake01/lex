@@ -8,6 +8,7 @@ import type { AiService, StructuredCall } from '../src/ai-review/ai.service.js';
 import { emptyUsage } from '../src/ai-review/ai.service.js';
 import { DocumentContentService } from '../src/ai-review/document-content.service.js';
 import { AnalyzeDocumentProcessor } from '../src/ai-review/jobs/analyze-document.processor.js';
+import { toReviewWire } from '../src/ai-review/mappers.js';
 import type { Db } from '../src/db/db.module.js';
 import {
   aiIssues,
@@ -367,6 +368,8 @@ describe('analyze-document job', () => {
     expect(saved.error).toBe(
       'The PDF file could not be read; it may be damaged or password-protected',
     );
+    // The reason reaches the client, so the screen can say why.
+    expect(toReviewWire(saved, []).error).toBe(saved.error);
   });
 
   it('shows the real extractor message when a file is not what it claims to be', async () => {

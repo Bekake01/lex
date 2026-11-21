@@ -9,6 +9,7 @@ import {
   type RejectEditsResponse,
   type ReviewMessageWire,
   type ReviewWire,
+  SIGNING_ROUTES,
 } from '@lex/contracts';
 import demoDocument from '@lex/contracts/mocks/document.json';
 import demoText from '@lex/contracts/mocks/document-text.json';
@@ -78,6 +79,13 @@ export async function getDocument(id: string): Promise<DocumentWire> {
 export async function getDocumentText(id: string): Promise<DocumentTextWire> {
   if (DEMO_LOGIN) return { ...(demoText as DocumentTextWire), documentId: id };
   return json(await apiFetch(API_PATHS.documentText(id)));
+}
+
+/** The uploaded file's bytes (`GET /documents/:id/file`), e.g. a scanned PDF for pdf.js. */
+export async function getDocumentFile(id: string): Promise<ArrayBuffer> {
+  const res = DEMO_LOGIN ? await fetch('/demo.pdf') : await apiFetch(SIGNING_ROUTES.documentFile(id));
+  if (!res.ok) await json(res);
+  return res.arrayBuffer();
 }
 
 /** Every version of the document, oldest first. */

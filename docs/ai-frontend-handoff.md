@@ -64,8 +64,9 @@ contains no document text.
 
 ## A failed review says why
 
-`ReviewWire` carries a readable reason when `status` is `failed`, so show it
-instead of a generic "something went wrong":
+`ReviewWire.error` carries a readable reason when `status` is `failed`, so
+show it instead of a generic "something went wrong" (the web app shows these
+in Uzbek, `components/review/ReviewScreen.tsx`):
 
 - "The PDF file could not be read; it may be damaged or password-protected"
 - "The file is a PDF, not a DOCX"
@@ -141,3 +142,27 @@ point the screen at the new `documentId`.
 Applying edits works on **DOCX** (formatting kept). A PDF or text document
 answers `422 EDITS_NEED_DOCX`: show the suggested wording so the user can copy
 it. `POST /reviews/:id/edits/reject` takes the same `{ editIds }` body.
+
+Two things the API leaves to the screen: it does **not** refuse an accept on
+an older version (the web app only offers accept on the newest one), and if
+the plan has no AI checks left, the new version is still created but its
+review isn't started — opening it then asks to start one, which answers 402.
+
+## The review screen in `apps/web` (all wired, 2026-11-21)
+
+`/review?doc=<documentId>` (`components/review/`), built in
+`docs/review-wiring-plan.md`:
+
+- `ReviewScreen.tsx`: reuse the newest review or start one, poll, waiting /
+  failed / 402 states; header with the **v1 · v2** switcher and
+  **Imzoga yuboriş** (`ReviewSend.tsx`: a PDF opens the send flow for this
+  document; Word / text shows "Imzolaş uçun PDF kerak"; hidden on old versions).
+- `ReviewFindings.tsx`: risk, verdict, findings with lex.uz citations.
+- `ReviewDocument.tsx`: the text from `GET /documents/:id/text`, findings
+  highlighted both ways; scanned PDF → the pages.
+- `ReviewChat.tsx` + `ReviewEdits.tsx`: the correction chat, accept / reject,
+  then on to the new version.
+
+The old demo screen (`ReviewWorkspace`, `DocumentPane`, `ReviewCard`,
+`SignDialog`) is gone; signing a contract someone sent you happens in
+`apps/sign`.

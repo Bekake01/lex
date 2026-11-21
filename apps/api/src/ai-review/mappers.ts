@@ -69,6 +69,7 @@ export function toReviewWire(review: AiReview, issues: AiIssue[]): ReviewWire {
     lawVersionDate: review.lawVersionDate ?? undefined,
     language: review.language,
     createdAt: review.createdAt.toISOString(),
+    ...(review.status === 'failed' && review.error ? { error: review.error } : {}),
   };
 }
 

@@ -4,5 +4,6 @@
   "status": "failed",
   "issues": [],
   "language": "uz",
-  "createdAt": "2026-11-20T09:00:00.000Z"
+  "createdAt": "2026-11-20T09:00:00.000Z",
+  "error": "The PDF file could not be read; it may be damaged or password-protected"
 }
