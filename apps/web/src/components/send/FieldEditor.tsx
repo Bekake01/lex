@@ -15,10 +15,12 @@ import {
   ChevronDownIcon,
   ClipboardIcon,
   CopyIcon,
+  PlusIcon,
   RedoIcon,
   SearchIcon,
   TrashIcon,
   UndoIcon,
+  XIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from '../Icons';
@@ -56,8 +58,15 @@ export function FieldEditor({
   }));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [clipboard, setClipboard] = useState<EditorField | null>(null);
-  const [zoomIndex, setZoomIndex] = useState(2); // 100%
+  // A phone can't show a whole page at 100%: start it zoomed out there.
+  const [zoomIndex, setZoomIndex] = useState(() =>
+    typeof window !== 'undefined' && window.innerWidth < 640 ? 0 : 2,
+  );
   const [query, setQuery] = useState('');
+  // Small screens have no room for the palette rail, so it opens as a drawer.
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  // Tapping a palette item adds the field here (drag-and-drop needs a mouse).
+  const [activePage, setActivePage] = useState(1);
 
   // Tell the parent after every change (not on the first render).
   const first = useRef(true);
@@ -175,21 +184,9 @@ export function FieldEditor({
     return FIELD_CATALOG.filter((f) => !q || f.label.toLowerCase().includes(q));
   }, [query]);
 
-  return (
-    <div className="flex min-h-0 flex-1">
-      {/* Left: palette, and the selected field's properties on top of it. */}
-      <aside className="flex w-[264px] shrink-0 flex-col overflow-y-auto border-r border-line bg-page">
-        {selected && (
-          <div className="border-b border-line bg-subtle/50">
-            <FieldProperties
-              field={selected}
-              onChange={(patch) => changeField(selected.id, patch)}
-              onDelete={deleteSelected}
-              onClose={() => setSelectedId(null)}
-            />
-          </div>
-        )}
-
+  /** Palette search + groups, shared by the desktop rail and the drawer. */
+  const paletteBody = (
+    <>
         <div className="px-4 pt-4">
           <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-surface px-2.5 text-muted focus-within:border-accent">
             <SearchIcon className="size-4 shrink-0" />
@@ -217,8 +214,15 @@ export function FieldEditor({
                       e.dataTransfer.setData(FIELD_DRAG_TYPE, f.type);
                       e.dataTransfer.effectAllowed = 'copy';
                     }}
-                    onDoubleClick={() => addField(f.type, 1, 0.4, 0.4)}
-                    title={`${f.label}: hujjatga sudrang (ikki marta bosilsa 1-sahifaga qöyiladi)`}
+                    onDoubleClick={() => addField(f.type, activePage, 0.4, 0.4)}
+                    onClick={() => {
+                      // Touch has no drag-and-drop: one tap drops the field on
+                      // the open page, and the drawer gets out of the way.
+                      if (!paletteOpen) return;
+                      addField(f.type, activePage, 0.4, 0.4);
+                      setPaletteOpen(false);
+                    }}
+                    title={`${f.label}: hujjatga sudrang (ikki marta bosilsa ${activePage}-sahifaga qöyiladi)`}
                     className="flex cursor-grab items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-2 text-left text-sm transition-colors hover:border-accent hover:bg-accent-soft active:cursor-grabbing"
                   >
                     <span className="shrink-0 text-accent">{f.icon}</span>
@@ -229,20 +233,69 @@ export function FieldEditor({
             );
           })}
           {palette.length === 0 && <p className="py-6 text-center text-sm text-muted">Bunday maydon yöq.</p>}
-          <p className="mt-2 text-xs text-faint">Har bir odam şu maydonlarning hammasini öz nusxasida töldiradi.</p>
+          <p className="mt-2 text-xs text-faint">
+            {paletteOpen ? `Bosing — maydon ${activePage}-sahifaga qöyiladi. ` : ''}
+            Har bir odam şu maydonlarning hammasini öz nusxasida töldiradi.
+          </p>
         </div>
+    </>
+  );
+
+  const properties = selected && (
+    <FieldProperties
+      field={selected}
+      onChange={(patch) => changeField(selected.id, patch)}
+      onDelete={deleteSelected}
+      onClose={() => setSelectedId(null)}
+    />
+  );
+
+  return (
+    <div className="flex min-h-0 flex-1">
+      {/* Left: palette, and the selected field's properties on top of it. */}
+      <aside className="hidden w-[264px] shrink-0 flex-col overflow-y-auto border-r border-line bg-page md:flex">
+        {properties && <div className="border-b border-line bg-subtle/50">{properties}</div>}
+        {paletteBody}
       </aside>
+
+      {/* Small screens: the same palette as a drawer over the page. */}
+      {paletteOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <button
+            type="button"
+            aria-label="Yopiş"
+            onClick={() => setPaletteOpen(false)}
+            className="animate-fade-in absolute inset-0 bg-overlay"
+          />
+          <div className="animate-slide-in-left absolute inset-y-0 left-0 flex w-[300px] max-w-[88vw] flex-col overflow-y-auto border-r border-line bg-page">
+            <div className="flex h-11 shrink-0 items-center justify-between border-b border-line px-3">
+              <span className="font-medium">Maydonlar</span>
+              <button type="button" onClick={() => setPaletteOpen(false)} aria-label="Yopiş" className="btn btn-ghost btn-icon btn-sm">
+                <XIcon className="size-4" />
+              </button>
+            </div>
+            {paletteBody}
+          </div>
+        </div>
+      )}
 
       {/* Centre: toolbar + pages. */}
       <main className="flex min-w-0 flex-1 flex-col">
-        <div className="flex h-11 shrink-0 items-center gap-0.5 border-b border-line bg-page px-3">
+        <div className="flex h-11 shrink-0 items-center gap-0.5 overflow-x-auto border-b border-line bg-page px-2 sm:px-3">
+          <button
+            type="button"
+            onClick={() => setPaletteOpen(true)}
+            className="btn btn-soft btn-sm mr-1 shrink-0 md:hidden"
+          >
+            <PlusIcon className="size-4" /> Maydon
+          </button>
           <ToolButton label="Bekor qiliş (⌘Z)" onClick={undo} disabled={past.length === 0}>
             <UndoIcon className="size-4" />
           </ToolButton>
           <ToolButton label="Qaytariş (⌘⇧Z)" onClick={redo} disabled={future.length === 0}>
             <RedoIcon className="size-4" />
           </ToolButton>
-          <span className="mx-1.5 h-5 w-px bg-line" />
+          <span className="mx-1.5 h-5 w-px shrink-0 bg-line" />
           <ToolButton label="Nusxalaş (⌘C)" onClick={copySelected} disabled={!selected}>
             <CopyIcon className="size-4" />
           </ToolButton>
@@ -252,11 +305,11 @@ export function FieldEditor({
           <ToolButton label="Öçiriş (Delete)" onClick={deleteSelected} disabled={!selected}>
             <TrashIcon className="size-4" />
           </ToolButton>
-          <span className="mx-1.5 h-5 w-px bg-line" />
+          <span className="mx-1.5 h-5 w-px shrink-0 bg-line" />
           <ToolButton label="Kiçraytiriş" onClick={() => setZoomIndex((i) => Math.max(0, i - 1))} disabled={zoomIndex === 0}>
             <ZoomOutIcon className="size-4" />
           </ToolButton>
-          <span className="w-12 text-center text-sm tabular-nums text-muted">{Math.round(ZOOM_STEPS[zoomIndex] * 100)}%</span>
+          <span className="w-12 shrink-0 text-center text-sm tabular-nums text-muted">{Math.round(ZOOM_STEPS[zoomIndex] * 100)}%</span>
           <ToolButton
             label="Kattalaştiriş"
             onClick={() => setZoomIndex((i) => Math.min(ZOOM_STEPS.length - 1, i + 1))}
@@ -264,14 +317,15 @@ export function FieldEditor({
           >
             <ZoomInIcon className="size-4" />
           </ToolButton>
-          <span className="ml-auto text-sm text-muted">{fields.length} ta maydon</span>
+          <span className="ml-auto hidden shrink-0 pl-3 text-sm text-muted sm:inline">{fields.length} ta maydon</span>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto bg-subtle p-6 sm:p-8">
+        <div className="min-h-0 flex-1 overflow-auto bg-subtle p-3 sm:p-8">
           <div className="mx-auto flex w-fit flex-col items-center gap-6">
             {pages.map((p) => (
               <div key={p} id={`page-${p}`} className="flex flex-col items-center gap-2">
-                <div onMouseDownCapture={(e) => {
+                <div onPointerDownCapture={(e) => {
+                  setActivePage(p);
                   // A press on an existing box starts a drag: snapshot first.
                   if ((e.target as HTMLElement).closest('[data-page-overlay] > div')) beginGesture();
                 }}>
@@ -292,6 +346,13 @@ export function FieldEditor({
           </div>
         </div>
       </main>
+
+      {/* Small screens: the selected field's properties as a bottom sheet. */}
+      {properties && (
+        <div className="animate-slide-up fixed inset-x-0 bottom-0 z-30 max-h-[60vh] overflow-y-auto border-t border-line bg-page shadow-[0_-8px_30px_var(--shadow)] md:hidden">
+          {properties}
+        </div>
+      )}
 
       {/* Right: page map with a per-page field tally. */}
       <aside className="hidden w-[200px] shrink-0 overflow-y-auto border-l border-line bg-page p-4 xl:block">
@@ -333,7 +394,7 @@ function ToolButton({
   children: React.ReactNode;
 }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} aria-label={label} title={label} className="btn btn-ghost btn-icon btn-sm">
+    <button type="button" onClick={onClick} disabled={disabled} aria-label={label} title={label} className="btn btn-ghost btn-icon btn-sm shrink-0">
       {children}
     </button>
   );

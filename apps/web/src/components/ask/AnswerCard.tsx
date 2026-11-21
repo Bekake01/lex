@@ -30,10 +30,14 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
   return (
     <div className="flex flex-col gap-5">
       {a.urgent && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-danger-line bg-danger-soft px-4 py-3">
-          <AlertIcon className="size-5 shrink-0 text-danger" />
-          <p className="min-w-0 flex-1 text-sm text-danger">{a.urgent.text}</p>
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-3 rounded-xl border border-danger-line bg-danger-soft px-4 py-3 sm:flex-row sm:items-center">
+          {/* On a phone the numbers get their own row: side by side they squeezed
+              the warning down to one word per line. */}
+          <div className="flex min-w-0 flex-1 items-start gap-3 sm:items-center">
+            <AlertIcon className="mt-0.5 size-5 shrink-0 text-danger sm:mt-0" />
+            <p className="min-w-0 flex-1 text-sm text-danger">{a.urgent.text}</p>
+          </div>
+          <div className="flex flex-wrap gap-2 pl-8 sm:shrink-0 sm:pl-0">
             {a.urgent.numbers.map((n) => (
               <a
                 key={n.number}
@@ -149,7 +153,7 @@ export function AnswerCard({ answer: a, onFollowUp }: { answer: LegalAnswer; onF
                     <span className="block text-xs text-muted">{c.detail}</span>
                   </span>
                   {c.phone && (
-                    <span className="flex items-center gap-1 rounded-md bg-ink px-2 py-1 font-mono text-sm font-semibold text-page">
+                    <span className="flex shrink-0 items-center gap-1 rounded-md bg-ink px-2 py-1 font-mono text-sm font-semibold text-page">
                       <PhoneIcon className="size-3" />
                       {c.phone}
                     </span>

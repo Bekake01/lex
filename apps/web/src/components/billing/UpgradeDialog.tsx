@@ -29,7 +29,7 @@ export function UpgradeDialog() {
         role="dialog"
         aria-modal
         aria-label="Tarifni oşiriş"
-        className="w-full max-w-md animate-fade-up rounded-2xl bg-surface shadow-xl"
+        className="max-h-[90dvh] w-full max-w-md animate-fade-up overflow-y-auto rounded-2xl bg-surface shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start gap-3 px-5 pt-5">
