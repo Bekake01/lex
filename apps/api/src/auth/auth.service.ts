@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
@@ -10,7 +11,8 @@ import { DB, type Db } from '../db/db.module.js';
 import { users } from '../db/schema/index.js';
 import { ACCESS_TOKEN_TTL_SECONDS } from './auth.constants.js';
 import { PasswordHasher } from './password.js';
-import type { LoginInput } from './request-bodies.js';
+import { BILLING_ERROR_CODES } from '@lex/contracts';
+import type { LoginInput, RegisterInput } from './request-bodies.js';
 import {
   ACCOUNT_SUSPENDED,
   SESSION_INVALID,
@@ -88,9 +90,42 @@ export class AuthService {
       throw new ForbiddenException(ACCOUNT_SUSPENDED);
     }
 
+    return this.signIn(user, input.rememberMe, client);
+  }
+
+  /**
+   * Sign-up: a new individual account on the free plan, signed in at once.
+   * 409 EMAIL_TAKEN when the email is registered (sign-up has to say so).
+   */
+  async register(input: RegisterInput, client: ClientInfo): Promise<SignedIn> {
+    const passwordHash = await this.passwords.hash(input.password);
+    const [user] = await this.db
+      .insert(users)
+      .values({ email: input.email, fullName: input.fullName, passwordHash })
+      .onConflictDoNothing({ target: users.email })
+      .returning({
+        id: users.id,
+        email: users.email,
+        fullName: users.fullName,
+      });
+    if (!user) {
+      throw new ConflictException({
+        code: BILLING_ERROR_CODES.emailTaken,
+        message: 'Bu email bilan hisob bor. Kiriş sahifasidan kiring.',
+      });
+    }
+    return this.signIn(user, input.rememberMe, client);
+  }
+
+  /** A new session + access token for a user whose credentials were checked. */
+  async signIn(
+    user: SessionUser,
+    rememberMe: boolean,
+    client: ClientInfo,
+  ): Promise<SignedIn> {
     const session = await this.sessions.create({
       userId: user.id,
-      rememberMe: input.rememberMe,
+      rememberMe,
       userAgent: client.userAgent,
       ip: client.ip,
     });
@@ -104,6 +139,15 @@ export class AuthService {
       user: { id: user.id, email: user.email, fullName: user.fullName },
       session,
     };
+  }
+
+  /** Same argon2 check as login, for routes that re-confirm a password. */
+  verifyPassword(hash: string | null, password: string): Promise<boolean> {
+    return this.passwords.verify(hash, password);
+  }
+
+  hashPassword(password: string): Promise<string> {
+    return this.passwords.hash(password);
   }
 
   async refresh(token: string | undefined): Promise<RefreshResult> {

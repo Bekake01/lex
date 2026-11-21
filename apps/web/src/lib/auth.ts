@@ -196,6 +196,64 @@ export async function login(credentials: {
 }
 
 /**
+ * POST /auth/register (sign-up, free plan) or POST /invites/:token/accept
+ * (join a company). Both answer like login: the token is kept and
+ * `signed_in` is set. Errors come back as a message to show.
+ */
+export function register(input: {
+  fullName: string;
+  email: string;
+  password: string;
+}): Promise<{ ok: true } | { ok: false; message: string }> {
+  return signInAt('/auth/register', { ...input, rememberMe: true }, true);
+}
+
+export function acceptInvite(
+  token: string,
+  input: { password: string; fullName?: string },
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  return signInAt(`/invites/${encodeURIComponent(token)}/accept`, input, false);
+}
+
+async function signInAt(
+  path: string,
+  body: unknown,
+  rememberMe: boolean,
+): Promise<{ ok: true } | { ok: false; message: string }> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { ok: false, message: 'Lex bilan aloqa yöq. Internetni tekşirib, qayta urinib köring.' };
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as { message?: unknown } | null;
+    const message = Array.isArray(data?.message) ? data?.message.join(', ') : data?.message;
+    return {
+      ok: false,
+      message: typeof message === 'string' ? toUzbekError(message) : 'Xatolik yuz berdi. Qayta urinib köring.',
+    };
+  }
+  keep((await res.json()) as SignedIn);
+  setSignedInCookie(rememberMe);
+  return { ok: true };
+}
+
+/** The API's English validation messages, as users should read them. */
+function toUzbekError(message: string): string {
+  if (message.startsWith('password must be at least')) return 'Parol kamida 8 ta belgidan iborat bölsin.';
+  if (message === 'email is invalid' || message === 'email is required') return 'Emailni tögri kiriting.';
+  if (message === 'fullName is required') return 'Ismingizni kiriting.';
+  if (message === 'Invalid email or password') return 'Parol notögri.';
+  return message;
+}
+
+/**
  * What to tell the user about a failed login. 401 and 403 carry the API's
  * fixed messages ("Invalid email or password", "Your account is suspended"),
  * which are written for users.

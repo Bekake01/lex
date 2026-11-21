@@ -1,49 +1,34 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
-import { AI_ERROR_CODES, type AiUsageWire } from '@lex/contracts';
+import { BILLING_ERROR_CODES, type AiUsageWire } from '@lex/contracts';
 import { and, eq, sql } from 'drizzle-orm';
 import type { CurrentUser } from '../common/current-user.js';
-import { ENV, type Env } from '../config/env.js';
 import { DB, type Db } from '../db/db.module.js';
 import { aiUsage } from '../db/schema/index.js';
 import type { AiUsageTotals } from '../ai-review/ai.service.js';
+import {
+  checkQuota,
+  currentPeriod,
+  scopeKeyFor,
+  sendQuota,
+} from '../billing/plan-of.js';
 
-/** `agency:<id>` pools an agency's quota across its members. */
-export function scopeKeyFor(user: CurrentUser): string {
-  return user.agencyId ? `agency:${user.agencyId}` : `user:${user.id}`;
-}
-
-/** Billing month in UTC, `YYYY-MM`. */
-export function currentPeriod(now = new Date()): string {
-  return now.toISOString().slice(0, 7);
-}
+export { currentPeriod, scopeKeyFor };
 
 /**
- * Monthly AI metering and plan limits.
+ * AI metering and plan limits (see `@lex/contracts` PLANS).
  *
- * The limit is checked **at enqueue**, so a sender finds out before a job
- * starts spending tokens, and the counter is incremented when a job finishes.
+ * Free accounts get FREE_CHECKS for life; paid plans a monthly quota. The
+ * limit is checked **at enqueue**, so a sender finds out before a job starts
+ * spending tokens, and the counter is incremented when a job finishes.
  */
 @Injectable()
 export class AiUsageService {
-  constructor(
-    @Inject(DB) private readonly db: Db,
-    @Inject(ENV) private readonly env: Env,
-  ) {}
-
-  /** null = unlimited. */
-  reviewLimitFor(user: CurrentUser): number | null {
-    const limit = user.agencyId
-      ? this.env.AI_REVIEWS_LIMIT_AGENCY
-      : this.env.AI_REVIEWS_LIMIT_PERSONAL;
-    return limit === 0 ? null : limit;
-  }
+  constructor(@Inject(DB) private readonly db: Db) {}
 
   async get(user: CurrentUser, period = currentPeriod()): Promise<AiUsageWire> {
+    const quota = await checkQuota(this.db, user);
     const [row] = await this.db
-      .select({
-        reviewsUsed: aiUsage.reviewsUsed,
-        revisionsUsed: aiUsage.revisionsUsed,
-      })
+      .select({ revisionsUsed: aiUsage.revisionsUsed })
       .from(aiUsage)
       .where(
         and(
@@ -55,28 +40,43 @@ export class AiUsageService {
 
     return {
       period,
-      reviewsUsed: row?.reviewsUsed ?? 0,
-      reviewsLimit: this.reviewLimitFor(user),
+      reviewsUsed: quota.used,
+      reviewsLimit: quota.limit,
       revisionsUsed: row?.revisionsUsed ?? 0,
     };
   }
 
-  /**
-   * Throws the same 402 shape as the existing trial check when the monthly
-   * review quota is used up.
-   */
+  /** 402 `REVIEW_LIMIT_REACHED` when the plan's checks are used up. */
   async assertReviewAllowed(user: CurrentUser): Promise<void> {
-    const limit = this.reviewLimitFor(user);
-    if (limit === null) return;
-
-    const usage = await this.get(user);
-    if (usage.reviewsUsed >= limit) {
+    const quota = await checkQuota(this.db, user);
+    if (quota.used >= quota.limit) {
       throw new HttpException(
         {
-          code: AI_ERROR_CODES.reviewLimitReached,
-          message: 'The monthly AI review limit for this plan is used up',
-          reviewsUsed: usage.reviewsUsed,
-          reviewsLimit: limit,
+          code: BILLING_ERROR_CODES.checkLimitReached,
+          message:
+            quota.plan === 'free'
+              ? 'Bepul AI tekşiruvlar tugadi. Davom etiş uçun tarif tanlang.'
+              : 'Bu oy uçun AI tekşiruvlar tugadi.',
+          plan: quota.plan,
+          reviewsUsed: quota.used,
+          reviewsLimit: quota.limit,
+        },
+        HttpStatus.PAYMENT_REQUIRED,
+      );
+    }
+  }
+
+  /** 402 `SEND_LIMIT_REACHED` when a free account used its signature sends. */
+  async assertSendAllowed(user: CurrentUser): Promise<void> {
+    const quota = await sendQuota(this.db, user);
+    if (quota.limit !== null && quota.used >= quota.limit) {
+      throw new HttpException(
+        {
+          code: BILLING_ERROR_CODES.sendLimitReached,
+          message:
+            'Bepul imzoga yuborişlar tugadi. Davom etiş uçun tarif tanlang.',
+          sendsUsed: quota.used,
+          sendsLimit: quota.limit,
         },
         HttpStatus.PAYMENT_REQUIRED,
       );

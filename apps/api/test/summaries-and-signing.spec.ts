@@ -39,8 +39,6 @@ function env(): Env {
   return {
     SIGN_APP_URL: 'http://localhost:3001',
     SUMMARY_WAIT_MS: 60_000,
-    AI_REVIEWS_LIMIT_PERSONAL: 20,
-    AI_REVIEWS_LIMIT_AGENCY: 200,
   } as Env;
 }
 
@@ -116,7 +114,7 @@ describe('summary job (one per send) and invite job', () => {
       new FakeDocProcessingService(),
       storage,
     );
-    usage = new AiUsageService(db, env());
+    usage = new AiUsageService(db);
   });
 
   afterAll(async () => {

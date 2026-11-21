@@ -9,7 +9,9 @@ import {
   NotFoundException,
   UnprocessableEntityException,
   UnsupportedMediaTypeException,
+  Optional,
 } from '@nestjs/common';
+import { AiUsageService } from '../usage/ai-usage.service.js';
 import {
   AI_ERROR_CODES,
   compactPhone,
@@ -71,6 +73,8 @@ export class SignatureRequestsService {
     @InjectQueue(QUEUE.summarizeForRecipients)
     private readonly summarizeQueue: Queue,
     @InjectQueue(QUEUE.sendSigningInvite) private readonly inviteQueue: Queue,
+    /** Free-plan send limit. Optional so unit tests can leave it out. */
+    @Optional() private readonly usage?: AiUsageService,
   ) {}
 
   /* ---------------------------------------------------------------- draft -- */
@@ -227,6 +231,8 @@ export class SignatureRequestsService {
         message: 'Kamida bitta odam qöşing yoki oçiq havolani yoqing',
       });
     }
+
+    await this.usage?.assertSendAllowed(user);
 
     // Conditional on `draft`, so a double click sends once.
     const [sent] = await this.db

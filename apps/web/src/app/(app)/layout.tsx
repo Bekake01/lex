@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { AppSidebar, MobileBar } from '@/components/AppSidebar';
 import { SessionGate } from '@/components/session-gate';
+import { UpgradeDialog } from '@/components/billing/UpgradeDialog';
 
 /**
  * Every signed-in page. It renders once SessionGate has confirmed the session.
@@ -19,6 +20,7 @@ export default function AppLayout({ children }: LayoutProps<'/'>) {
           <main className="flex min-h-0 flex-1 flex-col">{children}</main>
         </div>
       </div>
+      <UpgradeDialog />
     </SessionGate>
   );
 }

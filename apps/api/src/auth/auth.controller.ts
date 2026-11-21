@@ -12,7 +12,7 @@ import type { Request, Response } from 'express';
 import { ENV, type Env } from '../config/env.js';
 import { Public } from './auth.decorators.js';
 import { AuthService, type ClientInfo } from './auth.service.js';
-import { parseLoginBody } from './request-bodies.js';
+import { parseLoginBody, parseRegisterBody } from './request-bodies.js';
 import {
   clearRefreshCookie,
   readRefreshCookie,
@@ -50,6 +50,26 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<SignedInResponse> {
     const result = await this.auth.login(parseLoginBody(body), clientInfo(req));
+    setRefreshCookie(res, result.session, this.secureCookie);
+    return {
+      accessToken: result.accessToken,
+      expiresIn: result.expiresIn,
+      user: result.user,
+    };
+  }
+
+  /** Sign-up (free plan). Same response and cookie as login. */
+  @Post('register')
+  @HttpCode(201)
+  async register(
+    @Body() body: unknown,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<SignedInResponse> {
+    const result = await this.auth.register(
+      parseRegisterBody(body),
+      clientInfo(req),
+    );
     setRefreshCookie(res, result.session, this.secureCookie);
     return {
       accessToken: result.accessToken,
@@ -108,7 +128,7 @@ export class AuthController {
   }
 }
 
-function clientInfo(req: Request): ClientInfo {
+export function clientInfo(req: Request): ClientInfo {
   return {
     userAgent: req.get('user-agent') ?? null,
     ip: req.ip ?? null,

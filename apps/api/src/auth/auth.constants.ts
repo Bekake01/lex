@@ -22,3 +22,6 @@ export const REFRESH_COOKIE_PATH = '/auth';
 export const EMAIL_MAX_LENGTH = 320;
 // argon2 runs on the whole password, so a huge one would be a cheap way to burn CPU.
 export const PASSWORD_MAX_LENGTH = 1024;
+
+/** Shortest password accepted at sign-up or when joining by invite. */
+export const PASSWORD_MIN_LENGTH = 8;

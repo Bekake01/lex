@@ -33,13 +33,13 @@ const ai = {
   configured: true,
 } as unknown as AiService;
 
-function env(overrides: Partial<Env> = {}): Env {
-  return {
-    AI_REVIEWS_LIMIT_PERSONAL: 20,
-    AI_REVIEWS_LIMIT_AGENCY: 200,
-    ...overrides,
-  } as Env;
-}
+const noTokens = {
+  inputTokens: 0,
+  outputTokens: 0,
+  cacheReadTokens: 0,
+  cacheCreationTokens: 0,
+  costUsd: 0,
+};
 
 describe('POST /documents/:id/reviews', () => {
   let db: Db;
@@ -73,10 +73,10 @@ describe('POST /documents/:id/reviews', () => {
     documentId = document.id;
   });
 
-  function service(limits: Partial<Env> = {}) {
+  function service() {
     const analyze = fakeQueue();
     const revise = fakeQueue();
-    const usage = new AiUsageService(db, env(limits));
+    const usage = new AiUsageService(db);
     return {
       analyze,
       revise,
@@ -135,18 +135,11 @@ describe('POST /documents/:id/reviews', () => {
     expect(row.error).toBeNull();
   });
 
-  it('refuses at enqueue when the monthly limit is used up', async () => {
-    const { reviews, usage } = service({ AI_REVIEWS_LIMIT_PERSONAL: 1 });
-    await usage.recordReview(
-      { userId: user.id, agencyId: null },
-      {
-        inputTokens: 0,
-        outputTokens: 0,
-        cacheReadTokens: 0,
-        cacheCreationTokens: 0,
-        costUsd: 0,
-      },
-    );
+  it('refuses at enqueue when the 3 free checks are used up', async () => {
+    const { reviews, usage } = service();
+    for (let i = 0; i < 3; i++) {
+      await usage.recordReview({ userId: user.id, agencyId: null }, noTokens);
+    }
 
     await expect(reviews.createReview(user, documentId, 'uz')).rejects.toThrow(
       HttpException,
@@ -171,7 +164,7 @@ describe('POST /documents/:id/reviews', () => {
       agencyRole: 'member',
     };
 
-    const { usage } = service({ AI_REVIEWS_LIMIT_AGENCY: 5 });
+    const { usage } = service();
     await usage.recordReview(
       { userId: owner.id, agencyId: owner.agencyId },
       {
@@ -185,7 +178,8 @@ describe('POST /documents/:id/reviews', () => {
 
     const seen = await usage.get(colleague);
     expect(seen.reviewsUsed).toBe(1);
-    expect(seen.reviewsLimit).toBe(5);
+    // No company plan bought yet: the free lifetime checks, pooled.
+    expect(seen.reviewsLimit).toBe(3);
 
     const rows = await db
       .select()

@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronsUpDown, FolderOpen, LogOut, PanelLeft, Plus, Scale } from 'lucide-react';
+import { ChevronsUpDown, CreditCard, FolderOpen, LogOut, PanelLeft, Plus, Scale, Users } from 'lucide-react';
 import { ThemeToggle } from '@lex/theme';
 import { currentUser, logout } from '@/lib/auth';
 import { contracts, recentChats } from '@/lib/demo';
+import { UsageMeter } from './billing/UsageMeter';
 import { Wordmark } from './Brand';
 import { LogoMark } from './Icons';
 
@@ -21,6 +22,14 @@ const NAV = [
     badge: newCount,
     match: (p: string) => p === '/contracts' || p === '/review',
   },
+  {
+    href: '/billing',
+    label: 'Tarif',
+    Icon: CreditCard,
+    badge: 0,
+    match: (p: string) => p === '/billing' || p === '/pricing',
+  },
+  { href: '/team', label: 'Jamoa', Icon: Users, badge: 0, match: (p: string) => p === '/team' },
 ];
 
 function initials(name: string | undefined) {
@@ -168,6 +177,7 @@ export function AppSidebar() {
         </ul>
 
         <div className="border-t border-edge p-2">
+          <UsageMeter />
           <UserMenu />
         </div>
       </div>

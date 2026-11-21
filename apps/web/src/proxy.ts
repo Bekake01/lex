@@ -5,10 +5,10 @@ import { SIGNED_IN_COOKIE, safeNextPath } from '@/lib/signed-in';
  * Pages anyone can open (with their subpaths). Everything else needs sign-in,
  * so a new page is protected unless it is added here.
  */
-const PUBLIC_PATHS = ['/login'];
+const PUBLIC_PATHS = ['/login', '/register', '/invite'];
 
 /** Public pages a signed-in user has no reason to see. */
-const SIGNED_OUT_ONLY_PATHS = ['/login'];
+const SIGNED_OUT_ONLY_PATHS = ['/login', '/register'];
 
 /**
  * Sign-in redirects. Optimistic only: reads the `signed_in` hint cookie and

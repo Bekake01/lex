@@ -121,10 +121,7 @@ describe('corrections', () => {
     storage = new StorageService({ STORAGE_DIR: dir } as Env);
     documentsService = new DocumentsService(db, storage);
     content = new DocumentContentService(db, new TextDocProcessing(), storage);
-    usage = new AiUsageService(db, {
-      AI_REVIEWS_LIMIT_PERSONAL: 20,
-      AI_REVIEWS_LIMIT_AGENCY: 200,
-    } as Env);
+    usage = new AiUsageService(db);
   });
 
   afterAll(async () => {

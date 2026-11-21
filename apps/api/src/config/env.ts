@@ -126,12 +126,8 @@ export const envSchema = z
       .positive()
       .default(20 * 1024 * 1024),
 
-    /* -------------------------------------------------------- plan limits -- */
+    // Plan limits (AI checks, signature sends) are in @lex/contracts PLANS.
 
-    /** Monthly AI reviews for an individual user. 0 = unlimited. */
-    AI_REVIEWS_LIMIT_PERSONAL: z.coerce.number().int().min(0).default(20),
-    /** Monthly AI reviews pooled across an agency. 0 = unlimited. */
-    AI_REVIEWS_LIMIT_AGENCY: z.coerce.number().int().min(0).default(200),
     /** How long the invite job waits for recipient summaries before sending without them. */
     SUMMARY_WAIT_MS: z.coerce.number().int().min(0).default(60_000),
   })

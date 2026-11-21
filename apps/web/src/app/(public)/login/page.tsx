@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ChevronRight, MessageCircle, PenLine, ScanSearch } from 'lucide-react';
 import { ThemeToggle } from '@lex/theme';
 import { Wordmark } from '@/components/Brand';
@@ -72,6 +73,12 @@ export default function LoginPage() {
             <h2 className="text-[1.75rem] leading-tight font-medium tracking-tight">Xuş kelibsiz</h2>
             <p className="mt-1.5 mb-7 text-[15px] text-muted">Davom etiş uçun hisobingizga kiring.</p>
             <LoginForm />
+            <p className="mt-6 text-center text-sm text-muted">
+              Hisobingiz yöqmi?{' '}
+              <Link href="/register" className="font-medium text-accent hover:underline">
+                Röyxatdan öting — 3 ta tekşiruv bepul
+              </Link>
+            </p>
           </div>
         </section>
       </div>

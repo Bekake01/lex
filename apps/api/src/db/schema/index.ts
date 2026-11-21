@@ -13,3 +13,4 @@ export * from './signature-requests.js';
 export * from './recipients.js';
 export * from './recipient-summaries.js';
 export * from './ai-usage.js';
+export * from './billing.js';

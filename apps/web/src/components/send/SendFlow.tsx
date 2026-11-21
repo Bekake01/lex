@@ -10,6 +10,7 @@ import type {
 import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { blankRow, isEmptyRow, rowProblem, toInput, type PersonRow } from '@/lib/people';
+import { billingChanged, isLimitError, showUpgrade } from '@/lib/billing';
 import { ApiError, documentPdf, getDraft, sendDraft, updateDraft } from '@/lib/signing';
 import { usePdf } from '@/lib/use-pdf';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '../Icons';
@@ -123,7 +124,9 @@ export function SendFlow({ id }: { id: string }) {
     try {
       if (!(await flush())) throw new Error('save');
       setResult(await sendDraft(id));
+      billingChanged();
     } catch (err) {
+      if (isLimitError(err)) showUpgrade(err.message);
       setSendError(err instanceof ApiError ? err.message : 'Yuborib bölmadi. Qaytadan urinib köring.');
     } finally {
       setSending(false);

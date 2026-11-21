@@ -15,5 +15,7 @@ import { TokenService } from './token.service.js';
     // Global: applies to every controller in the app, not just this module.
     { provide: APP_GUARD, useClass: AccessTokenGuard },
   ],
+  // Billing signs a user in after they accept a team invite.
+  exports: [AuthService],
 })
 export class AuthModule {}

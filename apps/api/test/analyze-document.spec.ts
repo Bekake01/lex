@@ -121,10 +121,7 @@ describe('analyze-document job', () => {
     ({ db, close } = await createTestDb());
     dir = await mkdtemp(join(tmpdir(), 'lex-analyze-'));
     storage = new StorageService({ STORAGE_DIR: dir } as Env);
-    usage = new AiUsageService(db, {
-      AI_REVIEWS_LIMIT_PERSONAL: 20,
-      AI_REVIEWS_LIMIT_AGENCY: 200,
-    } as Env);
+    usage = new AiUsageService(db);
     content = new DocumentContentService(
       db,
       new FakeDocProcessingService(),

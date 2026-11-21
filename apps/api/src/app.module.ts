@@ -4,6 +4,7 @@ import { AiReviewModule } from './ai-review/ai-review.module.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthModule } from './auth/auth.module.js';
+import { BillingModule } from './billing/billing.module.js';
 import { ConfigModule } from './config/config.module.js';
 import { ENV, type Env } from './config/env.js';
 import { DbModule } from './db/db.module.js';
@@ -33,6 +34,7 @@ import { AiUsageModule } from './usage/ai-usage.module.js';
     SignatureRequestsModule,
     SigningModule,
     AiUsageModule,
+    BillingModule,
     LoggerModule.forRootAsync({
       inject: [ENV],
       useFactory: (env: Env) => ({

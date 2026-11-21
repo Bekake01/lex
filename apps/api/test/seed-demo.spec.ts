@@ -48,10 +48,7 @@ describe('staging seed', () => {
     return new ReviewService(
       db,
       new DocumentsService(db, storage),
-      new AiUsageService(db, {
-        AI_REVIEWS_LIMIT_PERSONAL: 20,
-        AI_REVIEWS_LIMIT_AGENCY: 200,
-      } as Env),
+      new AiUsageService(db),
       { model: 'gpt-5', promptVersion: 'seed' } as AiService,
       queue,
       queue,
